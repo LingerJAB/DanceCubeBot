@@ -1,0 +1,27 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.7.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.7.21'
+
+    id 'net.mamoe.mirai-console' version '2.12.2'
+}
+
+
+group = 'com.mirai'
+version = '0.1.0'
+
+mirai {
+    jvmTarget = JavaVersion.VERSION_17
+}
+repositories {
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    mavenCentral()
+}
+dependencies {
+    implementation 'net.mamoe:mirai-core:2.13.2'
+
+    implementation 'com.google.zxing:core:3.5.1'
+    implementation 'com.google.zxing:javase:3.5.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'com.google.code.gson:gson:2.10'
+    implementation 'com.freewayso:image-combiner:2.4.1'
+}
