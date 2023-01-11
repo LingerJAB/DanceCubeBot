@@ -1,6 +1,5 @@
 package com.mirai;
 
-import com.google.zxing.qrcode.decoder.Decoder;
 import com.mirai.channel.FriendChannel;
 import com.mirai.channel.GlobalChannel;
 import com.mirai.channel.GroupChannel;
