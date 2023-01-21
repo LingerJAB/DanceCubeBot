@@ -49,14 +49,19 @@ public class Token {
             Response response = client.newCall(request).execute();
             JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
             response.close();
-            accessToken = json.get("access_token").getAsString();
-            refreshToken = json.get("refresh_token").getAsString();
-            recTime = System.currentTimeMillis();
+            if(response.code()!=200) {
+                throw new IOException(response.code() + ":" + response.message());
+            } else {
+                accessToken = json.get("access_token").getAsString();
+                refreshToken = json.get("refresh_token").getAsString();
+                recTime = System.currentTimeMillis();
+                return true;
+            }
         } catch(IOException e) {
             System.out.println("# refreshTokenHttp执行bug辣！");
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        return true;
+        return false;
     }
 
     @Override

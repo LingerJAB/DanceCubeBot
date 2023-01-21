@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +48,7 @@ public class TokenBuilder {
         try {
             Response response = client.newCall(request).execute();
             String string = response.body().string();
-            response.close(); //释放
+            response.close(); // 释放
             return JsonParser.parseString(string).getAsJsonObject().get("QrcodeUrl").getAsString();
         } catch(IOException e) {
             throw new RuntimeException(e);
@@ -77,16 +78,16 @@ public class TokenBuilder {
                 response.close();  // 关闭释放
             } catch(IOException e) {
                 System.out.println("# TokenHttp执行bug辣！");
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
         return null;
     }
 
 
-    // HashMap写入json文件（一般K为Long）
-    public static <K> void tokensToFile(HashMap<K, Token> tokenMap, String filePath) {
-        Type type = new TypeToken<HashMap<K, Token>>() {
+    // HashMap写入json文件（一般T为Long）
+    public static void tokensToFile(HashMap<Long, Token> tokenMap, String filePath) {
+        Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
         String json = new GsonBuilder().setPrettyPrinting().create().toJson(tokenMap, type);
 
@@ -100,7 +101,8 @@ public class TokenBuilder {
         }
     }
 
-    public static HashMap<Long, Token> tokensFromFile(String filePath,boolean isRefreshed) {
+    // HashMap写出json文件（一般为Long）
+    public static HashMap<Long, Token> tokensFromFile(String filePath,boolean refreshed) {
         Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
         StringBuilder json = new StringBuilder();
@@ -119,7 +121,7 @@ public class TokenBuilder {
         HashMap<Long,Token> userMap = new Gson().fromJson(json.toString(), type);
 
         // 读取并refresh()
-        if(isRefreshed) userMap.forEach((key, token) -> token.refresh());
+        if(refreshed) userMap.forEach((key, token) -> token.refresh());
         return userMap;
     }
 

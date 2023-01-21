@@ -1,15 +1,12 @@
 package com.mirai;
 
-import com.mirai.channel.FriendChannel;
-import com.mirai.channel.GlobalChannel;
-import com.mirai.channel.GroupChannel;
+import com.mirai.event.GlobalHandler;
+import net.mamoe.mirai.console.command.CommandManager;
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescriptionBuilder;
 import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.EventChannel;
 import net.mamoe.mirai.event.GlobalEventChannel;
-import net.mamoe.mirai.event.events.FriendMessageEvent;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 
 public final class MiraiBot extends JavaPlugin {
@@ -25,18 +22,13 @@ public final class MiraiBot extends JavaPlugin {
     @Override
     public void onEnable() {
         getLogger().info("Plugin loaded!");
-
         EventChannel<Event> channel = GlobalEventChannel.INSTANCE.context(this.getCoroutineContext());
+//        CommandManager.INSTANCE.registerCommand(CmdTest.INSTANCE, true);
 
 
-        //全局通道
-        channel.subscribeAlways(MessageEvent.class, GlobalChannel::eventCenter);
+        channel.subscribeAlways(MessageEvent.class, GlobalHandler::eventCenter);
 
-        //群组通道
-        channel.subscribeAlways(GroupMessageEvent.class, GroupChannel::eventCenter);
-
-        //好友通道
-        channel.subscribeAlways(FriendMessageEvent.class, FriendChannel::eventCenter);
 
     }
 }
+

@@ -29,7 +29,7 @@ public class userInfoImage {
             combiner.save(path);
             System.out.println("succeeded");
         } catch(Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 }

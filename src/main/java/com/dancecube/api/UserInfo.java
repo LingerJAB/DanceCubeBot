@@ -70,7 +70,8 @@ public class UserInfo {
             response.close();
             return new Gson().fromJson(string, UserInfo.class);
         } catch(IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-package com.mirai.channel;
+package com.mirai.event;
 
 import com.dancecube.token.Token;
 
@@ -7,8 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 
-// 抽象通道，用于过滤分区
-public abstract class AbstractChannel {
+public abstract class Handler {
     public static HashMap<Long, Token> userMap = new HashMap<>();
     public static HashSet<Long> logStatus = new HashSet<>();
     public static String rootPath;

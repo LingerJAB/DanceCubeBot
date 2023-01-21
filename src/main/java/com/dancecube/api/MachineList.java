@@ -1,7 +1,9 @@
 package com.dancecube.api;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import com.mirai.HttpUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -15,26 +17,32 @@ public class MachineList {
     public boolean Online;
 
 
-    public static List<MachineList> get() {
+    public static List<MachineList> get(String  lng,String  lat) {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
-                .url("https://dancedemo.shenghuayule.com/Dance/OAuth/GetMachineListByLocation?lng=116.5&lat=31.7")
+                .url("https://dancedemo.shenghuayule.com/Dance/OAuth/GetMachineListByLocation?lng="+lng+"&lat="+lat)
                 .get()
-//                .addHeader("Connection", "Keep-Alive")
-//                .addHeader("Accept-Encoding", "gzip")
-//                .addHeader("user-agent", "Mozilla/5.0 (Linux; Android 8.1.0; V1818T Build/OPM1.171019.026; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/96.0.4664.104 Mobile Safari/537.36 uni-app Html5Plus/1.0 (Immersed/28.0)")
-//                .addHeader("Content-Type", "application/json;charset=UTF-8")
                 .build();
 
         try {
             Response response = client.newCall(request).execute();
             String string = response.body().string();
-            response.close();
+            response.close(); // Todo 改为JsonParser
             return new Gson().fromJson(string, new TypeToken<List<MachineList>>() {
             }.getType());
         } catch(IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+        return null;
+    }
+
+    public static List<MachineList> get(String region){
+        if(region==null || region.isBlank()) return null;
+        String json=HttpUtils.getLocationInfo(region);
+        if(json==null) return null;
+        String result= JsonParser.parseString(json).getAsJsonObject().get("geocodes").getAsJsonArray().get(0).getAsJsonObject().get("location").getAsString();
+        String[] location = result.split(",");
+        return get(location[0], location[1]);
     }
 }
