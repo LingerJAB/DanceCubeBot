@@ -21,26 +21,39 @@ import java.util.List;
 import java.util.Map;
 
 // 不过滤通道
-public class GlobalHandler extends Handler {
+public class MainHandler extends AbstractHandler {
     @EventHandler
     public static void eventCenter(MessageEvent event) {
-        String content = event.getMessage().contentToString();
-        long qq = event.getSender().getId();
+        String message = event.getMessage().contentToString();
+        long qq = event.getSender().getId(); // qq不为contact.getId()
         Contact contact = event.getSubject();
 
-        // 发送消息检测
-        switch(content) {
+        // 文本消息检测
+        switch(message) {
             case "个人信息" -> msgUserInfo(contact, qq);
-            case "登录" -> dcLogin(contact);
+            case "登录" -> dcLogin(contact, qq);
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
-            default -> {  // 带参指令 & 自定义指令
-                ArrayList<String> params = new ArrayList<>(Arrays.asList(content.strip().split(" ")));
+            default -> {
+                message = message.strip();
+                // 自定义指令 TODO 封装
+
+                if(message.equals(userInfoCommand.get(qq))) {
+                    msgUserInfo(contact, qq);
+                }
+
+                // 带参指令
+                ArrayList<String> params = new ArrayList<>(Arrays.stream(message.split(" ")).filter(str -> !str.isBlank()).toList());
                 String prefix = params.remove(0);
 
-                switch(prefix) {  //TODO 多匹配指令前缀 (List)
-                    case "查找舞立方" -> msgMachineList(contact, params.get(0));
-                    case "查找" -> msgMachineList(contact, params.get(0));
+                if(params.size()>0) {
+                    String firstParam = params.get(0);
+
+                    switch(prefix) {  //TODO 多匹配指令前缀 (List)
+                        case "查找舞立方" -> msgMachineList(contact, firstParam);
+                        case "添加指令" -> addCmd(contact, qq, firstParam);
+                        case "删除指令" -> delCmd(contact, qq, firstParam);
+                    }
                 }
 
             }
@@ -48,15 +61,29 @@ public class GlobalHandler extends Handler {
 
     }
 
+    // 添加指令 全局
+    public static void addCmd(Contact contact, long qq, String newPrefix) {
+        userInfoCommand.put(qq, newPrefix);
+        contact.sendMessage("已添加 " + newPrefix + " !");
+    }
+
+    // 删除指令 全局
+    public static void delCmd(Contact contact, long qq, String newPrefix) {
+        if(!newPrefix.equals(userInfoCommand.get(qq))) {
+            contact.sendMessage("未找到 " + newPrefix + " !");
+            return;
+        }
+        contact.sendMessage("已删除 " + userInfoCommand.remove(qq, newPrefix) + " !");
+    }
+
     // 个人信息 全局
     public static void msgUserInfo(Contact contact, long qq) {
         Token token = userMap.get(qq);
         if(token==null) {
             // 登录检测
-            contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"舞立方登录\"一起来玩吧！");
+            contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
             return;
         }
-
         token.refresh();
 
         UserInfo user;
@@ -65,7 +92,8 @@ public class GlobalHandler extends Handler {
             user = UserInfo.get(token);
             ex = HttpUtils.getExResByURL(new URL(user.HeadimgURL));
         } catch(IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return;
         }
         Image image = ExternalResource.uploadAsImage(ex, contact);
 
@@ -91,13 +119,12 @@ public class GlobalHandler extends Handler {
     }
 
     // 舞立方登录 好友
-    public static void dcLogin(Contact contact) {
+    public static void dcLogin(Contact contact, long qq) {
         // 限私聊
         if(contact instanceof Group) {
             contact.sendMessage("私信才可以登录哦( •̀ ω •́ )/");
             return;
         }
-        long qq = contact.getId();
         // 正在登录检测
         if(logStatus.contains(qq)) {
             contact.sendMessage("(´。＿。｀)不要重复登录啊喂！");

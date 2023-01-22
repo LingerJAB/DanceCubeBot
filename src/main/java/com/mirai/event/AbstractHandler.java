@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public abstract class Handler {
+public abstract class AbstractHandler {
     public static HashMap<Long, Token> userMap = new HashMap<>();
+    public static HashMap<Long, String> userInfoCommand = new HashMap<>();
     public static HashSet<Long> logStatus = new HashSet<>();
     public static String rootPath;
-    static{
+
+    static {
         try {
             // C:\Users\周洁\IdeaProjects\DanceCubeBot
             rootPath = new File("..").getCanonicalPath();

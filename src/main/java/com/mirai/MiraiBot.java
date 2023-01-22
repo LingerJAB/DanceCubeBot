@@ -1,7 +1,6 @@
 package com.mirai;
 
-import com.mirai.event.GlobalHandler;
-import net.mamoe.mirai.console.command.CommandManager;
+import com.mirai.event.MainHandler;
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescriptionBuilder;
 import net.mamoe.mirai.event.Event;
@@ -26,7 +25,7 @@ public final class MiraiBot extends JavaPlugin {
 //        CommandManager.INSTANCE.registerCommand(CmdTest.INSTANCE, true);
 
 
-        channel.subscribeAlways(MessageEvent.class, GlobalHandler::eventCenter);
+        channel.subscribeAlways(MessageEvent.class, MainHandler::eventCenter);
 
 
     }
