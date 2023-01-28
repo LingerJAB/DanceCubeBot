@@ -105,7 +105,7 @@ public class MainHandler extends AbstractHandler {
         List<MachineList> lists = MachineList.get(region);
         if(lists==null) return;
         for(MachineList machine : lists) {
-            String online = machine.Online ? "在线🟢" : "离线⚫";
+            String online = machine.Online ? "在线🟢" : "离线🔴";
             String singleInfo = "店名：%s *%s\n地址：%s".formatted(machine.PlaceName, online, machine.Address);
             list.append("\n\n").append(singleInfo);
         }
@@ -199,10 +199,9 @@ public class MainHandler extends AbstractHandler {
         for(Map.Entry<Long, Token> entry : userMap.entrySet()) {
             Long qq = entry.getKey();
             Token token = entry.getValue();
-            sb.append("qq: %d , id: %s;\n".formatted(qq, token.getUserId()));
+            sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
         }
-        contact.sendMessage("加载成功！共%d条".formatted(userMap.size()));
-        contact.sendMessage(sb.toString());
+        contact.sendMessage("加载成功！共%d条".formatted(userMap.size()) + sb.toString());
     }
 
     // 登录检测 内部
