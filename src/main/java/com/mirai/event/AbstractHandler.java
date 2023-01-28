@@ -15,7 +15,6 @@ public abstract class AbstractHandler {
 
     static {
         try {
-            // C:\Users\周洁\IdeaProjects\DanceCubeBot
             rootPath = new File("..").getCanonicalPath();
 
         } catch(IOException e) {
