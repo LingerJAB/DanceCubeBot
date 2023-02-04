@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public abstract class AbstractHandler {
-    public static HashMap<Long, Token> userMap = new HashMap<>();
+    public static HashMap<Long, Token> userTokensMap = new HashMap<>();
     public static HashMap<Long, String> userInfoCommand = new HashMap<>();
     public static HashSet<Long> logStatus = new HashSet<>();
     public static String rootPath;

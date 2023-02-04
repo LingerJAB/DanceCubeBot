@@ -66,11 +66,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token{" +
-                "userId='" + userId + '\'' +
-                ", accessToken='" + accessToken + '\'' +
-                ", refreshToken='" + refreshToken + '\'' +
-                ", recTime=" + recTime +
-                '}';
+        return "Token{\nuserId=\"%s\",\naccessToken=\"%s\n,\nrefreshToken=\"%s\", recTime=%d\n}".formatted(userId, accessToken, refreshToken, recTime);
     }
 }

@@ -7,6 +7,7 @@ import com.dancecube.token.TokenBuilder;
 import com.mirai.HttpUtils;
 import com.mirai.MiraiBot;
 import net.mamoe.mirai.contact.Contact;
+import net.mamoe.mirai.contact.Friend;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.EventChannel;
@@ -39,11 +40,13 @@ public class MainHandler extends AbstractHandler {
 
         // 文本消息检测
         switch(message) {
+            case "菜单" -> msgMenu(contact);
             case "个人信息" -> msgUserInfo(contact, qq);
             case "登录" -> dcLogin(contact, qq);
             case "机台登录" -> machineLogin(contact, qq, messageChain);
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
+            case "#token" -> showToken(contact, qq);
             default -> {
                 message = message.strip();
                 // 自定义指令 TODO 封装
@@ -69,6 +72,20 @@ public class MainHandler extends AbstractHandler {
             }
         }
 
+    }
+
+    // 菜单 全局
+    private static void msgMenu(Contact contact) {
+        String menu = """
+                舞小铃有以下功能哦！
+                1.登录 -登录才能和舞小铃玩！
+                2.个人信息 -开发，只能显示一部分
+                3.机台登录 -可以拍照扫码舞立方机台！
+                4.添加指令 [名称] -换个方式查看信息！
+                5.查找舞立方 [地名] 越详细地名越精确！
+                ❤️其它问题记得联系开发者 [铃] 酱！
+                """;
+        contact.sendMessage(menu);
     }
 
     // 添加指令 全局
@@ -101,19 +118,24 @@ public class MainHandler extends AbstractHandler {
 
     // 查找舞立方 全局
     public static void msgMachineList(Contact contact, String region) {
-        StringBuilder list = new StringBuilder("舞立方机台列表：");
+        StringBuilder list = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
         List<MachineList> lists = MachineList.get(region);
         if(lists==null) return;
-        for(MachineList machine : lists) {
-            String online = machine.Online ? "在线🟢" : "离线🔴";
-            String singleInfo = "店名：%s *%s\n地址：%s".formatted(machine.PlaceName, online, machine.Address);
-            list.append("\n\n").append(singleInfo);
+        int limit = Math.min(lists.size(), contact instanceof Friend ? 99 : 5);
+        for(int i = 0; i<limit; i++) {
+            MachineList machine = lists.get(i);
+            String online = machine.Online ? "🔵在线" : "🔴离线";
+            String singleInfo = "店名：%s %s\n地址：%s\n".formatted(machine.PlaceName, online, machine.Address);
+            list.append("\n").append(singleInfo);
         }
-
-        contact.sendMessage(list.toString());
+        if(contact instanceof Group) {
+            contact.sendMessage(list + "⭐刷屏哒咩！群聊显示" + limit + "条就够啦，更多列表请私聊喽~");
+        } else {
+            contact.sendMessage(list.toString());
+        }
     }
 
-    // 舞立方登录 好友
+    // 登录 好友
     public static void dcLogin(Contact contact, long qq) {
         // 限私聊
         if(contact instanceof Group) {
@@ -136,7 +158,7 @@ public class MainHandler extends AbstractHandler {
             contact.sendMessage("超时啦~ 请重试一下吧！");
         } else {
             contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s".formatted(token.getUserId()));
-            userMap.put(qq, builder.getToken());  // 重复登录只会覆盖新的token
+            userTokensMap.put(qq, builder.getToken());  // 重复登录只会覆盖新的token
         }
         logStatus.remove(qq);
     }
@@ -187,31 +209,42 @@ public class MainHandler extends AbstractHandler {
     // #save 高级
     public static void saveTokens(Contact contact) {
         String path = rootPath + "/DcConfig/UserToken.json";
-        TokenBuilder.tokensToFile(userMap, path);
-        contact.sendMessage("保存成功！共%d条".formatted(userMap.size()));
+        TokenBuilder.tokensToFile(userTokensMap, path);
+        contact.sendMessage("保存成功！共%d条".formatted(userTokensMap.size()));
     }
 
     // #load 高级
     public static void loadTokens(Contact contact) {
         String path = rootPath + "/DcConfig/UserToken.json";
-        userMap = TokenBuilder.tokensFromFile(path, true);
+        userTokensMap = TokenBuilder.tokensFromFile(path, true);
         StringBuilder sb = new StringBuilder();
-        for(Map.Entry<Long, Token> entry : userMap.entrySet()) {
+        for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
             Long qq = entry.getKey();
             Token token = entry.getValue();
             sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
         }
-        contact.sendMessage("加载成功！共%d条".formatted(userMap.size()) + sb.toString());
+        contact.sendMessage("加载成功！共%d条".formatted(userTokensMap.size()) + sb.toString());
+    }
+
+    //token 高级
+    public static void showToken(Contact contact, long qq) {
+        if(loginDetect(contact, qq)!=null) {
+            if(contact instanceof Group) {
+                contact.sendMessage("私聊才能看的辣！");
+            } else {
+                contact.sendMessage(userTokensMap.get(qq).toString());
+            }
+        }
     }
 
     // 登录检测 内部
     public static Token loginDetect(Contact contact, Long qq) {
-        Token token = userMap.get(qq);
+        Token token = userTokensMap.get(qq);
         if(token==null) {
             // 登录检测
             contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
             return null;
         }
-        return token.refresh() ? token : null;
+        return token;
     }
 }
