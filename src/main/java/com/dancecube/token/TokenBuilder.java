@@ -12,19 +12,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class TokenBuilder {
     private static int index = 0;
-    private static final String[] ids = {
-            "yyQ6VxqMeIKJDzVmQuHtNAUGxHAgSxmR",
-            "yyQ6VxqMeIL2hceWzZtdqsJxNf/hHSzH",
-            "yyQ6VxqMeIL2hceWzZtdqtGq81Ru8pIE",
-            "yyQ6VxqMeILLsdiEbWkbSnddhlyVGcNa",
-            "yyQ6VxqMeILneEzfVyXPFVCZoOuXSoH3"
-    };
+    private static final String[] ids = {"yyQ6VxqMeIKJDzVmQuHtNAUGxHAgSxmR", "yyQ6VxqMeIL2hceWzZtdqsJxNf/hHSzH", "yyQ6VxqMeIL2hceWzZtdqtGq81Ru8pIE", "yyQ6VxqMeILLsdiEbWkbSnddhlyVGcNa", "yyQ6VxqMeILneEzfVyXPFVCZoOuXSoH3"};
     private final String id;
 
     public TokenBuilder() {
@@ -102,7 +94,7 @@ public class TokenBuilder {
     }
 
     // HashMap写出json文件（一般为Long）
-    public static HashMap<Long, Token> tokensFromFile(String filePath,boolean refreshed) {
+    public static HashMap<Long, Token> tokensFromFile(String filePath, boolean refreshed) {
         Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
         StringBuilder json = new StringBuilder();
@@ -118,14 +110,14 @@ public class TokenBuilder {
             System.out.println("# TokenFromFile执行bug辣！");
             throw new RuntimeException(e);
         }
-        HashMap<Long,Token> userMap = new Gson().fromJson(json.toString(), type);
+        HashMap<Long, Token> userMap = new Gson().fromJson(json.toString(), type);
 
         // 读取并refresh()
         if(refreshed) userMap.forEach((key, token) -> token.refresh());
         return userMap;
     }
 
-    public static HashMap<Long, Token> tokensFromFile(String filePath){
-        return tokensFromFile(filePath,false);
+    public static HashMap<Long, Token> tokensFromFile(String filePath) {
+        return tokensFromFile(filePath, false);
     }
 }

@@ -19,9 +19,9 @@ repositories {
 dependencies {
     implementation 'net.mamoe:mirai-core:2.13.2'
 
-    implementation 'com.google.zxing:core:3.5.1'
     implementation 'com.google.zxing:javase:3.5.1'
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'com.google.code.gson:gson:2.10'
     implementation 'com.freewayso:image-combiner:2.4.1'
+    implementation 'com.tencentcloudapi:tencentcloud-sdk-java-ocr:3.1.691'
 }

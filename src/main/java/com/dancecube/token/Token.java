@@ -37,13 +37,8 @@ public class Token {
 
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create("client_type=qrcode&grant_type=refresh_token&refresh_token=%s"
-                .formatted(getRefreshToken()), mediaType);
-        Request request = new Request.Builder()
-                .url("https://dancedemo.shenghuayule.com/Dance/token")
-                .post(body)
-                .addHeader("content-type", "application/x-www-form-urlencoded")
-                .build();
+        RequestBody body = RequestBody.create("client_type=qrcode&grant_type=refresh_token&refresh_token=%s".formatted(getRefreshToken()), mediaType);
+        Request request = new Request.Builder().url("https://dancedemo.shenghuayule.com/Dance/token").post(body).addHeader("content-type", "application/x-www-form-urlencoded").build();
 
         try {
             Response response = client.newCall(request).execute();
@@ -66,6 +61,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token{\nuserId=\"%s\",\naccessToken=\"%s\n,\nrefreshToken=\"%s\", recTime=%d\n}".formatted(userId, accessToken, refreshToken, recTime);
+        return "Token {\n\tuserId=\"%s\",\n\taccessToken=\"%s\n,\n\trefreshToken=\"%s\",\n\trecTime=%d\n}".formatted(userId, accessToken, refreshToken, recTime);
     }
 }

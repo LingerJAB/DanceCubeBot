@@ -31,6 +31,8 @@ import java.util.concurrent.TimeoutException;
 
 // 不过滤通道
 public class MainHandler extends AbstractHandler {
+
+
     @EventHandler
     public static void eventCenter(MessageEvent event) {
         MessageChain messageChain = event.getMessage();
@@ -179,6 +181,25 @@ public class MainHandler extends AbstractHandler {
             List<SingleMessage> messageList = future.get(3, TimeUnit.MINUTES).getMessage().stream().filter(m -> m instanceof Image).toList();
             if(messageList.size()==1) {
                 message = messageList.get(0);
+                String imageUrl = Image.queryUrl((Image) message);
+                String qrUrl = HttpUtils.QrDecodeTencent(imageUrl);
+                if(qrUrl==null) {  // 若扫码失败
+                    contact.sendMessage("没有扫出来！再试一次吧！");
+                    return;
+                }
+                String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
+                try(Response response = HttpUtils.httpApi(url, Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
+                    if(response.code()==200) {
+                        contact.sendMessage("登录成功辣，快来出勤吧！");
+                    } else {  //401 404
+                        try {
+                            contact.sendMessage("呜呜呜，登录错误了，再试一次吧\n" + response.body().string());
+                        } catch(IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
             } else {
                 contact.sendMessage("这个不是图片吧...重新发送“机台登录”吧");
             }
@@ -187,21 +208,6 @@ public class MainHandler extends AbstractHandler {
         } catch(TimeoutException e) {
             e.printStackTrace();
             contact.sendMessage(quoteReply.plus("超时啦，请重新发送吧~"));
-        }
-        if(message instanceof Image) {
-            String imageUrl = Image.queryUrl((Image) message);
-            String qrUrl = HttpUtils.QrDecode(imageUrl);
-            String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
-            Response response = HttpUtils.httpApi(url, Map.of("Authorization", "Bearer " + token.getAccessToken()));
-            if(response.code()==200) {
-                contact.sendMessage("登录成功辣，快来出勤吧！");
-            } else {
-                try {
-                    contact.sendMessage("呜呜呜，登录错误了，再试一次吧\n" + response.body().string());
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
     }
