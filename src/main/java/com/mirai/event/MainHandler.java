@@ -176,10 +176,12 @@ public class MainHandler extends AbstractHandler {
         channel.subscribeOnce(MessageEvent.class, future::complete);
 
         contact.sendMessage(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！").plus(quoteReply));
-        SingleMessage message = null;
+        SingleMessage message;
         try {
             List<SingleMessage> messageList = future.get(3, TimeUnit.MINUTES).getMessage().stream().filter(m -> m instanceof Image).toList();
-            if(messageList.size()==1) {
+            if(messageList.size()!=1) {
+                contact.sendMessage("这个不是图片吧...重新发送“机台登录”吧");
+            } else {  // 第一个信息
                 message = messageList.get(0);
                 String imageUrl = Image.queryUrl((Image) message);
                 String qrUrl = HttpUtils.QrDecodeTencent(imageUrl);
@@ -199,9 +201,6 @@ public class MainHandler extends AbstractHandler {
                         }
                     }
                 }
-
-            } else {
-                contact.sendMessage("这个不是图片吧...重新发送“机台登录”吧");
             }
         } catch(InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -209,7 +208,6 @@ public class MainHandler extends AbstractHandler {
             e.printStackTrace();
             contact.sendMessage(quoteReply.plus("超时啦，请重新发送吧~"));
         }
-
     }
 
     // #save 高级

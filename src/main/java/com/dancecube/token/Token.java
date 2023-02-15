@@ -2,9 +2,11 @@ package com.dancecube.token;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import okhttp3.*;
+import com.mirai.HttpUtils;
+import okhttp3.Response;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class Token {
     private final String userId;
@@ -35,13 +37,11 @@ public class Token {
         // 过期检测
         if(System.currentTimeMillis() - recTime<604_800_000) return false;
 
-        OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create("client_type=qrcode&grant_type=refresh_token&refresh_token=%s".formatted(getRefreshToken()), mediaType);
-        Request request = new Request.Builder().url("https://dancedemo.shenghuayule.com/Dance/token").post(body).addHeader("content-type", "application/x-www-form-urlencoded").build();
 
         try {
-            Response response = client.newCall(request).execute();
+            Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
+                    Map.of("content-type", "application/x-www-form-urlencoded"),
+                    Map.of("client_type", "qrcode", "grant_type", "refresh_token", "refresh_token", getRefreshToken()));
             JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
             response.close();
             if(response.code()!=200) {

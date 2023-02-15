@@ -70,13 +70,10 @@ public final class HttpUtils {
         return result==null ? null : result.getText();
     }
 
-    public static String QrDecodeTencent(String url) {
-
+    public static String QrDecodeTencent(String imgUrl) {
+        String url = null;
         try {
-            // 实例化一个认证对象，入参需要传入腾讯云账户 SecretId 和 SecretKey，此处还需注意密钥对的保密
-            // 代码泄露可能会导致 SecretId 和 SecretKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考，建议采用更安全的方式来使用密钥，请参见：https://cloud.tencent.com/document/product/1278/85305
-            // 密钥可前往官网控制台 https://console.cloud.tencent.com/cam/capi 进行获取
-            String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07";
+            String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07"; //TODO 加密
             String secretKey = "CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF";
             Credential cred = new Credential(secretId, secretKey);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
@@ -89,11 +86,12 @@ public final class HttpUtils {
             OcrClient client = new OcrClient(cred, "ap-shanghai", clientProfile);
             // 实例化一个请求对象,每个接口都会对应一个request对象
             QrcodeOCRRequest req = new QrcodeOCRRequest();
-            req.setImageUrl(url);
+            req.setImageUrl(imgUrl);
             // 返回的resp是一个QrcodeOCRResponse的实例，与请求对象对应
             QrcodeOCRResponse resp = client.QrcodeOCR(req);
             // 输出json格式的字符串回包
-            return QrcodeOCRResponse.toJsonString(resp);
+            url = resp.getCodeResults()[0].getUrl();
+            return url;
         } catch(TencentCloudSDKException e) {
             e.printStackTrace();
         }
@@ -128,10 +126,10 @@ public final class HttpUtils {
     }
 
     @Nullable  // GET
-    public static Response httpApi(String url, Map<String, String> headerMap) {
+    public static Response httpApi(String url, Map<String, String> headersMap) {
         OkHttpClient client = new OkHttpClient();
         Request.Builder post = new Request.Builder().url(url).get();
-        headerMap.forEach(post::addHeader);
+        headersMap.forEach(post::addHeader);
         Request request = post.build();
 
         try {
@@ -142,6 +140,9 @@ public final class HttpUtils {
         return null;
     }
 
+    /**
+     * @param bodyMap MediaType 默认为 application/x-www-form-urlencoded
+     */
     @Nullable  // POST
     public static Response httpApi(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
 
