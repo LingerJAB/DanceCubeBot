@@ -168,4 +168,24 @@ public final class HttpUtils {
         return null;
     }
 
+
+    public static Call httpApiCall(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
+
+        StringBuilder bodySb = new StringBuilder();
+        bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
+        bodySb.deleteCharAt(0);
+        String body = bodySb.toString();
+
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody requestBody = RequestBody.create(body, mediaType);
+        Request.Builder post = new Request.Builder()
+                .url(url)
+                .post(requestBody);
+        if(headerMap!=null) headerMap.forEach(post::addHeader);
+        Request request = post.build();
+
+        return client.newCall(request);
+    }
+
 }

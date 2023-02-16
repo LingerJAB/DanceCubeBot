@@ -34,14 +34,14 @@ public class Token {
     }
 
     public boolean refresh() {
-        // 过期检测
+        //TODO 必须过期检测 强制刷新会很耗时间（Http IO）
         if(System.currentTimeMillis() - recTime<604_800_000) return false;
 
 
         try {
             Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
-                    Map.of("client_type", "qrcode", "grant_type", "refresh_token", "refresh_token", getRefreshToken()));
+                    Map.of("client_type", "qrcode", "grant_type", "refresh_token", "refresh_token", refreshToken));
             JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
             response.close();
             if(response.code()!=200) {

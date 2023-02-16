@@ -5,7 +5,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import okhttp3.*;
+import com.mirai.HttpUtils;
+import okhttp3.Call;
+import okhttp3.Response;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 
 public class TokenBuilder {
     private static int index = 0;
@@ -34,11 +37,8 @@ public class TokenBuilder {
     }
 
     private String getQrcodeUrl(String id) {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode?id=%s".formatted(id)).get().build();
-
         try {
-            Response response = client.newCall(request).execute();
+            Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode?id=" + id);
             String string = response.body().string();
             response.close(); // 释放
             return JsonParser.parseString(string).getAsJsonObject().get("QrcodeUrl").getAsString();
@@ -49,13 +49,9 @@ public class TokenBuilder {
 
     public Token getToken() {
         long curTime = System.currentTimeMillis();
-        OkHttpClient client = new OkHttpClient();
-
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create("client_type=qrcode&grant_type=client_credentials&client_id=%s".formatted(id), mediaType);
-        Request request = new Request.Builder().url("https://dancedemo.shenghuayule.com/Dance/token").post(body).addHeader("content-type", "application/x-www-form-urlencoded").build();
-
-        Call call = client.newCall(request);
+        Call call = HttpUtils.httpApiCall("https://dancedemo.shenghuayule.com/Dance/token",
+                Map.of("client_type", "qrcode", "grant_type", "client_credentials", "client_id", id),
+                Map.of("content-type", "application/x-www-form-urlencoded"));
         Response response;
         //五分钟计时
         while(System.currentTimeMillis() - curTime<300_000) {

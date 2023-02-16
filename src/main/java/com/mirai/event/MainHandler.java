@@ -227,7 +227,7 @@ public class MainHandler extends AbstractHandler {
             Token token = entry.getValue();
             sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
         }
-        contact.sendMessage("加载成功！共%d条".formatted(userTokensMap.size()) + sb.toString());
+        contact.sendMessage("加载成功！共%d条".formatted(userTokensMap.size()) + sb);
     }
 
     //token 高级
