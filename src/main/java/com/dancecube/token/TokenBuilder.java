@@ -6,8 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.mirai.HttpUtils;
-import okhttp3.Call;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -19,7 +18,14 @@ import java.util.Map;
 
 public class TokenBuilder {
     private static int index = 0;
-    private static final String[] ids = {"yyQ6VxqMeIKJDzVmQuHtNAUGxHAgSxmR", "yyQ6VxqMeIL2hceWzZtdqsJxNf/hHSzH", "yyQ6VxqMeIL2hceWzZtdqtGq81Ru8pIE", "yyQ6VxqMeILLsdiEbWkbSnddhlyVGcNa", "yyQ6VxqMeILneEzfVyXPFVCZoOuXSoH3"};
+    private static final String[] ids = {
+            "yyQ6VxqMeIILRjTwF72HMsKKbYSEaEAE",
+            "yyQ6VxqMeIKJDzVmQuHtNAUGxHAgSxmR",
+            "yyQ6VxqMeIL2hceWzZtdqsJxNf/hHSzH",
+            "yyQ6VxqMeIL2hceWzZtdqtGq81Ru8pIE",
+            "yyQ6VxqMeILLsdiEbWkbSnddhlyVGcNa",
+            "yyQ6VxqMeILneEzfVyXPFVCZoOuXSoH3",
+            "yyQ6VxqMeIKx9ha1cnpaxxYZ6qjFuL2I"};
     private final String id;
 
     public TokenBuilder() {
@@ -50,8 +56,38 @@ public class TokenBuilder {
     public Token getToken() {
         long curTime = System.currentTimeMillis();
         Call call = HttpUtils.httpApiCall("https://dancedemo.shenghuayule.com/Dance/token",
-                Map.of("client_type", "qrcode", "grant_type", "client_credentials", "client_id", id),
-                Map.of("content-type", "application/x-www-form-urlencoded"));
+                Map.of("content-type", "application/x-www-form-urlencoded"),
+                Map.of("client_type", "qrcode", "grant_type", "client_credentials", "client_id", id)
+        );
+        Response response;
+        //五分钟计时
+        while(System.currentTimeMillis() - curTime<300_000) {
+            try {
+                //call不能重复请求
+                response = call.clone().execute();
+                //未登录为 400 登录为 200
+                if(response.code()==200) {
+                    JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
+                    return new Token(json.get("userId").getAsString(), json.get("access_token").getAsString(), json.get("refresh_token").getAsString(), System.currentTimeMillis());
+                }
+                response.close();  // 关闭释放
+            } catch(IOException e) {
+                System.out.println("# TokenHttp执行bug辣！");
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public Token getTokenLegacy(String id) {
+        long curTime = System.currentTimeMillis();
+        OkHttpClient client = new OkHttpClient();
+
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create("client_type=qrcode&grant_type=client_credentials&client_id=%s".formatted(id), mediaType);
+        Request request = new Request.Builder().url("https://dancedemo.shenghuayule.com/Dance/token").post(body).addHeader("content-type", "application/x-www-form-urlencoded").build();
+
+        Call call = client.newCall(request);
         Response response;
         //五分钟计时
         while(System.currentTimeMillis() - curTime<300_000) {
@@ -109,6 +145,7 @@ public class TokenBuilder {
         HashMap<Long, Token> userMap = new Gson().fromJson(json.toString(), type);
 
         // 读取并refresh()
+        final int succeed = 0;
         if(refreshed) userMap.forEach((key, token) -> token.refresh());
         return userMap;
     }

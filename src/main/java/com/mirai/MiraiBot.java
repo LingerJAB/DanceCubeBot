@@ -30,8 +30,9 @@ public final class MiraiBot extends JavaPlugin {
         //定时器
         refreshTokensTimer();
 
+        //加载 DcConfig
+//        MainHandler.loadTokens();
         channel.subscribeAlways(MessageEvent.class, MainHandler::eventCenter);
-
 
     }
 
@@ -45,10 +46,11 @@ public final class MiraiBot extends JavaPlugin {
             public void run() {
                 userTokensMap.forEach((qq, token) -> token.refresh());
                 TokenBuilder.tokensToFile(userTokensMap, path);
+                System.out.println(System.currentTimeMillis() + ":今日已刷新token");
             }
         };
 
-        new Timer().schedule(task, 0, period);
+        new Timer().schedule(task, 1000, period);
     }
 }
 

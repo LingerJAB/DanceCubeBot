@@ -49,7 +49,7 @@ public final class HttpUtils {
     /**
      * @param url 使用URL格式，即“ http:// ”和“ file:/// ”
      */
-    public static String QrDecodeZXing(String url) {
+    public static String qrDecodeZXing(String url) {
         BufferedImage bufferedImage = null;
         try {
             bufferedImage = ImageIO.read(new URL(url));
@@ -70,8 +70,8 @@ public final class HttpUtils {
         return result==null ? null : result.getText();
     }
 
-    public static String QrDecodeTencent(String imgUrl) {
-        String url = null;
+    public static String qrDecodeTencent(String imgUrl) {
+        String url;
         try {
             String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07"; //TODO 加密
             String secretKey = "CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF";

@@ -77,16 +77,22 @@ public class MainHandler extends AbstractHandler {
     }
 
     // 菜单 全局
-    private static void msgMenu(Contact contact) {
+    public static void msgMenu(Contact contact) {
         String menu = """
                 舞小铃有以下功能哦！
-                1.登录 -登录才能和舞小铃玩！
-                2.个人信息 -开发，只能显示一部分
-                3.机台登录 -可以拍照扫码舞立方机台！
-                4.添加指令 [名称] -换个方式查看信息！
-                5.查找舞立方 [地名] 越详细地名越精确！
-                ❤️其它问题记得联系开发者 [铃] 酱！
-                """;
+                1. 登录
+                -登录才能和舞小铃玩！
+                2. 个人信息
+                -开发中，只能显示一部分
+                3. 机台登录
+                -可以拍照扫码舞立方机台！
+                4. 添加指令 [名称]
+                -换个方式查看信息！
+                5. 查找舞立方 [地名]
+                越详细地名越精确！
+                6. chatgpt
+                再键入stop才可停止
+                ❤️其它问题记得联系开发者 [铃] 酱！""";
         contact.sendMessage(menu);
     }
 
@@ -178,13 +184,14 @@ public class MainHandler extends AbstractHandler {
         contact.sendMessage(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！").plus(quoteReply));
         SingleMessage message;
         try {
-            List<SingleMessage> messageList = future.get(3, TimeUnit.MINUTES).getMessage().stream().filter(m -> m instanceof Image).toList();
+            MessageChain nextMessage = future.get(3, TimeUnit.MINUTES).getMessage();
+            List<SingleMessage> messageList = nextMessage.stream().filter(m -> m instanceof Image).toList();
             if(messageList.size()!=1) {
-                contact.sendMessage("这个不是图片吧...重新发送“机台登录”吧");
+                contact.sendMessage(new PlainText("这个不是图片吧...重新发送“机台登录”吧").plus(nextMessage));
             } else {  // 第一个信息
                 message = messageList.get(0);
                 String imageUrl = Image.queryUrl((Image) message);
-                String qrUrl = HttpUtils.QrDecodeTencent(imageUrl);
+                String qrUrl = HttpUtils.qrDecodeTencent(imageUrl);
                 if(qrUrl==null) {  // 若扫码失败
                     contact.sendMessage("没有扫出来！再试一次吧！");
                     return;
@@ -230,7 +237,7 @@ public class MainHandler extends AbstractHandler {
         contact.sendMessage("加载成功！共%d条".formatted(userTokensMap.size()) + sb);
     }
 
-    //token 高级
+    // #token 高级
     public static void showToken(Contact contact, long qq) {
         if(loginDetect(contact, qq)!=null) {
             if(contact instanceof Group) {

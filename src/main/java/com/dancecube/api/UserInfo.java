@@ -2,11 +2,11 @@ package com.dancecube.api;
 
 import com.dancecube.token.Token;
 import com.google.gson.Gson;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import com.mirai.HttpUtils;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class UserInfo {
     public int UserID; //用户ID
@@ -53,19 +53,19 @@ public class UserInfo {
     public int DeleteStatus;
 
     public static UserInfo get(Token token) {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=%s".formatted(token.getUserId()))
-                .get()
-//                .addHeader("Connection", "Keep-Alive")
-//                .addHeader("Accept-Encoding", "gzip")
-//                .addHeader("user-agent", "Mozilla/5.0 (Linux; Android 8.1.0; V1818T Build/OPM1.171019.026; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/96.0.4664.104 Mobile Safari/537.36 uni-app Html5Plus/1.0 (Immersed/28.0)")
-//                .addHeader("Content-Type", "application/json;charset=UTF-8")
-                .addHeader("Authorization", "Bearer %s".formatted(token.getAccessToken()))
-                .build();
+//        OkHttpClient client = new OkHttpClient();
+//        Request request = new Request.Builder()
+//                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=%s".formatted(token.getUserId()))
+//                .get()
+//                .addHeader("Authorization", "Bearer %s".formatted(token.getAccessToken()))
+//                .build();
 
         try {
-            Response response = client.newCall(request).execute();
+            Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(),
+                    Map.of("Authorization", "Bearer " + token.getAccessToken()));
+            if(response.code()!=200) {
+                return null;
+            }
             String string = response.body().string();
             response.close();
             return new Gson().fromJson(string, UserInfo.class);

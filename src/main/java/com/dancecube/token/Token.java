@@ -34,8 +34,9 @@ public class Token {
     }
 
     public boolean refresh() {
-        //TODO 必须过期检测 强制刷新会很耗时间（Http IO）
-        if(System.currentTimeMillis() - recTime<604_800_000) return false;
+
+        //每refresh间隔为一个星期，防止出错改为6天
+        if(System.currentTimeMillis() - recTime<518_400_000) return false;
 
 
         try {
@@ -45,7 +46,7 @@ public class Token {
             JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
             response.close();
             if(response.code()!=200) {
-                throw new IOException(response.code() + ":" + response.message());
+                throw new IOException(response.code() + " : ID:" + userId + " msg:" + response.message());
             } else {
                 accessToken = json.get("access_token").getAsString();
                 refreshToken = json.get("refresh_token").getAsString();
@@ -61,6 +62,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token {\n\tuserId=\"%s\",\n\taccessToken=\"%s\n,\n\trefreshToken=\"%s\",\n\trecTime=%d\n}".formatted(userId, accessToken, refreshToken, recTime);
+        return "Token {\n\tuserId=\"%s\",\n\taccessToken=\"%s\n,\n\trefreshToken=\"%s\",\n\trecTime=%d\n}"
+                .formatted(userId, accessToken, refreshToken, recTime);
     }
 }
