@@ -9,12 +9,12 @@ import java.io.IOException;
 import java.util.Map;
 
 public class Token {
-    private final String userId;
+    private final int userId;
     private String accessToken;
     private String refreshToken;
     private long recTime;
 
-    public String getUserId() {
+    public int getUserId() {
         return userId;
     }
 
@@ -26,7 +26,7 @@ public class Token {
         return refreshToken;
     }
 
-    public Token(String userId, String accessToken, String refreshToken, long recTime) {
+    public Token(int userId, String accessToken, String refreshToken, long recTime) {
         this.userId = userId;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
@@ -43,15 +43,18 @@ public class Token {
             Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
                     Map.of("client_type", "qrcode", "grant_type", "refresh_token", "refresh_token", refreshToken));
-            JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
-            response.close();
-            if(response.code()!=200) {
-                throw new IOException(response.code() + " : ID:" + userId + " msg:" + response.message());
-            } else {
-                accessToken = json.get("access_token").getAsString();
-                refreshToken = json.get("refresh_token").getAsString();
-                recTime = System.currentTimeMillis();
-                return true;
+            JsonObject json;
+            if(response!=null && response.body()!=null) {
+                json = JsonParser.parseString(response.body().string()).getAsJsonObject();
+                response.close();
+                if(response.code()!=200) {
+                    throw new IOException(response.code() + " : ID:" + userId + " msg:" + response.message());
+                } else {
+                    accessToken = json.get("access_token").getAsString();
+                    refreshToken = json.get("refresh_token").getAsString();
+                    recTime = System.currentTimeMillis();
+                    return true;
+                }
             }
         } catch(IOException e) {
             System.out.println("# refreshTokenHttp执行bug辣！");
@@ -62,7 +65,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return "Token {\n\tuserId=\"%s\",\n\taccessToken=\"%s\n,\n\trefreshToken=\"%s\",\n\trecTime=%d\n}"
+        return "{\n    userId=\"%s\",\n    accessToken=\"%s\n,\n    refreshToken=\"%s\",\n    recTime=%d\n}"
                 .formatted(userId, accessToken, refreshToken, recTime);
     }
 }

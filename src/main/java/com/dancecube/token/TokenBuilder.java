@@ -6,10 +6,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.mirai.HttpUtils;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.Response;
 
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -45,9 +47,13 @@ public class TokenBuilder {
     private String getQrcodeUrl(String id) {
         try {
             Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode?id=" + id);
-            String string = response.body().string();
-            response.close(); // 释放
-            return JsonParser.parseString(string).getAsJsonObject().get("QrcodeUrl").getAsString();
+            String string;
+            if(response!=null && response.body()!=null) {
+                string = response.body().string();
+                response.close(); // 释放
+                return JsonParser.parseString(string).getAsJsonObject().get("QrcodeUrl").getAsString();
+            }
+            return "";
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
@@ -66,38 +72,9 @@ public class TokenBuilder {
                 //call不能重复请求
                 response = call.clone().execute();
                 //未登录为 400 登录为 200
-                if(response.code()==200) {
+                if(response.body()!=null && response.code()==200) {
                     JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
-                    return new Token(json.get("userId").getAsString(), json.get("access_token").getAsString(), json.get("refresh_token").getAsString(), System.currentTimeMillis());
-                }
-                response.close();  // 关闭释放
-            } catch(IOException e) {
-                System.out.println("# TokenHttp执行bug辣！");
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
-    public Token getTokenLegacy(String id) {
-        long curTime = System.currentTimeMillis();
-        OkHttpClient client = new OkHttpClient();
-
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create("client_type=qrcode&grant_type=client_credentials&client_id=%s".formatted(id), mediaType);
-        Request request = new Request.Builder().url("https://dancedemo.shenghuayule.com/Dance/token").post(body).addHeader("content-type", "application/x-www-form-urlencoded").build();
-
-        Call call = client.newCall(request);
-        Response response;
-        //五分钟计时
-        while(System.currentTimeMillis() - curTime<300_000) {
-            try {
-                //call不能重复请求
-                response = call.clone().execute();
-                //未登录为 400 登录为 200
-                if(response.code()==200) {
-                    JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
-                    return new Token(json.get("userId").getAsString(), json.get("access_token").getAsString(), json.get("refresh_token").getAsString(), System.currentTimeMillis());
+                    return new Token(json.get("userId").getAsInt(), json.get("access_token").getAsString(), json.get("refresh_token").getAsString(), System.currentTimeMillis());
                 }
                 response.close();  // 关闭释放
             } catch(IOException e) {
@@ -109,7 +86,7 @@ public class TokenBuilder {
     }
 
 
-    // HashMap写入json文件（一般T为Long）
+    // HashMap写入json文件
     public static void tokensToFile(HashMap<Long, Token> tokenMap, String filePath) {
         Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
@@ -125,28 +102,18 @@ public class TokenBuilder {
         }
     }
 
-    // HashMap写出json文件（一般为Long）
+    // HashMap写出json文件  不用数组是为了覆盖原key
     public static HashMap<Long, Token> tokensFromFile(String filePath, boolean refreshed) {
         Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
-        StringBuilder json = new StringBuilder();
-
-        try(FileInputStream stream = new FileInputStream(filePath)) {
-            // read读取字符到json
-            int i = stream.read();
-            while(i!=-1) {
-                json.append((char) i);
-                i = stream.read();
-            }
-        } catch(IOException e) {
-            System.out.println("# TokenFromFile执行bug辣！");
-            throw new RuntimeException(e);
+        HashMap<Long, Token> userMap = null;
+        try {
+            userMap = new Gson().fromJson(new FileReader(filePath), type);
+            // 读取并refresh()
+            if(refreshed) userMap.forEach((key, token) -> token.refresh());
+        } catch(FileNotFoundException e) {
+            e.printStackTrace();
         }
-        HashMap<Long, Token> userMap = new Gson().fromJson(json.toString(), type);
-
-        // 读取并refresh()
-        final int succeed = 0;
-        if(refreshed) userMap.forEach((key, token) -> token.refresh());
         return userMap;
     }
 

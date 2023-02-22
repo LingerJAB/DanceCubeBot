@@ -56,7 +56,9 @@ public final class HttpUtils {
         } catch(IOException e) {
             e.printStackTrace();
         }
-        LuminanceSource source = new BufferedImageLuminanceSource(bufferedImage);
+        LuminanceSource source = null;
+        if(bufferedImage!=null)
+            source = new BufferedImageLuminanceSource(bufferedImage);
         Binarizer binarizer = new HybridBinarizer(source);
         BinaryBitmap bitmap = new BinaryBitmap(binarizer);
         HashMap<DecodeHintType, Object> decodeHints = new HashMap<>();
@@ -71,7 +73,7 @@ public final class HttpUtils {
     }
 
     public static String qrDecodeTencent(String imgUrl) {
-        String url;
+        String url = "";
         try {
             String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07"; //TODO 加密
             String secretKey = "CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF";
@@ -91,24 +93,23 @@ public final class HttpUtils {
             QrcodeOCRResponse resp = client.QrcodeOCR(req);
             // 输出json格式的字符串回包
             url = resp.getCodeResults()[0].getUrl();
-            return url;
         } catch(TencentCloudSDKException e) {
             e.printStackTrace();
         }
-        return null;
+        return url;
     }
 
-    @Nullable
     public static String getLocationInfo(String region) {
         Response response = httpApi("https://restapi.amap.com/v3/geocode/geo?address=" + region.strip() + "&output=json&key=b1bbd99c8a1a9117227498975da1f5a4");
-        if(response==null) return null;
-        String result = null;
+        String result = "";
         try {
-            result = response.body().string();
+            if(response!=null && response.body()!=null) {
+                result = response.body().string();
+                response.close();
+            }
         } catch(IOException e) {
             e.printStackTrace();
         }
-        response.close();
         return result;
     }
 
@@ -168,6 +169,28 @@ public final class HttpUtils {
         return null;
     }
 
+    public static Response httpApiPut(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
+        StringBuilder bodySb = new StringBuilder();
+        bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
+        bodySb.deleteCharAt(0);
+        String body = bodySb.toString();
+
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody requestBody = RequestBody.create(body, mediaType);
+        Request.Builder post = new Request.Builder()
+                .url(url)
+                .put(requestBody);
+        if(headerMap!=null) headerMap.forEach(post::addHeader);
+        Request request = post.build();
+
+        try {
+            return client.newCall(request).execute();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public static Call httpApiCall(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
 

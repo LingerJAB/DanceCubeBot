@@ -1,6 +1,6 @@
 package com.mirai.event;
 
-import com.dancecube.api.MachineList;
+import com.dancecube.api.Machine;
 import com.dancecube.api.UserInfo;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
@@ -17,7 +17,6 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.*;
 import okhttp3.Response;
 
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -49,6 +48,7 @@ public class MainHandler extends AbstractHandler {
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
             case "#token" -> showToken(contact, qq);
+            case "#about" -> showAbout(contact);
             default -> {
                 message = message.strip();
                 // 自定义指令 TODO 封装
@@ -70,10 +70,8 @@ public class MainHandler extends AbstractHandler {
                         case "删除指令" -> delCmd(contact, qq, firstParam);
                     }
                 }
-
             }
         }
-
     }
 
     // 菜单 全局
@@ -92,7 +90,7 @@ public class MainHandler extends AbstractHandler {
                 越详细地名越精确！
                 6. chatgpt
                 再键入stop才可停止
-                ❤️其它问题记得联系开发者 [铃] 酱！""";
+                ❤️其它问题请联系开发者 [铃] 酱！""";
         contact.sendMessage(menu);
     }
 
@@ -116,30 +114,30 @@ public class MainHandler extends AbstractHandler {
         Token token = loginDetect(contact, qq);
         if(token==null) return;
 
-        UserInfo user = UserInfo.get(token);
-        Image image = HttpUtils.getImageFromURL(user.HeadimgURL, contact);
+        UserInfo user = new UserInfo(token);
+        Image image = HttpUtils.getImageFromURL(user.getHeadimgURL(), contact);
 
-        String info = "昵称：%s\n战队：%s\n积分：%d\n全国排名：%d".formatted(user.UserName, user.TeamName, user.MusicScore, user.RankNation);
+        String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold(), user.getRankNation());
 
         contact.sendMessage(image.plus(info));
     }
 
     // 查找舞立方 全局
     public static void msgMachineList(Contact contact, String region) {
-        StringBuilder list = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
-        List<MachineList> lists = MachineList.get(region);
-        if(lists==null) return;
-        int limit = Math.min(lists.size(), contact instanceof Friend ? 99 : 5);
+        StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
+        List<Machine> list = Machine.getMachineList(region);
+        if(list==null) return;
+        int limit = Math.min(list.size(), contact instanceof Friend ? 99 : 5);
         for(int i = 0; i<limit; i++) {
-            MachineList machine = lists.get(i);
+            Machine machine = list.get(i);
             String online = machine.Online ? "🔵在线" : "🔴离线";
             String singleInfo = "店名：%s %s\n地址：%s\n".formatted(machine.PlaceName, online, machine.Address);
-            list.append("\n").append(singleInfo);
+            machineListText.append("\n").append(singleInfo);
         }
         if(contact instanceof Group) {
-            contact.sendMessage(list + "⭐刷屏哒咩！群聊显示" + limit + "条就够啦，更多列表请私聊喽~");
+            contact.sendMessage(machineListText + "⭐刷屏哒咩！群聊显示" + limit + "条就够啦，更多列表请私聊喽~");
         } else {
-            contact.sendMessage(list.toString());
+            contact.sendMessage(machineListText.toString());
         }
     }
 
@@ -176,36 +174,31 @@ public class MainHandler extends AbstractHandler {
         Token token = loginDetect(contact, qq);
         if(token==null) return;
 
-        QuoteReply quoteReply = new QuoteReply(messageChain);
+//        QuoteReply quoteReply = new QuoteReply(messageChain);
         EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
         CompletableFuture<MessageEvent> future = new CompletableFuture<>();
         channel.subscribeOnce(MessageEvent.class, future::complete);
 
-        contact.sendMessage(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！").plus(quoteReply));
+        contact.sendMessage(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！").plus(new QuoteReply(messageChain)));
         SingleMessage message;
         try {
             MessageChain nextMessage = future.get(3, TimeUnit.MINUTES).getMessage();
             List<SingleMessage> messageList = nextMessage.stream().filter(m -> m instanceof Image).toList();
             if(messageList.size()!=1) {
-                contact.sendMessage(new PlainText("这个不是图片吧...重新发送“机台登录”吧").plus(nextMessage));
+                contact.sendMessage(new PlainText("这个不是图片吧...重新发送“机台登录”吧").plus(new QuoteReply(nextMessage)));
             } else {  // 第一个信息
                 message = messageList.get(0);
                 String imageUrl = Image.queryUrl((Image) message);
                 String qrUrl = HttpUtils.qrDecodeTencent(imageUrl);
                 if(qrUrl==null) {  // 若扫码失败
-                    contact.sendMessage("没有扫出来！再试一次吧！");
+                    contact.sendMessage(new PlainText("没有扫出来！再试一次吧！").plus(new QuoteReply((MessageChain) message)));
                     return;
                 }
                 String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
                 try(Response response = HttpUtils.httpApi(url, Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
-                    if(response.code()==200) {
+                    //401 404
+                    if(response!=null && response.code()==200) {
                         contact.sendMessage("登录成功辣，快来出勤吧！");
-                    } else {  //401 404
-                        try {
-                            contact.sendMessage("呜呜呜，登录错误了，再试一次吧\n" + response.body().string());
-                        } catch(IOException e) {
-                            e.printStackTrace();
-                        }
                     }
                 }
             }
@@ -213,7 +206,7 @@ public class MainHandler extends AbstractHandler {
             e.printStackTrace();
         } catch(TimeoutException e) {
             e.printStackTrace();
-            contact.sendMessage(quoteReply.plus("超时啦，请重新发送吧~"));
+            contact.sendMessage(new QuoteReply(messageChain).plus("超时啦，请重新发送吧~"));
         }
     }
 
@@ -246,6 +239,18 @@ public class MainHandler extends AbstractHandler {
                 contact.sendMessage(userTokensMap.get(qq).toString());
             }
         }
+    }
+
+    // #about 全局
+    public static void showAbout(Contact contact) {
+        if(contact instanceof Group) return;
+        String content = """
+                你的id是%d,发送#token查看详情
+                舞小铃已保存%d个账户辣！
+                目前运行在Ubuntu Linux服务器上
+                欢迎提出建议！
+                开发者QQ:2862125721""".formatted(userTokensMap.get(contact.getId()).getUserId(), userTokensMap.size());
+        contact.sendMessage(content);
     }
 
     // 登录检测 内部

@@ -1,7 +1,8 @@
 package com.dancecube.api;
 
 import com.dancecube.token.Token;
-import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mirai.HttpUtils;
 import okhttp3.Response;
 
@@ -9,69 +10,134 @@ import java.io.IOException;
 import java.util.Map;
 
 public class UserInfo {
-    public int UserID; //用户ID
-    public String HeadimgURL; //头像URL
-    public String UserName; //用户名
-    public int Sex; //性别（1男 2女）
-    public String Phone; //手机号
-    public String CityName; //
-    public int MaxCursorSpeed;
-    public int MusicSpeed;
-    public String OtherCursorSpeed;
-    public int MusicScore; //积分
-    public int Point;
-    public int RankNation;
-    public int ComboPercent; //连击率（518为5.18%）
-    public int LvRatio;
-    public boolean IsVIP;
-    public boolean IsInBlackList;
-    public int TeamID;
-    public String TeamName;
-    public int StrictMode;
-    public boolean JudgeTip;
-    public boolean MirrorMode;
-    public int MirrorModeVal;
-    public boolean ResultPush;
-    public int ResultPushPicLevel;
-    public boolean ResultPushPic1;
-    public boolean ResultPushPic2;
-    public boolean ResultPushPic3;
-    public int PrivacyLevel;
-    public int TitleID;
-    public String TitleUrl; //头衔
-    public int Brightness;
-    public String MuteExpireTime;
-    public boolean IsMuted;
-    public int TipsType;
-    public String HeadimgBoxPath; //头像框
-    public int WinTimes;
-    public int Coins;
-    public int GameLev;
-    public String GameLevName;
-    public int HideCursor;
-    public int HpMode;
-    public int DeleteStatus;
+    private final int userID; //用户ID
+    private final int gold; //金币
+    private final int musicScore; //积分
+    private final int rankNation; //全国排名
+    private final int comboPercent; //连击率（518为5.18%）
+    private final int sex; //性别（1男 2女）
+    private final String userName; //用户名
+    private final String headimgURL; //头像URL
+    private final String phone; //手机号
+    private final String cityName; //城市名
+    private final String teamName;
+    private final String titleUrl; //头衔
+    private final String headimgBoxPath; //头像框
 
-    public static UserInfo get(Token token) {
-//        OkHttpClient client = new OkHttpClient();
-//        Request request = new Request.Builder()
-//                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=%s".formatted(token.getUserId()))
-//                .get()
-//                .addHeader("Authorization", "Bearer %s".formatted(token.getAccessToken()))
-//                .build();
+    public int getGold() {
+        return gold;
+    }
 
-        try {
-            Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(),
-                    Map.of("Authorization", "Bearer " + token.getAccessToken()));
-            if(response.code()!=200) {
-                return null;
-            }
-            String string = response.body().string();
-            response.close();
-            return new Gson().fromJson(string, UserInfo.class);
+    public int getUserID() {
+        return userID;
+    }
+
+    public String getHeadimgURL() {
+        return headimgURL;
+    }
+
+    //    public void setHeadimgURL(String headimgURL) {
+//        this.headimgURL = headimgURL;
+//    }
+    public String getUserName() {
+        return userName;
+    }
+
+    //    public void setUserName(String userName) {
+//        this.userName = userName;
+//    }
+    public int getSex() {
+        return sex;
+    }
+
+    //        public void setSex(int sex) {
+//        this.sex = sex;
+//    }
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    //        public void setCityName(String cityName) {
+//        this.cityName = cityName;
+//    }
+    public int getMusicScore() {
+        return musicScore;
+    }
+
+    public int getRankNation() {
+        return rankNation;
+    }
+
+    public int getComboPercent() {
+        return comboPercent;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public String getTitleUrl() {
+        return titleUrl;
+    }
+
+    public String getHeadimgBoxPath() {
+        return headimgBoxPath;
+    }
+
+    public UserInfo(Token token) {
+        String userInfoJson = "";
+        String userAccountInfoJson = "";
+        try(Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
+            if(response!=null && response.body()!=null)
+                userInfoJson = response.body().string();
         } catch(IOException e) {
             e.printStackTrace();
         }
-        return null;
+        try(Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
+            if(response!=null && response.body()!=null)
+                userAccountInfoJson = response.body().string();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+        JsonObject jsonObject1 = JsonParser.parseString(userInfoJson).getAsJsonObject();
+        JsonObject jsonObject2 = JsonParser.parseString(userAccountInfoJson).getAsJsonObject();
+
+        this.userID = jsonObject1.get("UserID").getAsInt();
+        this.headimgURL = jsonObject1.get("HeadimgURL").getAsString();
+        this.userName = jsonObject1.get("UserName").getAsString();
+        this.sex = jsonObject1.get("Sex").getAsInt();
+        this.phone = jsonObject1.get("Phone").getAsString();
+        this.cityName = jsonObject1.get("CityName").getAsString();
+        this.musicScore = jsonObject1.get("MusicScore").getAsInt();
+        this.rankNation = jsonObject1.get("RankNation").getAsInt();
+        this.comboPercent = jsonObject1.get("ComboPercent").getAsInt();
+        this.teamName = jsonObject1.get("TeamName").getAsString();
+        this.titleUrl = jsonObject1.get("TitleUrl").getAsString();
+        this.headimgBoxPath = jsonObject1.get("HeadimgBoxPath").getAsString();
+        this.gold = jsonObject2.get("Gold").getAsInt();
+    }
+
+    @Override
+    public String toString() {
+        return "UserInfo{" +
+                "userID=" + userID +
+                ", headimgURL='" + headimgURL + '\'' +
+                ", userName='" + userName + '\'' +
+                ", sex=" + sex +
+                ", phone='" + phone + '\'' +
+                ", cityName='" + cityName + '\'' +
+                ", musicScore=" + musicScore +
+                ", rankNation=" + rankNation +
+                ", comboPercent=" + comboPercent +
+                ", teamName='" + teamName + '\'' +
+                ", titleUrl='" + titleUrl + '\'' +
+                ", headimgBoxPath='" + headimgBoxPath + '\'' +
+                ", gold='" + gold + '\'' +
+                '}';
     }
 }
