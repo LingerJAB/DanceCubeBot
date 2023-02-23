@@ -219,7 +219,7 @@ public class MainHandler extends AbstractHandler {
 
     // #load 高级
     public static void loadTokens(Contact contact) {
-        String path = rootPath + "/DcConfig/UserToken.json";
+        String path = configPath + "UserToken.json";
         userTokensMap = TokenBuilder.tokensFromFile(path, true);
         StringBuilder sb = new StringBuilder();
         for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {

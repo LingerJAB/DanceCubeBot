@@ -37,8 +37,6 @@ public class Token {
 
         //每refresh间隔为一个星期，防止出错改为6天
         if(System.currentTimeMillis() - recTime<518_400_000) return false;
-
-
         try {
             Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
