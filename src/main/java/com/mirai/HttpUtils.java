@@ -192,7 +192,7 @@ public final class HttpUtils {
         return null;
     }
 
-    public static Call httpApiCall(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
+    public static Call httpApiCall(String url, Map<String, String> headersMap, Map<String, String> bodyMap) {
 
         StringBuilder bodySb = new StringBuilder();
         bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
@@ -205,9 +205,17 @@ public final class HttpUtils {
         Request.Builder post = new Request.Builder()
                 .url(url)
                 .post(requestBody);
-        if(headerMap!=null) headerMap.forEach(post::addHeader);
+        if(headersMap!=null) headersMap.forEach(post::addHeader);
         Request request = post.build();
 
+        return client.newCall(request);
+    }
+
+    public static Call httpApiCall(String url, Map<String, String> headersMap) {
+        OkHttpClient client = new OkHttpClient();
+        Request.Builder post = new Request.Builder().url(url).get();
+        headersMap.forEach(post::addHeader);
+        Request request = post.build();
         return client.newCall(request);
     }
 

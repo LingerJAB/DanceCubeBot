@@ -25,7 +25,7 @@ public final class MiraiBot extends JavaPlugin {
     @Override
     public void onEnable() {
         getLogger().info("Plugin loaded!");
-        EventChannel<Event> channel = GlobalEventChannel.INSTANCE.context(this.getCoroutineContext());
+        EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE).context(this.getCoroutineContext());
 
         //定时器
         refreshTokensTimer();

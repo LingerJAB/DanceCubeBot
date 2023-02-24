@@ -97,7 +97,7 @@ public class MainHandler extends AbstractHandler {
     // 添加指令 全局
     public static void addCmd(Contact contact, long qq, String newPrefix) {
         userInfoCommand.put(qq, newPrefix);
-        contact.sendMessage("已添加 " + newPrefix + " !");
+        contact.sendMessage("已添加 \"" + newPrefix + "\" !");
     }
 
     // 删除指令 全局
