@@ -12,7 +12,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.mirai.event.AbstractHandler.rootPath;
+import static com.mirai.event.AbstractHandler.configPath;
 import static com.mirai.event.AbstractHandler.userTokensMap;
 
 public final class MiraiBot extends JavaPlugin {
@@ -37,8 +37,9 @@ public final class MiraiBot extends JavaPlugin {
     }
 
     public static void refreshTokensTimer() {
-        long period = 86400 * 1000; //一天
-        String path = rootPath + "/DcConfig/UserToken.json";
+        long period = 86400 * 5000; //半天
+
+        String path = configPath + "UserToken.json";
         userTokensMap = TokenBuilder.tokensFromFile(path);
 
         TimerTask task = new TimerTask() {

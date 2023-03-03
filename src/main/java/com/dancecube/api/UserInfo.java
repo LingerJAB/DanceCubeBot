@@ -1,6 +1,7 @@
 package com.dancecube.api;
 
 import com.dancecube.token.Token;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mirai.HttpUtils;
@@ -131,8 +132,10 @@ public class UserInfo {
         this.rankNation = jsonObject1.get("RankNation").getAsInt();
         this.comboPercent = jsonObject1.get("ComboPercent").getAsInt();
         this.teamName = jsonObject1.get("TeamName").getAsString();
-        this.titleUrl = jsonObject1.get("TitleUrl").getAsString();
-        this.headimgBoxPath = jsonObject1.get("HeadimgBoxPath").getAsString();
+        JsonElement titleUrlJsonElement = jsonObject1.get("TitleUrl");
+        this.titleUrl = titleUrlJsonElement.isJsonNull() ? "" : titleUrlJsonElement.getAsString();
+        JsonElement headimgBoxPathJsonElement = jsonObject1.get("HeadimgBoxPath");
+        this.headimgBoxPath = headimgBoxPathJsonElement.isJsonNull() ? "" : headimgBoxPathJsonElement.getAsString();
         this.gold = jsonObject2.get("Gold").getAsInt();
     }
 

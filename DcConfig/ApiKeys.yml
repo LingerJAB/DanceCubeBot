@@ -1,0 +1,7 @@
+# 腾讯OCR SDK密钥
+tencentScannerKeys:
+  secretId: CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF
+  secretKey: AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07
+# 高德地图定位 SDK密钥
+gaodeMapKeys:
+  apiKey: b1bbd99c8a1a9117227498975da1f5a4

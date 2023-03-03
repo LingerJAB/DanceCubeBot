@@ -12,6 +12,8 @@ public class Token {
     private final int userId;
     private String accessToken;
     private String refreshToken;
+
+
     private long recTime;
 
     public int getUserId() {
@@ -26,6 +28,10 @@ public class Token {
         return refreshToken;
     }
 
+    public long getRecTime() {
+        return recTime;
+    }
+
     public Token(int userId, String accessToken, String refreshToken, long recTime) {
         this.userId = userId;
         this.accessToken = accessToken;
@@ -33,10 +39,20 @@ public class Token {
         this.recTime = recTime;
     }
 
-    public boolean refresh() {
+    public boolean isAvailable() {
+        return System.currentTimeMillis() - recTime<604_800_000;
+    }
 
+    public boolean refresh() {
+        return refresh(false);
+    }
+
+    /**
+     * @param ignoreWaiting 忽略默认等待时间
+     */
+    public boolean refresh(boolean ignoreWaiting) {
         //每refresh间隔为一个星期，防止出错改为6天
-        if(System.currentTimeMillis() - recTime<518_400_000) return false;
+        if(!ignoreWaiting && System.currentTimeMillis() - recTime<302_400_000) return false;
         try {
             Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
@@ -63,7 +79,15 @@ public class Token {
 
     @Override
     public String toString() {
-        return "{\n    userId=\"%s\",\n    accessToken=\"%s\n,\n    refreshToken=\"%s\",\n    recTime=%d\n}"
-                .formatted(userId, accessToken, refreshToken, recTime);
+        return ("""
+                {
+                    "userId"="%s",
+                    "accessToken"="%s",
+                    "refreshToken"="%s",
+                    "recTime"=%d
+                }
+                token时长：%.3f天（大于7天需要重新登录）
+                """)
+                .formatted(userId, accessToken, refreshToken, recTime, (float) (System.currentTimeMillis() - recTime) / 86400_000);
     }
 }

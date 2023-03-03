@@ -2,6 +2,7 @@ package com.mirai.event;
 
 import com.dancecube.api.Machine;
 import com.dancecube.api.UserInfo;
+import com.dancecube.image.UserInfoImage;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.HttpUtils;
@@ -17,6 +18,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.*;
 import okhttp3.Response;
 
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -43,11 +45,13 @@ public class MainHandler extends AbstractHandler {
         switch(message) {
             case "菜单" -> msgMenu(contact);
             case "个人信息" -> msgUserInfo(contact, qq);
+            case "个人信息 -l" -> msgUserInfoLegacy(contact, qq);
             case "登录" -> dcLogin(contact, qq);
             case "机台登录" -> machineLogin(contact, qq, messageChain);
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
             case "#token" -> showToken(contact, qq);
+            case "#refresh" -> refreshToken(contact, qq);
             case "#about" -> showAbout(contact);
             default -> {
                 message = message.strip();
@@ -112,13 +116,26 @@ public class MainHandler extends AbstractHandler {
     // 个人信息 全局
     public static void msgUserInfo(Contact contact, long qq) {
         Token token = loginDetect(contact, qq);
-        if(token==null) return;
+        if(token==null) {
+            return;
+        } else if(!token.isAvailable()) {
+            contact.sendMessage("由于不可抗因素（bushi) 身份过期了💦\n重新私信登录即可恢复💦");
+            return;
+        }
+        InputStream inputStream = UserInfoImage.generate(token);
+        if(inputStream!=null) {
+            Image image = HttpUtils.getImageFromStream(inputStream, contact);
+            contact.sendMessage(image);
+        }
 
+    }
+
+    private static void msgUserInfoLegacy(Contact contact, long qq) {
+        loginDetect(contact, qq);
+        Token token = userTokensMap.get(qq);
         UserInfo user = new UserInfo(token);
         Image image = HttpUtils.getImageFromURL(user.getHeadimgURL(), contact);
-
         String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold(), user.getRankNation());
-
         contact.sendMessage(image.plus(info));
     }
 
@@ -165,6 +182,7 @@ public class MainHandler extends AbstractHandler {
         } else {
             contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s".formatted(token.getUserId()));
             userTokensMap.put(qq, builder.getToken());  // 重复登录只会覆盖新的token
+            TokenBuilder.tokensToFile(userTokensMap, configPath + "UserToken.json");
         }
         logStatus.remove(qq);
     }
@@ -173,25 +191,23 @@ public class MainHandler extends AbstractHandler {
     public static void machineLogin(Contact contact, Long qq, MessageChain messageChain) {
         Token token = loginDetect(contact, qq);
         if(token==null) return;
-
-//        QuoteReply quoteReply = new QuoteReply(messageChain);
         EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
         CompletableFuture<MessageEvent> future = new CompletableFuture<>();
         channel.subscribeOnce(MessageEvent.class, future::complete);
 
-        contact.sendMessage(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！").plus(new QuoteReply(messageChain)));
+        contact.sendMessage(new QuoteReply(messageChain).plus(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！")));
         SingleMessage message;
         try {
             MessageChain nextMessage = future.get(3, TimeUnit.MINUTES).getMessage();
             List<SingleMessage> messageList = nextMessage.stream().filter(m -> m instanceof Image).toList();
             if(messageList.size()!=1) {
-                contact.sendMessage(new PlainText("这个不是图片吧...重新发送“机台登录”吧").plus(new QuoteReply(nextMessage)));
+                contact.sendMessage(new QuoteReply(nextMessage).plus(new PlainText("这个不是图片吧...重新发送“机台登录”吧")));
             } else {  // 第一个信息
                 message = messageList.get(0);
                 String imageUrl = Image.queryUrl((Image) message);
                 String qrUrl = HttpUtils.qrDecodeTencent(imageUrl);
                 if(qrUrl==null) {  // 若扫码失败
-                    contact.sendMessage(new PlainText("没有扫出来！再试一次吧！").plus(new QuoteReply((MessageChain) message)));
+                    contact.sendMessage(new QuoteReply((MessageChain) message).plus(new PlainText("没有扫出来！再试一次吧！")));
                     return;
                 }
                 String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
@@ -212,7 +228,7 @@ public class MainHandler extends AbstractHandler {
 
     // #save 高级
     public static void saveTokens(Contact contact) {
-        String path = rootPath + "/DcConfig/UserToken.json";
+        String path = configPath + "UserToken.json";
         TokenBuilder.tokensToFile(userTokensMap, path);
         contact.sendMessage("保存成功！共%d条".formatted(userTokensMap.size()));
     }
@@ -232,11 +248,26 @@ public class MainHandler extends AbstractHandler {
 
     // #token 高级
     public static void showToken(Contact contact, long qq) {
-        if(loginDetect(contact, qq)!=null) {
+        Token token = loginDetect(contact, qq);
+        if(token!=null) {
             if(contact instanceof Group) {
                 contact.sendMessage("私聊才能看的辣！");
             } else {
-                contact.sendMessage(userTokensMap.get(qq).toString());
+                contact.sendMessage(token.toString());
+            }
+        }
+    }
+
+    public static void refreshToken(Contact contact, long qq) {
+        Token token = loginDetect(contact, qq);
+        if(token!=null) {
+            if(contact instanceof Group) {
+                contact.sendMessage("私聊才能用的辣！");
+            } else {
+                if(token.refresh(true))
+                    contact.sendMessage("#Token已强制刷新#\n\n" + token);
+                else
+                    contact.sendMessage("刷新失败，请重新登录！");
             }
         }
     }

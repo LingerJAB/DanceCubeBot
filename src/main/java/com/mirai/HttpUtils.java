@@ -3,6 +3,7 @@ package com.mirai;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.mirai.event.AbstractHandler;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -15,9 +16,12 @@ import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.utils.ExternalResource;
 import okhttp3.*;
 import org.jetbrains.annotations.Nullable;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -25,7 +29,26 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class HttpUtils {
+public final class HttpUtils extends AbstractHandler {
+    static String gaodeApiKey;
+    static String tencentSecretId;
+    static String tencentSecretKey;
+
+    static {
+        try {
+            Map<String, Map<String, String>> map = new Yaml().load(new FileReader(windowsConfigPath + "ApiKeys.yml"));
+            Map<String, String> tencentScannerKeys = map.get("tencentScannerKeys");
+            Map<String, String> gaodeMapKeys = map.get("gaodeMapKeys");
+
+            gaodeApiKey = gaodeMapKeys.get("apiKey");
+            tencentSecretId = tencentScannerKeys.get("secretId");
+            tencentSecretKey = tencentScannerKeys.get("secretKey");
+
+        } catch(FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public static Image getImageFromURL(String strUrl, Contact contact) {
         Image image = null;
@@ -41,6 +64,21 @@ public final class HttpUtils {
         } catch(IOException e) {
             e.printStackTrace();
             System.out.println("# getImageFromURL出bug啦！");
+        }
+        return image;
+    }
+
+    public static Image getImageFromStream(InputStream inputStream, Contact contact) {
+        Image image = null;
+        try {
+            byte[] bytes = inputStream.readAllBytes();
+            inputStream.close();
+            ExternalResource ex = ExternalResource.create(bytes);
+            image = ExternalResource.uploadAsImage(ex, contact);
+            ex.close();
+        } catch(IOException e) {
+            e.printStackTrace();
+            System.out.println("# getImageFromIS出bug啦！");
         }
         return image;
     }
@@ -75,9 +113,9 @@ public final class HttpUtils {
     public static String qrDecodeTencent(String imgUrl) {
         String url = "";
         try {
-            String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07"; //TODO 加密
-            String secretKey = "CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF";
-            Credential cred = new Credential(secretId, secretKey);
+//            String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07"; //TODO 加密
+//            String secretKey = "CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF";
+            Credential cred = new Credential(tencentSecretId, tencentSecretKey);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
             HttpProfile httpProfile = new HttpProfile();
             httpProfile.setEndpoint("ocr.tencentcloudapi.com");
@@ -100,7 +138,7 @@ public final class HttpUtils {
     }
 
     public static String getLocationInfo(String region) {
-        Response response = httpApi("https://restapi.amap.com/v3/geocode/geo?address=" + region.strip() + "&output=json&key=b1bbd99c8a1a9117227498975da1f5a4");
+        Response response = httpApi("https://restapi.amap.com/v3/geocode/geo?address=" + region.strip() + "&output=json&key=" + gaodeApiKey);
         String result = "";
         try {
             if(response!=null && response.body()!=null) {
