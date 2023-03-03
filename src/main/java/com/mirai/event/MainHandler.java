@@ -47,7 +47,7 @@ public class MainHandler extends AbstractHandler {
             case "个人信息" -> msgUserInfo(contact, qq);
             case "个人信息 -l" -> msgUserInfoLegacy(contact, qq);
             case "登录" -> dcLogin(contact, qq);
-            case "机台登录" -> machineLogin(contact, qq, messageChain);
+            case "扫码", "机台登录" -> machineLogin(contact, qq, messageChain);
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
             case "#token" -> showToken(contact, qq);
@@ -85,15 +85,13 @@ public class MainHandler extends AbstractHandler {
                 1. 登录
                 -登录才能和舞小铃玩！
                 2. 个人信息
-                -开发中，只能显示一部分
-                3. 机台登录
-                -可以拍照扫码舞立方机台！
+                -查询舞立方资料
+                3. 机台登录 | 扫码
+                -拍照即可扫码舞立方机台！
                 4. 添加指令 [名称]
                 -换个方式查看信息！
                 5. 查找舞立方 [地名]
                 越详细地名越精确！
-                6. chatgpt
-                再键入stop才可停止
                 ❤️其它问题请联系开发者 [铃] 酱！""";
         contact.sendMessage(menu);
     }

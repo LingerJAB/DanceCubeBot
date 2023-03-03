@@ -22,7 +22,7 @@ public class UserInfoImage extends AbstractHandler {
             ImageCombiner combiner = new ImageCombiner(linuxBackgroundPath, OutputFormat.PNG);
             combiner.addImageElement(user.getHeadimgURL(), 120, 150).setWidth(137).setHeight(137).setZoomMode(ZoomMode.WidthHeight);
             combiner.addImageElement(user.getHeadimgBoxPath(), 74, 104).setWidth(230).setHeight(230).setZoomMode(ZoomMode.WidthHeight);
-            if(!user.getTitleUrl().equals(""))
+            if(!user.getTitleUrl().equals("")) // Todo 换行
                 combiner.addImageElement(user.getTitleUrl(), 108, 300).setWidth(161).setHeight(68).setZoomMode(ZoomMode.WidthHeight);
             combiner.addTextElement("%s\n\n战队：%s\n积分：%d\n金币：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold()), "得意黑", 36, 293, 137).setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);
             combiner.addTextElement("战力：%s\n连击率：%.2f%%\n全国排名：%d".formatted(user.getLvRatio(), (float) user.getComboPercent() / 100, user.getRankNation()), "得意黑", 36, 95, 472).setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);

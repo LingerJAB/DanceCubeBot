@@ -33,9 +33,9 @@ public final class HttpUtils extends AbstractHandler {
     static String gaodeApiKey;
     static String tencentSecretId;
     static String tencentSecretKey;
-
     static {
         try {
+            // Authorization错误时查看控制台ip白名单
             Map<String, Map<String, String>> map = new Yaml().load(new FileReader(windowsConfigPath + "ApiKeys.yml"));
             Map<String, String> tencentScannerKeys = map.get("tencentScannerKeys");
             Map<String, String> gaodeMapKeys = map.get("gaodeMapKeys");
