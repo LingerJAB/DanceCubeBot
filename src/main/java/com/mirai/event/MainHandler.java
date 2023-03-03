@@ -180,7 +180,7 @@ public class MainHandler extends AbstractHandler {
         } else {
             contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s".formatted(token.getUserId()));
             userTokensMap.put(qq, builder.getToken());  // 重复登录只会覆盖新的token
-            TokenBuilder.tokensToFile(userTokensMap, configPath + "UserToken.json");
+            TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
         }
         logStatus.remove(qq);
     }
@@ -226,14 +226,14 @@ public class MainHandler extends AbstractHandler {
 
     // #save 高级
     public static void saveTokens(Contact contact) {
-        String path = configPath + "UserToken.json";
+        String path = configPath + "UserTokens.json";
         TokenBuilder.tokensToFile(userTokensMap, path);
         contact.sendMessage("保存成功！共%d条".formatted(userTokensMap.size()));
     }
 
     // #load 高级
     public static void loadTokens(Contact contact) {
-        String path = configPath + "UserToken.json";
+        String path = configPath + "UserTokens.json";
         userTokensMap = TokenBuilder.tokensFromFile(path, true);
         StringBuilder sb = new StringBuilder();
         for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
