@@ -36,7 +36,7 @@ public final class HttpUtils extends AbstractHandler {
     static {
         try {
             // Authorization错误时查看控制台ip白名单
-            Map<String, Map<String, String>> map = new Yaml().load(new FileReader(windowsConfigPath + "ApiKeys.yml"));
+            Map<String, Map<String, String>> map = new Yaml().load(new FileReader(configPath + "ApiKeys.yml"));
             Map<String, String> tencentScannerKeys = map.get("tencentScannerKeys");
             Map<String, String> gaodeMapKeys = map.get("gaodeMapKeys");
 
@@ -113,8 +113,6 @@ public final class HttpUtils extends AbstractHandler {
     public static String qrDecodeTencent(String imgUrl) {
         String url = "";
         try {
-//            String secretId = "AKIDEHUZP5YpxtZzA70jFgxXzEDwQjsnRp07"; //TODO 加密
-//            String secretKey = "CAuPTGo6B4mSyHWcWEj2IOK4Zrx0vBHF";
             Credential cred = new Credential(tencentSecretId, tencentSecretKey);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
             HttpProfile httpProfile = new HttpProfile();

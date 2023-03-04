@@ -14,7 +14,7 @@
                     <option value=":runConsole"/>
                 </list>
             </option>
-            <option name="vmOptions"/>
+            <option name="vmOptions" value="--add-exports java.desktop/sun.font=ALL-UNNAMED"/>
         </ExternalSystemSettings>
         <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
         <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>

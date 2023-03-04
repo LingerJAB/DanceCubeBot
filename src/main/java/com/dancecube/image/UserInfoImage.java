@@ -14,12 +14,12 @@ import java.io.InputStream;
 public class UserInfoImage extends AbstractHandler {
     public static InputStream generate(Token token) {
         UserInfo user = new UserInfo(token);
-        String bgPath = "file:/" + configPath + "Images/Background.png";
-        String linuxBackgroundPath = "https://i.328888.xyz/2023/02/25/EfE1V.png";
-        //Todo Linux 自定义本地目录
+        String linuxBackgroundPathUrl = "file:" + configPath + "Images/Background.png";
+//        String linuxBackgroundPathUrl = "https://i.328888.xyz/2023/02/25/EfE1V.png";
+//        Todo Linux 自定义本地目录
 
         try {
-            ImageCombiner combiner = new ImageCombiner(linuxBackgroundPath, OutputFormat.PNG);
+            ImageCombiner combiner = new ImageCombiner(linuxBackgroundPathUrl, OutputFormat.PNG);
             combiner.addImageElement(user.getHeadimgURL(), 120, 150).setWidth(137).setHeight(137).setZoomMode(ZoomMode.WidthHeight);
             combiner.addImageElement(user.getHeadimgBoxPath(), 74, 104).setWidth(230).setHeight(230).setZoomMode(ZoomMode.WidthHeight);
             if(!user.getTitleUrl().equals("")) // Todo 换行

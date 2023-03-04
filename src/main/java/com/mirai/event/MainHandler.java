@@ -7,6 +7,7 @@ import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.HttpUtils;
 import com.mirai.MiraiBot;
+import com.mirai.UserConfigUtils;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Friend;
 import net.mamoe.mirai.contact.Group;
@@ -21,10 +22,7 @@ import okhttp3.Response;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +55,7 @@ public class MainHandler extends AbstractHandler {
                 message = message.strip();
                 // 自定义指令 TODO 封装
 
-                if(message.equals(userInfoCommand.get(qq))) {
+                if(userInfoCommands.containsKey(qq) && userInfoCommands.get(qq).contains(message)) {
                     msgUserInfo(contact, qq);
                 }
 
@@ -98,17 +96,20 @@ public class MainHandler extends AbstractHandler {
 
     // 添加指令 全局
     public static void addCmd(Contact contact, long qq, String newPrefix) {
-        userInfoCommand.put(qq, newPrefix);
+        if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+        userInfoCommands.get(qq).add(newPrefix);
         contact.sendMessage("已添加 \"" + newPrefix + "\" !");
     }
 
     // 删除指令 全局
     public static void delCmd(Contact contact, long qq, String newPrefix) {
-        if(!newPrefix.equals(userInfoCommand.get(qq))) {
+        if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+        if(!userInfoCommands.get(qq).contains(newPrefix)) {
             contact.sendMessage("未找到 " + newPrefix + " !");
             return;
         }
-        contact.sendMessage("已删除 " + userInfoCommand.remove(qq, newPrefix) + " !");
+        contact.sendMessage("已删除 " + userInfoCommands.get(qq).remove(newPrefix) + " !");
+        UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
     }
 
     // 个人信息 全局
@@ -213,6 +214,8 @@ public class MainHandler extends AbstractHandler {
                     //401 404
                     if(response!=null && response.code()==200) {
                         contact.sendMessage("登录成功辣，快来出勤吧！");
+                    } else {
+                        contact.sendMessage("二维码失效了，换一个试试看吧");
                     }
                 }
             }
@@ -288,6 +291,7 @@ public class MainHandler extends AbstractHandler {
         if(token==null) {
             // 登录检测
             contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
+            userInfoCommands.put(qq, new HashSet<>());
             return null;
         }
         return token;

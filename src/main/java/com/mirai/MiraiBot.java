@@ -39,7 +39,7 @@ public final class MiraiBot extends JavaPlugin {
     public static void refreshTokensTimer() {
         long period = 86400 * 5000; //半天
 
-        String path = configPath + "UserToken.json";
+        String path = configPath + "UserTokens.json";
         userTokensMap = TokenBuilder.tokensFromFile(path);
 
         TimerTask task = new TimerTask() {
