@@ -37,7 +37,8 @@ public final class MiraiBot extends JavaPlugin {
     }
 
     public static void refreshTokensTimer() {
-        long period = 86400 * 5000; //半天
+        long period = 86400 * 500; //半天
+//        long period = 5000; //5s
 
         String path = configPath + "UserTokens.json";
         userTokensMap = TokenBuilder.tokensFromFile(path);
@@ -45,13 +46,13 @@ public final class MiraiBot extends JavaPlugin {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                userTokensMap.forEach((qq, token) -> token.refresh());
+                userTokensMap.forEach((qq, token) -> token.refresh(true));
                 TokenBuilder.tokensToFile(userTokensMap, path);
                 System.out.println(System.currentTimeMillis() + ":今日已刷新token");
             }
         };
 
-        new Timer().schedule(task, 1000, period);
+        new Timer().schedule(task, 5000, period);
     }
 }
 

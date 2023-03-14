@@ -90,7 +90,7 @@ public class MainHandler extends AbstractHandler {
                 -换个方式查看信息！
                 5. 查找舞立方 [地名]
                 越详细地名越精确！
-                ❤️其它问题请联系开发者 [铃] 酱！""";
+                ❤️其它问题请联系铃酱！""";
         contact.sendMessage(menu);
     }
 
@@ -105,10 +105,11 @@ public class MainHandler extends AbstractHandler {
     public static void delCmd(Contact contact, long qq, String newPrefix) {
         if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
         if(!userInfoCommands.get(qq).contains(newPrefix)) {
-            contact.sendMessage("未找到 " + newPrefix + " !");
+            contact.sendMessage("未找到 \"" + newPrefix + "\" !");
             return;
         }
-        contact.sendMessage("已删除 " + userInfoCommands.get(qq).remove(newPrefix) + " !");
+        userInfoCommands.get(qq).remove(newPrefix);
+        contact.sendMessage("已删除 \"" + newPrefix + "\" !");
         UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
     }
 
@@ -174,6 +175,7 @@ public class MainHandler extends AbstractHandler {
         Image image = HttpUtils.getImageFromURL(builder.getQrcodeUrl(), contact);
 
         contact.sendMessage(new PlainText("快快用微信扫码，在五分钟内登录上吧~").plus(image));
+
         Token token = builder.getToken();
 
         if(token==null) {

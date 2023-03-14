@@ -67,14 +67,26 @@ public class TokenBuilder {
         );
         Response response;
         //五分钟计时
-        while(System.currentTimeMillis() - curTime<300_000) {
+        try {
+            Thread.sleep(2000);
+        } catch(InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        long wait = System.currentTimeMillis();
+        //等待2s时间（防止高频）
+        while(System.currentTimeMillis() - wait>2000 & System.currentTimeMillis() - curTime<300_000) {
+            wait = System.currentTimeMillis(); //重新赋值等待时间
             try {
                 //call不能重复请求
                 response = call.clone().execute();
                 //未登录为 400 登录为 200
                 if(response.body()!=null && response.code()==200) {
                     JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
-                    return new Token(json.get("userId").getAsInt(), json.get("access_token").getAsString(), json.get("refresh_token").getAsString(), System.currentTimeMillis());
+                    return new Token(json.get("userId").getAsInt(),
+                            json.get("access_token").getAsString(),
+                            json.get("refresh_token").getAsString(),
+                            System.currentTimeMillis());
                 }
                 response.close();  // 关闭释放
             } catch(IOException e) {

@@ -51,8 +51,8 @@ public class Token {
      * @param ignoreWaiting 忽略默认等待时间
      */
     public boolean refresh(boolean ignoreWaiting) {
-        //每refresh间隔为一个星期，防止出错改为6天
-        if(!ignoreWaiting && System.currentTimeMillis() - recTime<302_400_000) return false;
+        //每refresh间隔为一个星期，防止出错改为4天
+        if(!ignoreWaiting && System.currentTimeMillis() - recTime<345_600_000) return false;
         try {
             Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
