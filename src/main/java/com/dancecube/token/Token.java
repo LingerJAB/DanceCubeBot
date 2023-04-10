@@ -2,7 +2,7 @@ package com.dancecube.token;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mirai.HttpUtils;
+import com.mirai.HttpUtil;
 import okhttp3.Response;
 
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class Token {
         //每refresh间隔为一个星期，防止出错改为4天
         if(!ignoreWaiting && System.currentTimeMillis() - recTime<345_600_000) return false;
         try {
-            Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
+            Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
                     Map.of("client_type", "qrcode", "grant_type", "refresh_token", "refresh_token", refreshToken));
             JsonObject json;

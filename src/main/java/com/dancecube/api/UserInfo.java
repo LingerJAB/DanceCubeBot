@@ -4,7 +4,7 @@ import com.dancecube.token.Token;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mirai.HttpUtils;
+import com.mirai.HttpUtil;
 import okhttp3.Call;
 import okhttp3.Response;
 
@@ -101,8 +101,8 @@ public class UserInfo {
         String userAccountInfoJson = "";
         Response response2 = null;
         Response response1 = null;
-        Call call1 = HttpUtils.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()));
-        Call call2 = HttpUtils.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()));
+        Call call1 = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()));
+        Call call2 = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()));
         try {
             response1 = call1.execute();
             response2 = call2.execute();

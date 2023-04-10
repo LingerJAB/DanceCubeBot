@@ -5,9 +5,10 @@ import com.dancecube.api.UserInfo;
 import com.dancecube.image.UserInfoImage;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
-import com.mirai.HttpUtils;
+import com.mirai.HttpUtil;
 import com.mirai.MiraiBot;
-import com.mirai.UserConfigUtils;
+import com.mirai.config.AbstractConfig;
+import com.mirai.config.UserConfigUtils;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Friend;
 import net.mamoe.mirai.contact.Group;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 // 不过滤通道
-public class MainHandler extends AbstractHandler {
+public class MainHandler extends AbstractConfig {
 
 
     @EventHandler
@@ -67,7 +68,7 @@ public class MainHandler extends AbstractHandler {
                     String firstParam = params.get(0);
 
                     switch(prefix) {  //TODO 多匹配指令前缀 (List)
-                        case "查找舞立方" -> msgMachineList(contact, firstParam);
+                        case "查找舞立方", "查找机台" -> msgMachineList(contact, firstParam);
                         case "添加指令" -> addCmd(contact, qq, firstParam);
                         case "删除指令" -> delCmd(contact, qq, firstParam);
                     }
@@ -124,7 +125,7 @@ public class MainHandler extends AbstractHandler {
         }
         InputStream inputStream = UserInfoImage.generate(token);
         if(inputStream!=null) {
-            Image image = HttpUtils.getImageFromStream(inputStream, contact);
+            Image image = HttpUtil.getImageFromStream(inputStream, contact);
             contact.sendMessage(image);
         }
 
@@ -134,7 +135,7 @@ public class MainHandler extends AbstractHandler {
         loginDetect(contact, qq);
         Token token = userTokensMap.get(qq);
         UserInfo user = new UserInfo(token);
-        Image image = HttpUtils.getImageFromURL(user.getHeadimgURL(), contact);
+        Image image = HttpUtil.getImageFromURL(user.getHeadimgURL(), contact);
         String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold(), user.getRankNation());
         contact.sendMessage(image.plus(info));
     }
@@ -172,7 +173,7 @@ public class MainHandler extends AbstractHandler {
         }
         logStatus.add(qq);
         TokenBuilder builder = new TokenBuilder();
-        Image image = HttpUtils.getImageFromURL(builder.getQrcodeUrl(), contact);
+        Image image = HttpUtil.getImageFromURL(builder.getQrcodeUrl(), contact);
 
         contact.sendMessage(new PlainText("快快用微信扫码，在五分钟内登录上吧~").plus(image));
 
@@ -206,13 +207,13 @@ public class MainHandler extends AbstractHandler {
             } else {  // 第一个信息
                 message = messageList.get(0);
                 String imageUrl = Image.queryUrl((Image) message);
-                String qrUrl = HttpUtils.qrDecodeTencent(imageUrl);
+                String qrUrl = HttpUtil.qrDecodeTencent(imageUrl);
                 if(qrUrl==null) {  // 若扫码失败
                     contact.sendMessage(new QuoteReply((MessageChain) message).plus(new PlainText("没有扫出来！再试一次吧！")));
                     return;
                 }
                 String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
-                try(Response response = HttpUtils.httpApi(url, Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
+                try(Response response = HttpUtil.httpApi(url, Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
                     //401 404
                     if(response!=null && response.code()==200) {
                         contact.sendMessage("登录成功辣，快来出勤吧！");

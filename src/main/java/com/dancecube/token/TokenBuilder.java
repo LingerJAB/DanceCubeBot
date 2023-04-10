@@ -5,7 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import com.mirai.HttpUtils;
+import com.mirai.HttpUtil;
+import com.mirai.config.AbstractConfig;
 import okhttp3.Call;
 import okhttp3.Response;
 
@@ -18,17 +19,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TokenBuilder {
+public final class TokenBuilder extends AbstractConfig {
+
     private static int index = 0;
-    private static final String[] ids = {
-            "yyQ6VxqMeIILRjTwF72HMsKKbYSEaEAE",
-            "yyQ6VxqMeIKJDzVmQuHtNAUGxHAgSxmR",
-            "yyQ6VxqMeIL2hceWzZtdqsJxNf/hHSzH",
-            "yyQ6VxqMeIL2hceWzZtdqtGq81Ru8pIE",
-            "yyQ6VxqMeILLsdiEbWkbSnddhlyVGcNa",
-            "yyQ6VxqMeILneEzfVyXPFVCZoOuXSoH3",
-            "yyQ6VxqMeIKx9ha1cnpaxxYZ6qjFuL2I"};
     private final String id;
+    private static final String[] ids = initIds();
+
+    private static String[] initIds() {
+        try {
+            FileReader reader = new FileReader(configPath + "TokenIds.json");
+            return new Gson().fromJson(reader, String[].class);
+        } catch(FileNotFoundException e) {
+            throw new RuntimeException("TokenIds.json 文件未找到，请重新配置");
+        }
+    }
 
     public TokenBuilder() {
         this.id = getId();
@@ -46,7 +50,7 @@ public class TokenBuilder {
 
     private String getQrcodeUrl(String id) {
         try {
-            Response response = HttpUtils.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode?id=" + id);
+            Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode?id=" + id);
             String string;
             if(response!=null && response.body()!=null) {
                 string = response.body().string();
@@ -61,22 +65,18 @@ public class TokenBuilder {
 
     public Token getToken() {
         long curTime = System.currentTimeMillis();
-        Call call = HttpUtils.httpApiCall("https://dancedemo.shenghuayule.com/Dance/token",
+        Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/token",
                 Map.of("content-type", "application/x-www-form-urlencoded"),
                 Map.of("client_type", "qrcode", "grant_type", "client_credentials", "client_id", id)
         );
         Response response;
         //五分钟计时
-        try {
-            Thread.sleep(2000);
-        } catch(InterruptedException e) {
-            e.printStackTrace();
-        }
-
         long wait = System.currentTimeMillis();
-        //等待2s时间（防止高频）
-        while(System.currentTimeMillis() - wait>2000 & System.currentTimeMillis() - curTime<300_000) {
+        while(System.currentTimeMillis() - curTime<300_000) {
+            if(System.currentTimeMillis() - wait<2000) continue;  //等待2s时间（防止高频）
+//            System.out.println(System.currentTimeMillis()+" minus "+ wait);
             wait = System.currentTimeMillis(); //重新赋值等待时间
+
             try {
                 //call不能重复请求
                 response = call.clone().execute();
@@ -86,7 +86,7 @@ public class TokenBuilder {
                     return new Token(json.get("userId").getAsInt(),
                             json.get("access_token").getAsString(),
                             json.get("refresh_token").getAsString(),
-                            System.currentTimeMillis());
+                            curTime);
                 }
                 response.close();  // 关闭释放
             } catch(IOException e) {

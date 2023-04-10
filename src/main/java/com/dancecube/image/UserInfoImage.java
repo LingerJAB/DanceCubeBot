@@ -7,11 +7,11 @@ import com.freewayso.image.combiner.ImageCombiner;
 import com.freewayso.image.combiner.enums.LineAlign;
 import com.freewayso.image.combiner.enums.OutputFormat;
 import com.freewayso.image.combiner.enums.ZoomMode;
-import com.mirai.event.AbstractHandler;
+import com.mirai.config.AbstractConfig;
 
 import java.io.InputStream;
 
-public class UserInfoImage extends AbstractHandler {
+public class UserInfoImage extends AbstractConfig {
     public static InputStream generate(Token token) {
         UserInfo user = new UserInfo(token);
         String linuxBackgroundPathUrl = "file:" + configPath + "Images/Background.png";
@@ -40,7 +40,6 @@ public class UserInfoImage extends AbstractHandler {
         UserInfo user = new UserInfo(token);
         String bgPath = "file:///" + windowsConfigPath + "Images/Background.png";
         String linuxBackgroundPath = "https://i.328888.xyz/2023/02/25/EfE1V.png";
-        //Todo Linux 自定义本地目录
 
         try {
             ImageCombiner combiner = new ImageCombiner(linuxBackgroundPath, OutputFormat.PNG);

@@ -12,8 +12,8 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.mirai.event.AbstractHandler.configPath;
-import static com.mirai.event.AbstractHandler.userTokensMap;
+import static com.mirai.config.AbstractConfig.configPath;
+import static com.mirai.config.AbstractConfig.userTokensMap;
 
 public final class MiraiBot extends JavaPlugin {
     public static final MiraiBot INSTANCE = new MiraiBot();

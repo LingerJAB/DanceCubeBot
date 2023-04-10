@@ -3,7 +3,7 @@ package com.mirai;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
-import com.mirai.event.AbstractHandler;
+import com.mirai.config.AbstractConfig;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -29,10 +29,11 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class HttpUtils extends AbstractHandler {
+public final class HttpUtil extends AbstractConfig {
     static String gaodeApiKey;
     static String tencentSecretId;
     static String tencentSecretKey;
+
     static {
         try {
             // Authorization错误时查看控制台ip白名单

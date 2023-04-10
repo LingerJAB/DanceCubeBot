@@ -1,4 +1,4 @@
-package com.mirai.event;
+package com.mirai.config;
 
 import com.dancecube.token.Token;
 
@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public abstract class AbstractHandler {
+public abstract class AbstractConfig {
     public static HashMap<Long, Token> userTokensMap = new HashMap<>();
     public static HashMap<Long, HashSet<String>> userInfoCommands = new HashMap<>();
     public static HashSet<Long> logStatus = new HashSet<>();
     public static String linuxRootPath;
+
+    //如果是在Windows IDEA里运行，请将 configPath 换成 windowsConfigPath
     public static String windowsConfigPath;
     public static String configPath;
 
