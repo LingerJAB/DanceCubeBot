@@ -5,8 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import com.mirai.HttpUtil;
 import com.mirai.config.AbstractConfig;
+import com.mirai.tools.HttpUtil;
 import okhttp3.Call;
 import okhttp3.Response;
 

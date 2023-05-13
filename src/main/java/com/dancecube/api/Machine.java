@@ -3,7 +3,7 @@ package com.dancecube.api;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import com.mirai.HttpUtil;
+import com.mirai.tools.HttpUtil;
 import okhttp3.Response;
 
 import java.io.IOException;

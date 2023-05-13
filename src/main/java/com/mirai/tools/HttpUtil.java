@@ -1,4 +1,4 @@
-package com.mirai;
+package com.mirai.tools;
 
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
@@ -108,7 +108,7 @@ public final class HttpUtil extends AbstractConfig {
         } catch(NotFoundException e) {
             e.printStackTrace();
         }
-        return result==null ? null : result.getText();
+        return result==null ? "" : result.getText();
     }
 
     public static String qrDecodeTencent(String imgUrl) {
@@ -179,11 +179,12 @@ public final class HttpUtil extends AbstractConfig {
     }
 
     /**
-     * @param bodyMap MediaType 默认为 application/x-www-form-urlencoded
+     * @param bodyMap MediaType 默认为 application/x-www-form-urlencoded, null时则为POST请求
      */
     @Nullable  // POST
-    public static Response httpApi(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
+    public static Response httpApi(String url, Map<String, String> headerMap, @Nullable Map<String, String> bodyMap) {
 
+        if(bodyMap==null) bodyMap = Map.of("", "");
         StringBuilder bodySb = new StringBuilder();
         bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
         bodySb.deleteCharAt(0);

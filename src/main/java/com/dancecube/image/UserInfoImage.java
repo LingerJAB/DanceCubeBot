@@ -38,7 +38,7 @@ public class UserInfoImage extends AbstractConfig {
 
     public static void generate(Token token, String savingPath) {
         UserInfo user = new UserInfo(token);
-        String bgPath = "file:///" + windowsConfigPath + "Images/Background.png";
+        String bgPath = "file:///" + configPath + "Images/Background.png";
         String linuxBackgroundPath = "https://i.328888.xyz/2023/02/25/EfE1V.png";
 
         try {

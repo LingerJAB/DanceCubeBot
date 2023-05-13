@@ -19,7 +19,10 @@ public final class MiraiBot extends JavaPlugin {
     public static final MiraiBot INSTANCE = new MiraiBot();
 
     private MiraiBot() {
-        super(new JvmPluginDescriptionBuilder("com.mirai.lin", "0.1.0").name("MiraiBot").author("Lin").build());
+        super(new JvmPluginDescriptionBuilder("com.mirai.lin", "0.1.0")
+                .name("MiraiBot")
+                .author("Lin")
+                .build());
     }
 
     @Override
