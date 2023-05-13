@@ -148,7 +148,7 @@ public class DefinedCommands {
             }).build();
 
 
-    //    @BotCommand("舞立方自制谱兑换")
+    //TODO  @BotCommand("舞立方自制谱兑换")
     public static final Command gainMusicByCode = new CommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
@@ -162,6 +162,7 @@ public class DefinedCommands {
                 }
             }).build();
 
+    @BotCommand("个人信息（旧版）")
     public static final Command msgUserInfoLegacy = new CommandBuilder()
             .regex("个人信息-l")
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {

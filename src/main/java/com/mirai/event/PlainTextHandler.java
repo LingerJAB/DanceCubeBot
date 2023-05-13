@@ -47,12 +47,10 @@ public class PlainTextHandler {
 
             // 如果匹配上 command.regex
             if(scopes.contains(Scope.GLOBAL)) {
-                if(find) command.onCall(Scope.GROUP, messageEvent, contact, qq);
-                command.onCall(Scope.GLOBAL, messageEvent, contact, qq);
+                if(find) command.onCall(Scope.GLOBAL, messageEvent, contact, qq);
             } else {
                 if((scopes.contains(Scope.USER) & contact instanceof User)) {
-                    if(find) command.onCall(Scope.GROUP, messageEvent, contact, qq);
-                    command.onCall(Scope.USER, messageEvent, contact, qq);
+                    if(find) command.onCall(Scope.USER, messageEvent, contact, qq);
                 } else if((scopes.contains(Scope.GROUP) & contact instanceof Group))
                     if(find) command.onCall(Scope.GROUP, messageEvent, contact, qq);
             }
