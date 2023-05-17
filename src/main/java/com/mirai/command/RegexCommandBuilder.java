@@ -5,20 +5,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Pattern;
 
 // 构造器
-public class CommandBuilder {
-    private final Command command = new Command();
+public class RegexCommandBuilder {
+    private final RegexCommand command = new RegexCommand();
 
-    public CommandBuilder regex(@NotNull String regex) {
+    public RegexCommandBuilder regex(@NotNull String regex) {
         return regex(regex, true);
     }
 
-    public CommandBuilder regex(String regex, boolean lineOnly) {
+    public RegexCommandBuilder regex(String regex, boolean lineOnly) {
         if(regex.isBlank()) throw new RuntimeException("regex不能为空值");
         command.setRegex(Pattern.compile(lineOnly ? "^" + regex + "$" : regex));
         return this;
     }
 
-    public CommandBuilder onCall(Scope scope, @NotNull MsgHandleable onCall) {
+    public RegexCommandBuilder onCall(Scope scope, @NotNull MsgHandleable onCall) {
         command.addScope(scope);
         if(scope==Scope.GLOBAL) {
             command.setGlobalOnCall(onCall);
@@ -32,7 +32,7 @@ public class CommandBuilder {
         return this;
     }
 
-    public Command build() {
+    public RegexCommand build() {
         return command;
     }
 }

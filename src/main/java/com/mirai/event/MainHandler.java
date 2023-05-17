@@ -10,7 +10,7 @@ import net.mamoe.mirai.contact.Friend;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.Image;
+import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.PlainText;
 
@@ -23,14 +23,8 @@ public class MainHandler extends AbstractConfig {
     @EventHandler
     public static void eventCenter(MessageEvent event) {
         MessageChain messageChain = event.getMessage();
-        if(messageChain.size()==2) { //单一消息（仅图片，文本，表情）
-            if(messageChain.contains(PlainText.Key)) { //单一文本
-                PlainTextHandler.accept(event);
-            } else if(messageChain.contains(Image.Key)) { //单一图片
-                return;
-            } else { //其它单一的消息
-                return;
-            }
+        if(messageChain.size() - 1==messageChain.stream().filter(msg -> msg instanceof At | msg instanceof PlainText).toList().size()) {
+            PlainTextHandler.accept(event);
         } else { //其它多元的消息
             return;
         }

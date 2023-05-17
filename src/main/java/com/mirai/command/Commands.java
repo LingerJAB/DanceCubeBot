@@ -31,10 +31,10 @@ import java.util.regex.Pattern;
 import static com.mirai.config.AbstractConfig.*;
 
 @SuppressWarnings("unused")
-public class DefinedCommands {
+public class Commands {
 
-    @BotCommand("菜单")
-    public static final Command msgMenu = new CommandBuilder()
+    @DeclaredCommand("菜单")
+    public static final RegexCommand msgMenu = new RegexCommandBuilder()
             .regex("菜单")
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
                 String menu = """
@@ -53,8 +53,8 @@ public class DefinedCommands {
                 contact.sendMessage(menu);
             }).build();
 
-    @BotCommand("个人信息")
-    public static final Command msgUserInfo = new CommandBuilder()
+    @DeclaredCommand("个人信息")
+    public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
             .regex("个人信息")
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
                 Token token = loginDetect(contact, qq);
@@ -70,8 +70,8 @@ public class DefinedCommands {
                 }
             }).build();
 
-    @BotCommand("舞立方登录")
-    public static final Command dcLogin = new CommandBuilder()
+    @DeclaredCommand("舞立方登录")
+    public static final RegexCommand dcLogin = new RegexCommandBuilder()
             .regex("登录|舞立方登录")
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
                 // 限私聊
@@ -103,8 +103,8 @@ public class DefinedCommands {
             }).build();
 
 
-    @BotCommand("舞立方机台登录")
-    public static final Command machineLogin = new CommandBuilder()
+    @DeclaredCommand("舞立方机台登录")
+    public static final RegexCommand machineLogin = new RegexCommandBuilder()
             .regex("机台登录|扫码")
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
                 Token token = loginDetect(contact, qq);
@@ -148,8 +148,8 @@ public class DefinedCommands {
             }).build();
 
 
-    //TODO  @BotCommand("舞立方自制谱兑换")
-    public static final Command gainMusicByCode = new CommandBuilder()
+    //TODO  @DeclaredCommand("舞立方自制谱兑换")
+    public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
                 Token token = loginDetect(contact, qq);
@@ -162,8 +162,8 @@ public class DefinedCommands {
                 }
             }).build();
 
-    @BotCommand("个人信息（旧版）")
-    public static final Command msgUserInfoLegacy = new CommandBuilder()
+    @DeclaredCommand("个人信息（旧版）")
+    public static final RegexCommand msgUserInfoLegacy = new RegexCommandBuilder()
             .regex("个人信息-l")
             .onCall(Scope.GLOBAL, (event, contact, qq) -> {
                 loginDetect(contact, qq);
