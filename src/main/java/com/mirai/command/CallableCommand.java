@@ -5,7 +5,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 
 import java.util.HashSet;
 
-public abstract class AbstractCommand {
+public abstract class CallableCommand {
 
     final HashSet<Scope> scopes = new HashSet<>();  //作用范围
     MsgHandleable globalOnCall;  //作用效果
@@ -20,14 +20,14 @@ public abstract class AbstractCommand {
     }
 
 
-    public void onCall(Scope scope, MessageEvent event, Contact contact, long qq) {
+    public void onCall(Scope scope, MessageEvent event, Contact contact, long qq, String[] args) {
         //不同情况筛选
         if(scope==Scope.GROUP) {
-            groupOnCall.handle(event, contact, qq);
+            groupOnCall.handle(event, contact, qq, args);
         } else if(scope==Scope.USER) {
-            userOnCall.handle(event, contact, qq);
+            userOnCall.handle(event, contact, qq, args);
         } else {
-            globalOnCall.handle(event, contact, qq);
+            globalOnCall.handle(event, contact, qq, args);
         }
     }
 

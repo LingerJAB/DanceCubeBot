@@ -16,6 +16,7 @@ import net.mamoe.mirai.message.data.*;
 import okhttp3.Response;
 
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -31,12 +32,34 @@ import java.util.regex.Pattern;
 import static com.mirai.config.AbstractConfig.*;
 
 @SuppressWarnings("unused")
-public class Commands {
+public class AllCommands {
+
+    public static HashSet<RegexCommand> regexCommands = new HashSet<>();  //所有正则指令
+    public static HashSet<ArgsCommand> argsCommands = new HashSet<>();  //所有参数指令
+
+    // 初始化所有指令
+    public static void init() {
+        for(Field field : AllCommands.class.getDeclaredFields()) {
+            field.setAccessible(true);
+            if(field.isAnnotationPresent(DeclaredCommand.class)) {
+                try {
+                    if(field.getType()==RegexCommand.class)
+                        regexCommands.add((RegexCommand) field.get(null)); // 获取并保存所有指令
+                    else if(field.getType()==ArgsCommand.class) {
+                        argsCommands.add(((ArgsCommand) field.get(null)));
+                    }
+                } catch(IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
 
     @DeclaredCommand("菜单")
     public static final RegexCommand msgMenu = new RegexCommandBuilder()
             .regex("菜单")
-            .onCall(Scope.GLOBAL, (event, contact, qq) -> {
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 String menu = """
                         舞小铃有以下功能哦！
                         1. 登录
@@ -56,7 +79,7 @@ public class Commands {
     @DeclaredCommand("个人信息")
     public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
             .regex("个人信息")
-            .onCall(Scope.GLOBAL, (event, contact, qq) -> {
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = loginDetect(contact, qq);
                 if(token==null) return;
                 else if(!token.isAvailable()) {
@@ -73,7 +96,7 @@ public class Commands {
     @DeclaredCommand("舞立方登录")
     public static final RegexCommand dcLogin = new RegexCommandBuilder()
             .regex("登录|舞立方登录")
-            .onCall(Scope.GLOBAL, (event, contact, qq) -> {
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 // 限私聊
                 if(contact instanceof Group) {
                     contact.sendMessage("私信才可以登录哦( •̀ ω •́ )/");
@@ -106,7 +129,7 @@ public class Commands {
     @DeclaredCommand("舞立方机台登录")
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
             .regex("机台登录|扫码")
-            .onCall(Scope.GLOBAL, (event, contact, qq) -> {
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = loginDetect(contact, qq);
                 if(token==null) return;
                 MessageChain messageChain = event.getMessage();
@@ -148,30 +171,49 @@ public class Commands {
             }).build();
 
 
-    //TODO  @DeclaredCommand("舞立方自制谱兑换")
+    //TODO
+    @DeclaredCommand("舞立方自制谱兑换")
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
-            .onCall(Scope.GLOBAL, (event, contact, qq) -> {
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = loginDetect(contact, qq);
                 if(token==null) return;
 
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
                 if(matcher.find()) {
-                    matcher.group();
+                    contact.sendMessage(matcher.group());
                 }
             }).build();
 
     @DeclaredCommand("个人信息（旧版）")
     public static final RegexCommand msgUserInfoLegacy = new RegexCommandBuilder()
             .regex("个人信息-l")
-            .onCall(Scope.GLOBAL, (event, contact, qq) -> {
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 loginDetect(contact, qq);
                 Token token = userTokensMap.get(qq);
                 UserInfo user = new UserInfo(token);
                 Image image = HttpUtil.getImageFromURL(user.getHeadimgURL(), contact);
                 String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold(), user.getRankNation());
                 contact.sendMessage(image.plus(info));
+            }).build();
+
+    @DeclaredCommand("Test")
+    public static final ArgsCommand argsTest = new ArgsCommandBuilder()
+            .prefix("/say")
+            .form(ArgsCommand.CHAR, ArgsCommand.NUMBER)
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                if(args==null) {
+                    return;
+                }
+
+                String str = args[0];
+                int times = Integer.parseInt(args[1]);
+                contact.sendMessage("USER");
+                for(int i = 0; i<times; i++) {
+                    contact.sendMessage(i + ":" + str);
+                }
+
             }).build();
 
 

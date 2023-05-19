@@ -2,8 +2,20 @@ package com.mirai.command;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public class ArgsCommandBuilder {
     ArgsCommand command = new ArgsCommand();
+
+    public ArgsCommandBuilder prefix(String prefix) {
+        command.setPrefix(prefix);
+        return this;
+    }
+
+    public ArgsCommandBuilder form(Pattern... patterns) {
+        command.setForm(patterns);
+        return this;
+    }
 
 
     public ArgsCommandBuilder onCall(Scope scope, @NotNull MsgHandleable onCall) {

@@ -3,7 +3,7 @@ package com.mirai.command;
 import java.util.regex.Pattern;
 
 // 原始指令
-public class RegexCommand extends AbstractCommand {
+public class RegexCommand extends CallableCommand {
     private Pattern regex;  //正则
 
     protected RegexCommand() {
