@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 public class ArgsCommandBuilder {
     ArgsCommand command = new ArgsCommand();
 
-    public ArgsCommandBuilder prefix(String prefix) {
+    public ArgsCommandBuilder prefix(String... prefix) {
         command.setPrefix(prefix);
         return this;
     }

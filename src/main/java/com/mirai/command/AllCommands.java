@@ -1,10 +1,12 @@
 package com.mirai.command;
 
+import com.dancecube.api.Machine;
 import com.dancecube.api.UserInfo;
 import com.dancecube.image.UserInfoImage;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
+import com.mirai.config.UserConfigUtils;
 import com.mirai.tools.HttpUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
@@ -175,15 +177,47 @@ public class AllCommands {
     @DeclaredCommand("舞立方自制谱兑换")
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
-            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
                 Token token = loginDetect(contact, qq);
                 if(token==null) return;
 
+                String auth = userTokensMap.get(qq).getAccessToken();
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
-                if(matcher.find()) {
-                    contact.sendMessage(matcher.group());
+
+                int i = 0;
+                while(matcher.find()) {
+                    String code = matcher.group();
+                    contact.sendMessage("#%d 小铃在努力兑换 \"%s\" ...".formatted(++i, code));
+                    Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/MusicData/GainMusicByCode?code=" + code,
+                            Map.of("Authorization", auth),
+                            null);
+                    if(response==null) return;
+                    if(response.code()==200) {
+                        contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
+                        return;
+                    }
                 }
+                contact.sendMessage("好像都失效了💦💦\n换几个试试吧！");
+            })
+            .onCall(Scope.GROUP, (event, contact, qq, args) -> {
+                String auth = userTokensMap.get(qq).getAccessToken();
+                String message = event.getMessage().contentToString();
+                Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
+
+                if(matcher.find()) {
+                    String code = matcher.group();
+                    contact.sendMessage("检测到了兑换码！小铃在努力兑换 \"%s\" ...".formatted(code));
+                    Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/MusicData/GainMusicByCode?code=" + code,
+                            Map.of("Authorization", auth),
+                            null);
+                    if(response==null) return;
+                    if(response.code()==200) {
+                        contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
+                        return;
+                    }
+                }
+                contact.sendMessage("好像失效了💦💦\n换一个试试吧！");
             }).build();
 
     @DeclaredCommand("个人信息（旧版）")
@@ -192,31 +226,83 @@ public class AllCommands {
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 loginDetect(contact, qq);
                 Token token = userTokensMap.get(qq);
-                UserInfo user = new UserInfo(token);
+                UserInfo user = UserInfo.get(token);
                 Image image = HttpUtil.getImageFromURL(user.getHeadimgURL(), contact);
                 String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold(), user.getRankNation());
                 contact.sendMessage(image.plus(info));
             }).build();
 
-    @DeclaredCommand("Test")
-    public static final ArgsCommand argsTest = new ArgsCommandBuilder()
-            .prefix("/say")
-            .form(ArgsCommand.CHAR, ArgsCommand.NUMBER)
-            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+    @DeclaredCommand("添加指令")
+    public static final ArgsCommand addUserInfoCmd = new ArgsCommandBuilder()
+            .prefix("添加指令")
+            .form(ArgsCommand.CHAR)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                if(args==null) {
+                    return;
+                }
+                String newPrefix = args[0];
+                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+                userInfoCommands.get(qq).add(newPrefix);
+                contact.sendMessage("已添加 \"" + newPrefix + "\" !");
+            }).build();
+
+    @DeclaredCommand("删除指令")
+    public static final ArgsCommand delUserInfoCmd = new ArgsCommandBuilder()
+            .prefix("删除指令")
+            .form(ArgsCommand.CHAR)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
                 if(args==null) {
                     return;
                 }
 
-                String str = args[0];
-                int times = Integer.parseInt(args[1]);
-                contact.sendMessage("USER");
-                for(int i = 0; i<times; i++) {
-                    contact.sendMessage(i + ":" + str);
+                String newPrefix = args[0];
+                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+                if(!userInfoCommands.get(qq).contains(newPrefix)) {
+                    contact.sendMessage("未找到 \"" + newPrefix + "\" !");
+                    return;
                 }
-
+                userInfoCommands.get(qq).remove(newPrefix);
+                contact.sendMessage("已删除 \"" + newPrefix + "\" !");
+                UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
             }).build();
 
 
+    @DeclaredCommand("查找舞立方机台")
+    public static final ArgsCommand msgMachineList = new ArgsCommandBuilder()
+            .prefix("查找舞立方", "查找机台", "舞立方")
+            .form(ArgsCommand.CHAR)
+            .onCall(Scope.GROUP, (event, contact, qq, args) -> {
+                if(args==null) return;
+
+                String region = args[0];
+                StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
+                List<Machine> list = Machine.getMachineList(region);
+                for(int i = 0; i<5; i++) {
+                    Machine machine = list.get(i);
+                    String online = machine.Online ? "🔵在线" : "🔴离线";
+                    String singleInfo = "店名：%s %s\n地址：%s\n".formatted(machine.PlaceName, online, machine.Address);
+                    machineListText.append("\n").append(singleInfo);
+                }
+                contact.sendMessage(machineListText + "⭐刷屏哒咩！群聊只显示5条，更多列表请私聊喽~");
+            })
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                if(args==null) return;
+
+                String region = args[0];
+                StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
+                List<Machine> list = Machine.getMachineList(region);
+                if(list==null) return;
+
+                for(Machine machine : list) {
+                    String online = machine.Online ? "🔵在线" : "🔴离线";
+                    String singleInfo = "店名：%s %s\n地址：%s\n".formatted(machine.PlaceName, online, machine.Address);
+                    machineListText.append("\n").append(singleInfo);
+                }
+                contact.sendMessage(machineListText.toString());
+            }).build();
+
+
+    /////////////////////////////////////////////////////////////////////////////////
     public static Token loginDetect(Contact contact, Long qq) {
         Token token = userTokensMap.get(qq);
         if(token==null) {

@@ -21,6 +21,7 @@ public abstract class CallableCommand {
 
 
     public void onCall(Scope scope, MessageEvent event, Contact contact, long qq, String[] args) {
+
         //不同情况筛选
         if(scope==Scope.GROUP) {
             groupOnCall.handle(event, contact, qq, args);
@@ -45,13 +46,13 @@ public abstract class CallableCommand {
 
     protected final void addScope(Scope scope) {
         scopes.add(scope);
-        clearScopes();
+//        clearScopes();
     }
 
-    void clearScopes() {
-        if(scopes.contains(Scope.GLOBAL) | ((Scope.values().length - scopes.size()==1) & !scopes.contains(Scope.GLOBAL))) {
-            scopes.clear();
-            scopes.add(Scope.GLOBAL);
-        }
-    }
+//    void clearScopes() {
+//        if(scopes.contains(Scope.GLOBAL) | ((Scope.values().length - scopes.size()==1) & !scopes.contains(Scope.GLOBAL))) {
+//            scopes.clear();
+//            scopes.add(Scope.GLOBAL);
+//        }
+//    }
 }

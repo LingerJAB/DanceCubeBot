@@ -1,10 +1,9 @@
 package com.dancecube.api;
 
 import com.dancecube.token.Token;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.mirai.tools.HttpUtil;
+import com.mirai.tools.JsonUtil;
 import okhttp3.Call;
 import okhttp3.Response;
 
@@ -12,20 +11,20 @@ import java.io.IOException;
 import java.util.Map;
 
 public class UserInfo {
-    private final int userID; //用户ID
-    private final int gold; //金币
-    private final int musicScore; //积分
-    private final int lvRatio; //战力
-    private final int rankNation; //全国排名
-    private final int comboPercent; //连击率（518为5.18%）
-    private final int sex; //性别（1男 2女）
-    private final String userName; //用户名
-    private final String headimgURL; //头像URL
-    private final String phone; //手机号
-    private final String cityName; //城市名
-    private final String teamName; //战队名
-    private final String titleUrl; //头衔
-    private final String headimgBoxPath; //头像框
+    private int userID; //用户ID
+    private int gold; //金币
+    private int musicScore; //积分
+    private int lvRatio; //战力
+    private int rankNation; //全国排名
+    private int comboPercent; //连击率（518为5.18%）
+    private int sex; //性别（1男 2女）
+    private String userName; //用户名
+    private String headimgURL; //头像URL
+    private String phone; //手机号
+    private String cityName; //城市名
+    private String teamName; //战队名
+    private String titleUrl; //头衔
+    private String headimgBoxPath; //头像框
 
     public int getGold() {
         return gold;
@@ -44,23 +43,14 @@ public class UserInfo {
         return headimgURL;
     }
 
-    //    public void setHeadimgURL(String headimgURL) {
-//        this.headimgURL = headimgURL;
-//    }
     public String getUserName() {
         return userName;
     }
 
-    //    public void setUserName(String userName) {
-//        this.userName = userName;
-//    }
     public int getSex() {
         return sex;
     }
 
-    //        public void setSex(int sex) {
-//        this.sex = sex;
-//    }
     public String getPhone() {
         return phone;
     }
@@ -69,9 +59,6 @@ public class UserInfo {
         return cityName;
     }
 
-    //        public void setCityName(String cityName) {
-//        this.cityName = cityName;
-//    }
     public int getMusicScore() {
         return musicScore;
     }
@@ -96,7 +83,7 @@ public class UserInfo {
         return headimgBoxPath;
     }
 
-    public UserInfo(Token token) {
+    public static UserInfo get(Token token) {
         String userInfoJson = "";
         String userAccountInfoJson = "";
         Response response2 = null;
@@ -120,23 +107,16 @@ public class UserInfo {
         }
         JsonObject jsonObject1 = JsonParser.parseString(userInfoJson).getAsJsonObject();
         JsonObject jsonObject2 = JsonParser.parseString(userAccountInfoJson).getAsJsonObject();
+        JsonObject jsonObject = JsonUtil.mergeJson(jsonObject1, jsonObject2);
 
-        this.userID = jsonObject1.get("UserID").getAsInt();
-        this.headimgURL = jsonObject1.get("HeadimgURL").getAsString();
-        this.userName = jsonObject1.get("UserName").getAsString();
-        this.sex = jsonObject1.get("Sex").getAsInt();
-        this.phone = jsonObject1.get("Phone").getAsString();
-        this.lvRatio = jsonObject1.get("LvRatio").getAsInt();
-        this.cityName = jsonObject1.get("CityName").getAsString();
-        this.musicScore = jsonObject1.get("MusicScore").getAsInt();
-        this.rankNation = jsonObject1.get("RankNation").getAsInt();
-        this.comboPercent = jsonObject1.get("ComboPercent").getAsInt();
-        this.teamName = jsonObject1.get("TeamName").getAsString();
-        JsonElement titleUrlJsonElement = jsonObject1.get("TitleUrl");
-        this.titleUrl = titleUrlJsonElement.isJsonNull() ? "" : titleUrlJsonElement.getAsString();
-        JsonElement headimgBoxPathJsonElement = jsonObject1.get("HeadimgBoxPath");
-        this.headimgBoxPath = headimgBoxPathJsonElement.isJsonNull() ? "" : headimgBoxPathJsonElement.getAsString();
-        this.gold = jsonObject2.get("Gold").getAsInt();
+        Gson gson = new GsonBuilder()
+                .serializeNulls()
+                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
+                .create();
+
+        UserInfo userInfo = gson.fromJson(jsonObject, UserInfo.class);
+
+        return userInfo;
     }
 
     @Override

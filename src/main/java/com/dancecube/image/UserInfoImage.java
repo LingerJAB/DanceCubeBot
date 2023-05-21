@@ -13,7 +13,7 @@ import java.io.InputStream;
 
 public class UserInfoImage extends AbstractConfig {
     public static InputStream generate(Token token) {
-        UserInfo user = new UserInfo(token);
+        UserInfo user = UserInfo.get(token);
         String linuxBackgroundPathUrl = "file:" + configPath + "Images/Background.png";
 //        String linuxBackgroundPathUrl = "https://i.328888.xyz/2023/02/25/EfE1V.png";
 //        Todo Linux 自定义本地目录
@@ -37,7 +37,7 @@ public class UserInfoImage extends AbstractConfig {
     }
 
     public static void generate(Token token, String savingPath) {
-        UserInfo user = new UserInfo(token);
+        UserInfo user = UserInfo.get(token);
         String bgPath = "file:///" + configPath + "Images/Background.png";
         String linuxBackgroundPath = "https://i.328888.xyz/2023/02/25/EfE1V.png";
 

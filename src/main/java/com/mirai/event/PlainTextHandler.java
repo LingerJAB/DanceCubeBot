@@ -29,8 +29,8 @@ public class PlainTextHandler {
         MessageChain messageChain = messageEvent.getMessage();
 
         String message;
-        //At to QQ
-        if(messageChain.contains(At.Key)) {
+
+        if(messageChain.stream().anyMatch(m -> m instanceof At)) {  //At 转 QQ
             StringBuilder builder = new StringBuilder();
             messageChain.forEach(msg -> builder.append(" ").append(msg instanceof At ? (((At) msg).getTarget()) : msg.contentToString()));
             message = builder.toString();
@@ -41,16 +41,6 @@ public class PlainTextHandler {
 
         ArrayList<String> prefixAndArgs = new ArrayList<>(Arrays.asList(message.strip().split("\\s+")));
 
-        // TODO 执行参数指令
-        argsCommands.forEach(command -> {
-            if(command.getPrefix().equals(prefixAndArgs.remove(0))) {
-                String[] args = prefixAndArgs.toArray(new String[0]);
-                runCommand(messageEvent, command, args);
-            }
-
-            String[] arg;
-        });
-
         // 执行正则指令
         regexCommands.forEach(command -> {
             // 匹配作用域
@@ -59,6 +49,22 @@ public class PlainTextHandler {
                 runCommand(messageEvent, command);
             }
         });
+
+//TODO
+        //执行参数指令
+        argsCommands.forEach(command -> {
+            if(prefixAndArgs.size()<2) return;
+            String msgPre = prefixAndArgs.remove(0);
+            String[] commandPrefixes = command.getPrefix();
+            if(Arrays.asList(commandPrefixes).contains(msgPre)) {
+                String[] args = prefixAndArgs.toArray(new String[0]);
+                if(ArgsCommand.checkError(command, args)==-1) {
+                    runCommand(messageEvent, command, args);
+                }
+            }
+
+        });
+
 
     }
 
@@ -69,7 +75,6 @@ public class PlainTextHandler {
         long qq = messageEvent.getSender().getId(); // qq不为contact.getId()
         Contact contact = messageEvent.getSubject(); //发送对象
 
-        // 如果匹配上 regexCommand.regex
         if(scopes.contains(Scope.GLOBAL)) command.onCall(Scope.GLOBAL, messageEvent, contact, qq, args);
         else if((scopes.contains(Scope.USER) & contact instanceof User))
             command.onCall(Scope.USER, messageEvent, contact, qq, args);
@@ -79,17 +84,7 @@ public class PlainTextHandler {
 
     // 无参指令
     private static void runCommand(MessageEvent messageEvent, CallableCommand command) {
-        HashSet<Scope> scopes = command.getScopes(); //作用域
-        long qq = messageEvent.getSender().getId(); // qq不为contact.getId()
-        Contact contact = messageEvent.getSubject(); //发送对象
-        String[] args = null;
-
-        // 如果匹配上 regexCommand.regex
-        if(scopes.contains(Scope.GLOBAL)) command.onCall(Scope.GLOBAL, messageEvent, contact, qq, args);
-        else if((scopes.contains(Scope.USER) & contact instanceof User))
-            command.onCall(Scope.USER, messageEvent, contact, qq, args);
-        else if((scopes.contains(Scope.GROUP) & contact instanceof Group))
-            command.onCall(Scope.GROUP, messageEvent, contact, qq, args);
+        runCommand(messageEvent, command, null);
     }
 }
 
