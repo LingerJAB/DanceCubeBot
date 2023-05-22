@@ -109,12 +109,12 @@ public class AllCommands {
                     contact.sendMessage("(´。＿。｀)不要重复登录啊喂！");
                     return;
                 }
-                logStatus.add(qq);
                 TokenBuilder builder = new TokenBuilder();
                 Image image = HttpUtil.getImageFromURL(builder.getQrcodeUrl(), contact);
 
                 contact.sendMessage(new PlainText("快快用微信扫码，在五分钟内登录上吧~").plus(image));
 
+                logStatus.add(qq);
                 Token token = builder.getToken();
 
                 if(token==null) {
@@ -155,7 +155,7 @@ public class AllCommands {
                             return;
                         }
                         String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
-                        try(Response response = HttpUtil.httpApi(url, Map.of("Authorization", "Bearer " + token.getAccessToken()))) {
+                        try(Response response = HttpUtil.httpApi(url, Map.of("Authorization", token.getBearerToken()))) {
                             //401 404
                             if(response!=null && response.code()==200) {
                                 contact.sendMessage("登录成功辣，快来出勤吧！");
@@ -172,8 +172,6 @@ public class AllCommands {
                 }
             }).build();
 
-
-    //TODO
     @DeclaredCommand("舞立方自制谱兑换")
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
@@ -181,27 +179,29 @@ public class AllCommands {
                 Token token = loginDetect(contact, qq);
                 if(token==null) return;
 
-                String auth = userTokensMap.get(qq).getAccessToken();
+                String auth = userTokensMap.get(qq).getBearerToken();
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
 
                 int i = 0;
-                while(matcher.find()) {
+                while(matcher.find() & ++i<25) {
                     String code = matcher.group();
-                    contact.sendMessage("#%d 小铃在努力兑换 \"%s\" ...".formatted(++i, code));
+                    contact.sendMessage("#%d 小铃在努力兑换 \"%s\" ...".formatted(i, code));
                     Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/MusicData/GainMusicByCode?code=" + code,
                             Map.of("Authorization", auth),
                             null);
                     if(response==null) return;
                     if(response.code()==200) {
                         contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
+                        response.close();
                         return;
                     }
+                    response.close();
                 }
                 contact.sendMessage("好像都失效了💦💦\n换几个试试吧！");
             })
             .onCall(Scope.GROUP, (event, contact, qq, args) -> {
-                String auth = userTokensMap.get(qq).getAccessToken();
+                String auth = userTokensMap.get(qq).getBearerToken();
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
 

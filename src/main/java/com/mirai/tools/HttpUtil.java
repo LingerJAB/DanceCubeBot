@@ -29,6 +29,7 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public final class HttpUtil extends AbstractConfig {
     static String gaodeApiKey;
     static String tencentSecretId;

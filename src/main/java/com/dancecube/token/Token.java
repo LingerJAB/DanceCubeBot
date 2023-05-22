@@ -24,6 +24,10 @@ public class Token {
         return accessToken;
     }
 
+    public String getBearerToken() {
+        return "bearer " + accessToken;
+    }
+
     public String getRefreshToken() {
         return refreshToken;
     }

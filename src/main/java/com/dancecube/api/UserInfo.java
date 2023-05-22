@@ -88,9 +88,10 @@ public class UserInfo {
         String userAccountInfoJson = "";
         Response response2 = null;
         Response response1 = null;
-        Call call1 = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()));
-        Call call2 = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", "Bearer " + token.getAccessToken()));
+        Call call1 = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(), Map.of("Authorization", token.getBearerToken()));
+        Call call2 = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", token.getBearerToken()));
         try {
+
             response1 = call1.execute();
             response2 = call2.execute();
             if(response1.body()!=null && response2.body()!=null) {
@@ -114,9 +115,7 @@ public class UserInfo {
                 .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
                 .create();
 
-        UserInfo userInfo = gson.fromJson(jsonObject, UserInfo.class);
-
-        return userInfo;
+        return gson.fromJson(jsonObject, UserInfo.class);
     }
 
     @Override

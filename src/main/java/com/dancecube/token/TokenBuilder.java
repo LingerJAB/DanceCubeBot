@@ -9,6 +9,7 @@ import com.mirai.config.AbstractConfig;
 import com.mirai.tools.HttpUtil;
 import okhttp3.Call;
 import okhttp3.Response;
+import org.junit.jupiter.api.Test;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -46,6 +47,12 @@ public final class TokenBuilder extends AbstractConfig {
 
     public String getQrcodeUrl() {
         return getQrcodeUrl(id);
+    }
+
+    @Test
+    public void test() {
+        String qrcodeUrl = getQrcodeUrl();
+        System.out.println(qrcodeUrl);
     }
 
     private String getQrcodeUrl(String id) {
