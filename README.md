@@ -17,11 +17,12 @@
 
 用户可用功能：
 
-- 扫码登录机器人
+- 扫码至登录机器人
 - 查看个人信息（战力，排行，金币，积分等等）
 - 自定义个人信息指令（mydc,mywlf,舞立方等等）
 - 舞立方机台二维码登录（发送给机器人二维码）~~至少不用微信扫码了~~
-- 查找地区舞立方 且 检测是否在线
+- 查找地区在线/离线的舞立方
+- 自动批量兑换自制谱兑换码
 - Token每日自动更新
 
 ---
@@ -39,7 +40,11 @@
 >
 > 或许等到2077年才能做出来💦💦
 
-## 文件配置
+## 开发指南
+
+如果你只是插件使用者，只要配置好文件就行了
+
+### 文件配置
 
 ***前情提要：不难的其实，就是第一次有一点点的麻烦了...***
 
@@ -81,7 +86,7 @@
 | [`ApiKeys.yml`](#ApiKeys)    | 文件      | 用于API令牌      | **手动配置**   |
 | `UserCommands.json`          | 文件      | 用于保存用户信息触发指令 | **无需手动配置** |
 
-### TokenIds
+#### TokenIds
 
 用于登录时获取二维码，需要在 [舞立方制谱网站](https://danceweb.shenghuayule.com/MusicMaker/#/) 上
 抓包找到一个类似心跳的请求，然后多复制几个它的`client_id`，写入`DcConfig`里面
@@ -102,7 +107,7 @@
 
 可能你会发现不管开几个标签都是一样的，可以尝试先**登录**一个二维码，再打开另一个标签页
 
-### ApiKeys
+#### ApiKeys
 
 用于**二维码识别**和**地名转经纬度**
 
@@ -127,7 +132,7 @@ gaodeMapKeys:
 
 ~~唯独这个是YML文件，因为我觉得这个最像配置文件~~
 
-### Images
+#### Images
 
 在`Images`放入文件`Background.png`  
 如果想要和我一样用这样的效果：  
@@ -139,13 +144,122 @@ gaodeMapKeys:
 
 ![ip3gYJ.png](https://i.328888.xyz/2023/04/11/ip3gYJ.md.png)
 
-## 开发说明
+### 开发帮助
 
--  **\*重要：如果你是Java8以上，出现了`ImageCombiner`类的报错，请添加`mcl.cmd`或者`mcl`的`Java运行参数`：`--add-exports java.desktop/sun.font=ALL-UNNAMED`**
+#### 指令功能
+
+本机器人支持**正则指令**和**参数指令**两种指令触发
+
+所有的指令存放在 `AllCommands` 类中，具体在**声明指令**后，
+会在调用 `init()` 后，被自动保存到如下两个属性中
+
+```java
+public class AllCommands {
+  public static HashSet<RegexCommand> regexCommands = new HashSet<>();  //所有正则指令
+  public static HashSet<ArgsCommand> argsCommands = new HashSet<>();  //所有参数指令
+
+  // your commands...
+}
+```
+
+##### 指令声明
+
+你需要使用 `@DeclaredCommand("name")` 来声明一个`public static final`指令对象，  
+没有 `@DeclaredCommand("name")` 的对象不会被保存，  
+参数为指令名，没有实际用途，仅便于开发者，使用具体见以下实例
+
+##### 正则指令
+
+你可以通过 `RegexCommandBuilder` 链式调用来创建一个 `RegexCommand` 对象，例如：
+
+```java
+public class AllCommands {
+
+  @DeclaredCommand("舞立方自制谱兑换")  //指令声明
+  public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
+          .regex("[a-zA-Z0-9]{15}", false)
+          .onCall(Scope.USER, (event, contact, qq, args) -> {
+            Token token = loginDetect(contact, qq);
+            if(token==null) return;
+
+            // type your code here
+
+          }).build();
+}
+```
+
+---
+`regex(String regex, boolean lineOnly)`  
+正则匹配方式，`regex`为正则表达式字符串， `lineOnly`为是否仅匹配单行，当为`true`时会默认加上 `^...$`
+行匹配标识，默认为`true`
+
+`onCall(Scope scope, MsgHandleable (lambda) )`  
+调用指令，`scope`为作用域，`lambda`为调用指令实现体，你需要传入`(event, contact, qq, args) -> {}`,其中`args`无需实现。
+
+`build()`  
+构建指令，返回一个`RegexCommand`对象
+
+##### 参数指令
+
+类似于**正则指令**，你需要使用`ArgsCommandBuilder`来创建一个`ArgsCommand`对象
+
+```java
+public class AllCommands {
+  @DeclaredCommand("查找舞立方机台")
+  public static final ArgsCommand msgMachineList = new ArgsCommandBuilder()
+          .prefix("查找舞立方", "查找机台", "舞立方")
+          .form(ArgsCommand.CHAR)
+          .onCall(Scope.GROUP, (event, contact, qq, args) -> {
+            if(args==null) return;
+
+            // type your code here...
+
+          }).build();
+}
+```
+
+---
+`prefix(String... name)`  
+用于声明一个参数指令的前缀，仅当消息触发前缀后才会匹配参数
+
+`form(Pattern... patterns)`  
+声明参数的格式，建议使用`ArgsCommand`类提供的模板：
+
+```java
+public class ArgsCommand extends AbstractCommand {
+  // 数字
+  public static final Pattern NUMBER = Pattern.compile("\\d+");
+  // 字母＋数字
+  public static final Pattern WORD = Pattern.compile("[0-9a-zA-z]+");
+  // 非空字符
+  public static final Pattern CHAR = Pattern.compile("\\S+");
+}
+```
+
+`onCall(Scope scope, MsgHandleable (lambda) )`  
+和参数指令类似，但是获取参数的值需要使用到`args`来获取（需要做非`null`判定）
+
+##### 作用域
+
+```java
+public enum Scope {
+  GLOBAL, // 全局指令
+  USER, // 仅用户
+  GROUP //仅群聊
+}
+```
+
+作用域用于对不同的聊天环境触发不同的`onCall()`功能
+
+### 开发说明
+
+- **\*重要：如果你是Java8以上，出现了`ImageCombiner`类的报错，请添加`mcl.cmd`或者`mcl`
+  的`Java运行参数`：`--add-exports java.desktop/sun.font=ALL-UNNAMED`**
 
 - 如果你的`DcConfig`文件夹是在IDEA项目下，而报错**找不到路径**，请把`linuxRootPath`改成`windowsRootPath`变量
 - 对于不需要的功能，可以自己改代码的🤔比如机台查找，你可以注释掉获取`ApiKeys.yml`中`key`的相关代码
-- 在`MiraiBot.java`中的**自动刷新Token功能**建议把`refresh(true)`改为`refresh()`或者`refresh(false)`，这里是一个**刷新token而忽略等待时间**的参数，对于大量的`Token`不建议**忽略**
+- 在`MiraiBot.java`中的**自动刷新Token功能**建议把`refresh(true)`改为`refresh()`或者`refresh(false)`，这里是一个*
+  *刷新token而忽略等待时间**的参数，对于大量的`Token`不建议**忽略**
 - 其它问题问我或者自行debug（~~对不起bug真的好多好多~~
 
 ## 一些提醒
@@ -154,12 +268,8 @@ gaodeMapKeys:
 
 - 请不要高频http请求
 - 本项目和[**广州市胜骅动漫科技有限公司**](https://arccer.com/#/home)无关
-- *项目仅供学习交流，严禁用于商业用途*
 
 ## 鸣谢
 
-**感谢 艾鲁Bot 部分API的提供**
-
----
-
-草好困我睡觉了（2023.4.15
+**感谢 艾鲁Bot 的API提供**
+（或许可以试试隔壁的机器人🤔

@@ -5,7 +5,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 
 import java.util.HashSet;
 
-public abstract class CallableCommand {
+public abstract class AbstractCommand {
 
     final HashSet<Scope> scopes = new HashSet<>();  //作用范围
     MsgHandleable globalOnCall;  //作用效果

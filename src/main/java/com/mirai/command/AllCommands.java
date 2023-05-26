@@ -74,6 +74,8 @@ public class AllCommands {
                         -换个方式查看信息！
                         5. 查找舞立方 [地名]
                         越详细地名越精确！
+                        6. [自制谱兑换码]
+                        私聊批量兑换好多兑换码！
                         ❤️其它问题请联系铃酱!！""";
                 contact.sendMessage(menu);
             }).build();

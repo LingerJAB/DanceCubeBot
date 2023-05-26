@@ -70,7 +70,7 @@ public class PlainTextHandler {
 
 
     //含参指令
-    private static void runCommand(MessageEvent messageEvent, CallableCommand command, String[] args) {
+    private static void runCommand(MessageEvent messageEvent, AbstractCommand command, String[] args) {
         HashSet<Scope> scopes = command.getScopes(); //作用域
         long qq = messageEvent.getSender().getId(); // qq不为contact.getId()
         Contact contact = messageEvent.getSubject(); //发送对象
@@ -83,7 +83,7 @@ public class PlainTextHandler {
     }
 
     // 无参指令
-    private static void runCommand(MessageEvent messageEvent, CallableCommand command) {
+    private static void runCommand(MessageEvent messageEvent, AbstractCommand command) {
         runCommand(messageEvent, command, null);
     }
 }

@@ -2,7 +2,7 @@ package com.mirai.command;
 
 import java.util.regex.Pattern;
 
-public class ArgsCommand extends CallableCommand {
+public class ArgsCommand extends AbstractCommand {
     public static final Pattern NUMBER = Pattern.compile("\\d+");
     public static final Pattern WORD = Pattern.compile("[0-9a-zA-z]+");
     public static final Pattern CHAR = Pattern.compile("\\S+");
