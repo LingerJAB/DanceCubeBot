@@ -162,13 +162,13 @@ public class AllCommands {
 }
 ```
 
-##### 指令声明
+#### 指令声明
 
 你需要使用 `@DeclaredCommand("name")` 来声明一个`public static final`指令对象，  
 没有 `@DeclaredCommand("name")` 的对象不会被保存，  
 参数为指令名，没有实际用途，仅便于开发者，使用具体见以下实例
 
-##### 正则指令
+#### 正则指令
 
 你可以通过 `RegexCommandBuilder` 链式调用来创建一个 `RegexCommand` 对象，例如：
 
@@ -199,7 +199,7 @@ public class AllCommands {
 `build()`  
 构建指令，返回一个`RegexCommand`对象
 
-##### 参数指令
+#### 参数指令
 
 类似于**正则指令**，你需要使用`ArgsCommandBuilder`来创建一个`ArgsCommand`对象
 
@@ -239,7 +239,7 @@ public class ArgsCommand extends AbstractCommand {
 `onCall(Scope scope, MsgHandleable (lambda) )`  
 和参数指令类似，但是获取参数的值需要使用到`args`来获取（需要做非`null`判定）
 
-##### 作用域
+#### 作用域
 
 ```java
 public enum Scope {

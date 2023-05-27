@@ -15,6 +15,7 @@ import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.utils.ExternalResource;
 import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -97,8 +98,7 @@ public final class HttpUtil extends AbstractConfig {
             e.printStackTrace();
         }
         LuminanceSource source = null;
-        if(bufferedImage!=null)
-            source = new BufferedImageLuminanceSource(bufferedImage);
+        if(bufferedImage!=null) source = new BufferedImageLuminanceSource(bufferedImage);
         Binarizer binarizer = new HybridBinarizer(source);
         BinaryBitmap bitmap = new BinaryBitmap(binarizer);
         HashMap<DecodeHintType, Object> decodeHints = new HashMap<>();
@@ -165,11 +165,9 @@ public final class HttpUtil extends AbstractConfig {
     }
 
     @Nullable  // GET
-    public static Response httpApi(String url, Map<String, String> headersMap) {
+    public static Response httpApi(String url, @NotNull Map<String, String> headersMap) {
         OkHttpClient client = new OkHttpClient();
-        Request.Builder post = new Request.Builder().url(url).get();
-        headersMap.forEach(post::addHeader);
-        Request request = post.build();
+        Request request = new Request.Builder().url(url).get().headers(Headers.of(headersMap)).build();
 
         try {
             return client.newCall(request).execute();
@@ -183,22 +181,14 @@ public final class HttpUtil extends AbstractConfig {
      * @param bodyMap MediaType 默认为 application/x-www-form-urlencoded, null时则为POST请求
      */
     @Nullable  // POST
-    public static Response httpApi(String url, Map<String, String> headerMap, @Nullable Map<String, String> bodyMap) {
+    public static Response httpApi(String url, @NotNull Map<String, String> headersMap, @Nullable Map<String, String> bodyMap) {
 
         if(bodyMap==null) bodyMap = Map.of("", "");
-        StringBuilder bodySb = new StringBuilder();
-        bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
-        bodySb.deleteCharAt(0);
-        String body = bodySb.toString();
-
+        String body = bodyOf(bodyMap);
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody requestBody = RequestBody.create(body, mediaType);
-        Request.Builder post = new Request.Builder()
-                .url(url)
-                .post(requestBody);
-        if(headerMap!=null) headerMap.forEach(post::addHeader);
-        Request request = post.build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
 
         try {
             return client.newCall(request).execute();
@@ -208,54 +198,46 @@ public final class HttpUtil extends AbstractConfig {
         return null;
     }
 
-    public static Response httpApiPut(String url, Map<String, String> headerMap, Map<String, String> bodyMap) {
-        StringBuilder bodySb = new StringBuilder();
-        bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
-        bodySb.deleteCharAt(0);
-        String body = bodySb.toString();
+    //TODO headers form str
+    public static Response httpApiPut(String url, @NotNull Map<String, String> headersMap, Map<String, String> bodyMap) {
+        String body = bodyOf(bodyMap);
 
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody requestBody = RequestBody.create(body, mediaType);
-        Request.Builder post = new Request.Builder()
-                .url(url)
-                .put(requestBody);
-        if(headerMap!=null) headerMap.forEach(post::addHeader);
-        Request request = post.build();
 
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
         try {
             return client.newCall(request).execute();
         } catch(IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
-    public static Call httpApiCall(String url, Map<String, String> headersMap, Map<String, String> bodyMap) {
 
-        StringBuilder bodySb = new StringBuilder();
-        bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
-        bodySb.deleteCharAt(0);
-        String body = bodySb.toString();
+    public static Call httpApiCall(String url, @NotNull Map<String, String> headersMap, Map<String, String> bodyMap) {
+
+        String body = bodyOf(bodyMap);
 
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody requestBody = RequestBody.create(body, mediaType);
-        Request.Builder post = new Request.Builder()
-                .url(url)
-                .post(requestBody);
-        if(headersMap!=null) headersMap.forEach(post::addHeader);
-        Request request = post.build();
 
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
         return client.newCall(request);
     }
 
-    public static Call httpApiCall(String url, Map<String, String> headersMap) {
+    public static Call httpApiCall(String url, @NotNull Map<String, String> headersMap) {
         OkHttpClient client = new OkHttpClient();
-        Request.Builder post = new Request.Builder().url(url).get();
-        headersMap.forEach(post::addHeader);
-        Request request = post.build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
         return client.newCall(request);
     }
 
+    @NotNull
+    private static String bodyOf(Map<String, String> bodyMap) {
+        StringBuilder bodySb = new StringBuilder();
+        bodyMap.forEach((k, v) -> bodySb.append('&').append(k).append('=').append(v));
+        bodySb.deleteCharAt(0);
+        return bodySb.toString();
+    }
 }

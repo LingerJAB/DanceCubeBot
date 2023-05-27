@@ -57,6 +57,20 @@ public class AllCommands {
         }
     }
 
+    @DeclaredCommand("清空登录")
+    public static final ArgsCommand clearLogin = new ArgsCommandBuilder()
+            .prefix("#clearLogin")
+            .form(ArgsCommand.WORD)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                if(args==null) {
+                    return;
+                }
+                // 正在登录检测
+                switch(args[0]) {
+                    case "all" -> logStatus.clear();
+                    case "me" -> contact.sendMessage(logStatus.remove(qq) ? "已清空！" : "未找到登录！");
+                }
+            }).build();
 
     @DeclaredCommand("菜单")
     public static final RegexCommand msgMenu = new RegexCommandBuilder()
@@ -87,7 +101,7 @@ public class AllCommands {
                 Token token = loginDetect(contact, qq);
                 if(token==null) return;
                 else if(!token.isAvailable()) {
-                    contact.sendMessage("由于不可抗因素（bushi) 身份过期了💦\n重新私信登录即可恢复💦");
+                    contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
                     return;
                 }
                 InputStream inputStream = UserInfoImage.generate(token);
@@ -97,7 +111,7 @@ public class AllCommands {
                 }
             }).build();
 
-    @DeclaredCommand("舞立方登录")
+    @DeclaredCommand("舞立方机器人登录")
     public static final RegexCommand dcLogin = new RegexCommandBuilder()
             .regex("登录|舞立方登录")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
@@ -203,6 +217,9 @@ public class AllCommands {
                 contact.sendMessage("好像都失效了💦💦\n换几个试试吧！");
             })
             .onCall(Scope.GROUP, (event, contact, qq, args) -> {
+                Token token = loginDetect(contact, qq);
+                if(token==null) return;
+
                 String auth = userTokensMap.get(qq).getBearerToken();
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
@@ -230,7 +247,8 @@ public class AllCommands {
                 Token token = userTokensMap.get(qq);
                 UserInfo user = UserInfo.get(token);
                 Image image = HttpUtil.getImageFromURL(user.getHeadimgURL(), contact);
-                String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), user.getGold(), user.getRankNation());
+                //TODO Gold
+                String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), 0, user.getRankNation());
                 contact.sendMessage(image.plus(info));
             }).build();
 
@@ -301,6 +319,22 @@ public class AllCommands {
                     machineListText.append("\n").append(singleInfo);
                 }
                 contact.sendMessage(machineListText.toString());
+            }).build();
+
+    //    @DeclaredCommand("查看其它个人信息")
+    public static final ArgsCommand msgOthersInfo = new ArgsCommandBuilder()
+            .prefix("看看你的", "康康你的", "看看")
+            .form(ArgsCommand.NUMBER)
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                if(args==null) return;
+
+                String num = args[0];
+                if(num.length()<8 && num.length()>5) { //舞立方ID
+
+                } else if(num.length()>7) { //QQ
+                    Token token = userTokensMap.get(Long.parseLong(num));
+                    token.getUserId();
+                }
             }).build();
 
 
