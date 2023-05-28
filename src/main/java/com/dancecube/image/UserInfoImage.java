@@ -8,6 +8,7 @@ import com.freewayso.image.combiner.ImageCombiner;
 import com.freewayso.image.combiner.enums.OutputFormat;
 import com.freewayso.image.combiner.enums.ZoomMode;
 import com.mirai.config.AbstractConfig;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.*;
@@ -18,12 +19,7 @@ public class UserInfoImage extends AbstractConfig {
         String linuxBackgroundPathUrl = "file:" + configPath + "Images/Background.png";
 //        String linuxBackgroundPathUrl = "https://i.imgloc.com/2023/04/11/ip37wc.png";
 
-        AllInfo allInfo = new AllInfo();
-        CompletableFuture<AllInfo> userInfoFuture = CompletableFuture.supplyAsync(() -> allInfo.setUserInfo(UserInfo.get(token)));
-        CompletableFuture<AllInfo> accountInfoFuture = CompletableFuture.supplyAsync(() -> allInfo.setAccountInfo(AccountInfo.get(token)));
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(accountInfoFuture, userInfoFuture);
-
-        allFutures.join();
+        allUserInfos allInfo = getAllInfo(token);
         UserInfo userInfo = allInfo.getUserInfo();
         AccountInfo accountInfo = allInfo.getAccountInfo();
 
@@ -46,6 +42,17 @@ public class UserInfoImage extends AbstractConfig {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @NotNull
+    public static allUserInfos getAllInfo(Token token) {
+        allUserInfos allInfo = new allUserInfos();
+        CompletableFuture<allUserInfos> userInfoFuture = CompletableFuture.supplyAsync(() -> allInfo.setUserInfo(UserInfo.get(token)));
+        CompletableFuture<allUserInfos> accountInfoFuture = CompletableFuture.supplyAsync(() -> allInfo.setAccountInfo(AccountInfo.get(token)));
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(accountInfoFuture, userInfoFuture);
+
+        allFutures.join();
+        return allInfo;
     }
 
 //    @Test
@@ -98,25 +105,3 @@ public class UserInfoImage extends AbstractConfig {
     }
 }
 
-class AllInfo {
-    private UserInfo userInfo;
-    private AccountInfo accountInfo;
-
-    public UserInfo getUserInfo() {
-        return userInfo;
-    }
-
-    public AllInfo setUserInfo(UserInfo userInfo) {
-        this.userInfo = userInfo;
-        return this;
-    }
-
-    public AccountInfo getAccountInfo() {
-        return accountInfo;
-    }
-
-    public AllInfo setAccountInfo(AccountInfo accountInfo) {
-        this.accountInfo = accountInfo;
-        return this;
-    }
-}

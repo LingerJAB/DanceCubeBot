@@ -1,8 +1,10 @@
 package com.mirai.command;
 
+import com.dancecube.api.AccountInfo;
 import com.dancecube.api.Machine;
 import com.dancecube.api.UserInfo;
 import com.dancecube.image.UserInfoImage;
+import com.dancecube.image.allUserInfos;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
@@ -137,7 +139,7 @@ public class AllCommands {
                     contact.sendMessage("超时啦~ 请重试一下吧！");
                 } else {
                     contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s".formatted(token.getUserId()));
-                    userTokensMap.put(qq, builder.getToken());  // 重复登录只会覆盖新的token
+                    userTokensMap.put(qq, token);  // 重复登录只会覆盖新的token
                     TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
                 }
                 logStatus.remove(qq);
@@ -245,10 +247,12 @@ public class AllCommands {
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 loginDetect(contact, qq);
                 Token token = userTokensMap.get(qq);
-                UserInfo user = UserInfo.get(token);
-                Image image = HttpUtil.getImageFromURL(user.getHeadimgURL(), contact);
+                allUserInfos allInfo = UserInfoImage.getAllInfo(token);
+                UserInfo userInfo = allInfo.getUserInfo();
+                AccountInfo accountInfo = allInfo.getAccountInfo();
+                Image image = HttpUtil.getImageFromURL(userInfo.getHeadimgURL(), contact);
                 //TODO Gold
-                String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n全国排名：%d".formatted(user.getUserName(), user.getTeamName(), user.getMusicScore(), 0, user.getRankNation());
+                String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n战力：%d\n全国排名：%d".formatted(userInfo.getUserName(), userInfo.getTeamName(), userInfo.getMusicScore(), accountInfo.getGold(), userInfo.getLvRatio(), userInfo.getRankNation());
                 contact.sendMessage(image.plus(info));
             }).build();
 
@@ -321,7 +325,7 @@ public class AllCommands {
                 contact.sendMessage(machineListText.toString());
             }).build();
 
-    //    @DeclaredCommand("查看其它个人信息")
+    //todo    @DeclaredCommand("查看其它个人信息")
     public static final ArgsCommand msgOthersInfo = new ArgsCommandBuilder()
             .prefix("看看你的", "康康你的", "看看")
             .form(ArgsCommand.NUMBER)

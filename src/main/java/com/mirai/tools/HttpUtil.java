@@ -30,7 +30,6 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings("unused")
 public final class HttpUtil extends AbstractConfig {
     static String gaodeApiKey;
     static String tencentSecretId;
@@ -188,7 +187,7 @@ public final class HttpUtil extends AbstractConfig {
         OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody requestBody = RequestBody.create(body, mediaType);
-        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).post(requestBody).build();
 
         try {
             return client.newCall(request).execute();
@@ -198,7 +197,6 @@ public final class HttpUtil extends AbstractConfig {
         return null;
     }
 
-    //TODO headers form str
     public static Response httpApiPut(String url, @NotNull Map<String, String> headersMap, Map<String, String> bodyMap) {
         String body = bodyOf(bodyMap);
 
@@ -206,7 +204,7 @@ public final class HttpUtil extends AbstractConfig {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody requestBody = RequestBody.create(body, mediaType);
 
-        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).put(requestBody).build();
         try {
             return client.newCall(request).execute();
         } catch(IOException e) {
@@ -223,13 +221,13 @@ public final class HttpUtil extends AbstractConfig {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody requestBody = RequestBody.create(body, mediaType);
 
-        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).post(requestBody).build();
         return client.newCall(request);
     }
 
     public static Call httpApiCall(String url, @NotNull Map<String, String> headersMap) {
         OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).post(RequestBody.create("", MediaType.parse("application/x-www-form-urlencoded"))).build();
         return client.newCall(request);
     }
 
