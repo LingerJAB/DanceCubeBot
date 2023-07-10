@@ -17,10 +17,12 @@ public class PlainTextHandler {
 
     public static HashSet<RegexCommand> regexCommands = AllCommands.regexCommands;  //所有正则指令
     public static HashSet<ArgsCommand> argsCommands = AllCommands.argsCommands;  //所有参数指令
+    public static HashSet<Long> adminsSet = new HashSet<>();
 
     static {
         // 初始化AllCommands所有指令
         AllCommands.init();
+        adminsSet.add(2862125721L);
     }
 
 
@@ -50,7 +52,6 @@ public class PlainTextHandler {
             }
         });
 
-//TODO
         //执行参数指令
         argsCommands.forEach(command -> {
             if(prefixAndArgs.size()<2) return;
@@ -75,12 +76,16 @@ public class PlainTextHandler {
         long qq = messageEvent.getSender().getId(); // qq不为contact.getId()
         Contact contact = messageEvent.getSubject(); //发送对象
 
-        if(scopes.contains(Scope.GLOBAL)) command.onCall(Scope.GLOBAL, messageEvent, contact, qq, args);
+        if(scopes.contains(Scope.GLOBAL))
+            command.onCall(Scope.GLOBAL, messageEvent, contact, qq, args);
         else if((scopes.contains(Scope.USER) & contact instanceof User))
             command.onCall(Scope.USER, messageEvent, contact, qq, args);
         else if((scopes.contains(Scope.GROUP) & contact instanceof Group))
             command.onCall(Scope.GROUP, messageEvent, contact, qq, args);
+        else if(scopes.contains(Scope.ADMIN) & adminsSet.contains(qq))
+            command.onCall(Scope.ADMIN, messageEvent, contact, qq, args);
     }
+
 
     // 无参指令
     private static void runCommand(MessageEvent messageEvent, AbstractCommand command) {

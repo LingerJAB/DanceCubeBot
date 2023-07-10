@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mirai.tools.HttpUtil;
 import okhttp3.Response;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
@@ -12,8 +13,7 @@ public class Token {
     private final int userId;
     private String accessToken;
     private String refreshToken;
-
-
+    private boolean available = true;
     private long recTime;
 
     public int getUserId() {
@@ -43,8 +43,26 @@ public class Token {
         this.recTime = recTime;
     }
 
+    /**
+     * 仅临时创建
+     */
+    public Token(@Nullable String accessToken) {
+        this.userId = 0;
+        this.accessToken = accessToken;
+    }
+
     public boolean isAvailable() {
-        return System.currentTimeMillis() - recTime<604_800_000;
+        if(!available | accessToken==null | refreshToken==null) return false;
+        Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
+                Map.of("Authorization", getBearerToken()));
+        boolean available = response!=null && response.code()==200;
+        this.available = available;
+        return available;
+    }
+
+    //如果是默认Token(公共token)
+    public boolean isDefault() {
+        return userId==0;
     }
 
     public boolean refresh() {
@@ -55,6 +73,7 @@ public class Token {
      * @param ignoreWaiting 忽略默认等待时间
      */
     public boolean refresh(boolean ignoreWaiting) {
+        if(!available) return false;
         //每refresh间隔为一个星期，防止出错改为4天
         if(!ignoreWaiting && System.currentTimeMillis() - recTime<345_600_000) return false;
         try {
@@ -66,6 +85,7 @@ public class Token {
                 json = JsonParser.parseString(response.body().string()).getAsJsonObject();
                 response.close();
                 if(response.code()!=200) {
+                    available = false;
                     throw new IOException(response.code() + " : ID:" + userId + " msg:" + response.message());
                 } else {
                     accessToken = json.get("access_token").getAsString();
@@ -77,6 +97,7 @@ public class Token {
         } catch(IOException e) {
             System.out.println("# refreshTokenHttp执行bug辣！");
             e.printStackTrace();
+            return false;
         }
         return false;
     }
@@ -93,5 +114,9 @@ public class Token {
                 token时长：%.3f天（大于7天需要重新登录）
                 """)
                 .formatted(userId, accessToken, refreshToken, recTime, (float) (System.currentTimeMillis() - recTime) / 86400_000);
+    }
+
+    public void forceValidity() {
+        this.available = true;
     }
 }

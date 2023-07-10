@@ -11,19 +11,17 @@ public abstract class AbstractCommand {
     MsgHandleable globalOnCall;  //作用效果
     MsgHandleable userOnCall;
     MsgHandleable groupOnCall;
+    MsgHandleable adminOnCall;
 
 
-    protected void setGlobalOnCall(MsgHandleable onCall) {
-        globalOnCall = onCall;
-        userOnCall = onCall;
-        groupOnCall = onCall;
-    }
 
 
     public void onCall(Scope scope, MessageEvent event, Contact contact, long qq, String[] args) {
 
         //不同情况筛选
-        if(scope==Scope.GROUP) {
+        if(scope==Scope.ADMIN) {
+            adminOnCall.handle(event, contact, qq, args);
+        } else if(scope==Scope.GROUP) {
             groupOnCall.handle(event, contact, qq, args);
         } else if(scope==Scope.USER) {
             userOnCall.handle(event, contact, qq, args);
@@ -32,12 +30,23 @@ public abstract class AbstractCommand {
         }
     }
 
+    protected void setGlobalOnCall(MsgHandleable onCall) {
+        globalOnCall = onCall;
+        userOnCall = onCall;
+        groupOnCall = onCall;
+        adminOnCall = onCall;
+    }
+
     protected void setUserOnCall(MsgHandleable onCall) {
         this.userOnCall = onCall;
     }
 
     protected void setGroupOnCall(MsgHandleable onCall) {
         this.groupOnCall = onCall;
+    }
+
+    protected void setAdminOnCall(MsgHandleable onCall) {
+        this.adminOnCall = onCall;
     }
 
     public HashSet<Scope> getScopes() {

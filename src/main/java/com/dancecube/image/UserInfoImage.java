@@ -1,59 +1,62 @@
 package com.dancecube.image;
 
 
-import com.dancecube.api.AccountInfo;
-import com.dancecube.api.UserInfo;
+import com.dancecube.info.AccountInfo;
+import com.dancecube.info.UserInfo;
 import com.dancecube.token.Token;
 import com.freewayso.image.combiner.ImageCombiner;
 import com.freewayso.image.combiner.enums.OutputFormat;
 import com.freewayso.image.combiner.enums.ZoomMode;
+import com.mirai.MiraiBot;
 import com.mirai.config.AbstractConfig;
-import org.jetbrains.annotations.NotNull;
+import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 
 import java.awt.*;
 import java.io.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+//import static com.dancecube.image.AllUserInfos.getAllInfo;
 
 public class UserInfoImage extends AbstractConfig {
     public static InputStream generate(Token token) {
         String linuxBackgroundPathUrl = "file:" + configPath + "Images/Background.png";
 //        String linuxBackgroundPathUrl = "https://i.imgloc.com/2023/04/11/ip37wc.png";
+//        AllUserInfos allInfo = getAllInfo(token);
 
-        allUserInfos allInfo = getAllInfo(token);
-        UserInfo userInfo = allInfo.getUserInfo();
-        AccountInfo accountInfo = allInfo.getAccountInfo();
+        JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
+        UserInfo userInfo;
+        AccountInfo accountInfo;
+        try {
+            Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
+            Future<AccountInfo> accountInfoFuture = scheduler.async(() -> AccountInfo.get(token));
+            userInfo = userInfoFuture.get();
+            accountInfo = accountInfoFuture.get();
+        } catch(ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             ImageCombiner combiner = new ImageCombiner(linuxBackgroundPathUrl, OutputFormat.PNG);
             combiner.addImageElement(userInfo.getHeadimgURL(), 120, 150).setWidth(137).setHeight(137).setZoomMode(ZoomMode.WidthHeight);
-
-            if(userInfo.getHeadimgBoxPath()!=null && !userInfo.getHeadimgBoxPath().equals("")) // 头像框校验
+            if(!userInfo.getHeadimgBoxPath().equals("")) // 头像框校验
                 combiner.addImageElement(userInfo.getHeadimgBoxPath(), 74, 104).setWidth(230).setHeight(230).setZoomMode(ZoomMode.WidthHeight);
 
-            if(userInfo.getTitleUrl()!=null && !userInfo.getTitleUrl().equals("")) // 头衔校验
+            if(!userInfo.getTitleUrl().equals("")) // 头衔校验
                 combiner.addImageElement(userInfo.getTitleUrl(), 108, 300).setWidth(161).setHeight(68).setZoomMode(ZoomMode.WidthHeight);
 
             combiner.addTextElement("%s\n\n战队：%s\n积分：%d\n金币：%d".formatted(userInfo.getUserName(), userInfo.getTeamName(), userInfo.getMusicScore(), accountInfo.getGold()), "得意黑", 36, 293, 137).setAutoBreakLine("\n");//.setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);
-            combiner.addTextElement("战力：%s\n连击率：%.2f%%\n全国排名：%d".formatted(userInfo.getLvRatio(), (float) userInfo.getComboPercent() / 100, userInfo.getRankNation()), "得意黑", 36, 95, 472).setAutoBreakLine("\n");//.setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);
+            combiner.addTextElement("战力：%s\n全连率：%.2f%%\n全国排名：%d".formatted(userInfo.getLvRatio(), (float) userInfo.getComboPercent() / 100, userInfo.getRankNation()), "得意黑", 36, 95, 472).setAutoBreakLine("\n");//.setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);
 
             combiner.combine();
             return combiner.getCombinedImageStream();
         } catch(Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
 
     }
 
-    @NotNull
-    public static allUserInfos getAllInfo(Token token) {
-        allUserInfos allInfo = new allUserInfos();
-        CompletableFuture<allUserInfos> userInfoFuture = CompletableFuture.supplyAsync(() -> allInfo.setUserInfo(UserInfo.get(token)));
-        CompletableFuture<allUserInfos> accountInfoFuture = CompletableFuture.supplyAsync(() -> allInfo.setAccountInfo(AccountInfo.get(token)));
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(accountInfoFuture, userInfoFuture);
-
-        allFutures.join();
-        return allInfo;
-    }
 
 //    @Test
 //    public void test() throws IOException {

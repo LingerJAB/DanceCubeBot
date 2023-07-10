@@ -131,7 +131,7 @@ public final class TokenBuilder extends AbstractConfig {
             // 读取并refresh()
             if(refreshed) userMap.forEach((key, token) -> token.refresh());
         } catch(FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return userMap;
     }

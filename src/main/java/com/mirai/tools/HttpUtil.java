@@ -227,7 +227,7 @@ public final class HttpUtil extends AbstractConfig {
 
     public static Call httpApiCall(String url, @NotNull Map<String, String> headersMap) {
         OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).post(RequestBody.create("", MediaType.parse("application/x-www-form-urlencoded"))).build();
+        Request request = new Request.Builder().url(url).headers(Headers.of(headersMap)).get().build();
         return client.newCall(request);
     }
 

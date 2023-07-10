@@ -1,15 +1,17 @@
 package com.mirai.command;
 
-import com.dancecube.api.AccountInfo;
 import com.dancecube.api.Machine;
-import com.dancecube.api.UserInfo;
+import com.dancecube.api.PlayerMusic;
 import com.dancecube.image.UserInfoImage;
-import com.dancecube.image.allUserInfos;
+import com.dancecube.info.AccountInfo;
+import com.dancecube.info.InfoStatus;
+import com.dancecube.info.UserInfo;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
 import com.mirai.config.UserConfigUtils;
 import com.mirai.tools.HttpUtil;
+import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.Event;
@@ -18,18 +20,17 @@ import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.*;
 import okhttp3.Response;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +41,7 @@ public class AllCommands {
 
     public static HashSet<RegexCommand> regexCommands = new HashSet<>();  //所有正则指令
     public static HashSet<ArgsCommand> argsCommands = new HashSet<>();  //所有参数指令
+    public static Token defaultToken = userTokensMap.get(0L);
 
     // 初始化所有指令
     public static void init() {
@@ -57,6 +59,7 @@ public class AllCommands {
                 }
             }
         }
+
     }
 
     @DeclaredCommand("清空登录")
@@ -100,7 +103,7 @@ public class AllCommands {
     public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
             .regex("个人信息")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = loginDetect(contact, qq);
+                Token token = getToken(contact, qq);
                 if(token==null) return;
                 else if(!token.isAvailable()) {
                     contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
@@ -150,7 +153,7 @@ public class AllCommands {
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
             .regex("机台登录|扫码")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = loginDetect(contact, qq);
+                Token token = getToken(contact, qq);
                 if(token==null) return;
                 MessageChain messageChain = event.getMessage();
                 EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
@@ -172,15 +175,13 @@ public class AllCommands {
                             contact.sendMessage(new QuoteReply((MessageChain) message).plus(new PlainText("没有扫出来！再试一次吧！")));
                             return;
                         }
-                        String url = "https://dancedemo.shenghuayule.com/Dance/api/Machine/AppLogin?qrCode=" + URLEncoder.encode(qrUrl, StandardCharsets.UTF_8);
-                        try(Response response = HttpUtil.httpApi(url, Map.of("Authorization", token.getBearerToken()))) {
-                            //401 404
+                        try(Response response = Machine.qrLogin(token, qrUrl)) {
                             if(response!=null && response.code()==200) {
                                 contact.sendMessage("登录成功辣，快来出勤吧！");
                             } else {
                                 contact.sendMessage("二维码失效了，换一个试试看吧");
                             }
-                        }
+                        }//401 404
                     }
                 } catch(InterruptedException | ExecutionException e) {
                     e.printStackTrace();
@@ -194,10 +195,9 @@ public class AllCommands {
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.USER, (event, contact, qq, args) -> {
-                Token token = loginDetect(contact, qq);
+                Token token = getToken(contact, qq);
                 if(token==null) return;
 
-                String auth = userTokensMap.get(qq).getBearerToken();
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
 
@@ -205,9 +205,7 @@ public class AllCommands {
                 while(matcher.find() & ++i<25) {
                     String code = matcher.group();
                     contact.sendMessage("#%d 小铃在努力兑换 \"%s\" ...".formatted(i, code));
-                    Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/MusicData/GainMusicByCode?code=" + code,
-                            Map.of("Authorization", auth),
-                            null);
+                    Response response = PlayerMusic.gainMusicByCode(token, code);
                     if(response==null) return;
                     if(response.code()==200) {
                         contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
@@ -219,37 +217,44 @@ public class AllCommands {
                 contact.sendMessage("好像都失效了💦💦\n换几个试试吧！");
             })
             .onCall(Scope.GROUP, (event, contact, qq, args) -> {
-                Token token = loginDetect(contact, qq);
+                Token token = getToken(contact, qq);
                 if(token==null) return;
 
-                String auth = userTokensMap.get(qq).getBearerToken();
                 String message = event.getMessage().contentToString();
                 Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
 
                 if(matcher.find()) {
                     String code = matcher.group();
                     contact.sendMessage("检测到了兑换码！小铃在努力兑换 \"%s\" ...".formatted(code));
-                    Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/MusicData/GainMusicByCode?code=" + code,
-                            Map.of("Authorization", auth),
-                            null);
-                    if(response==null) return;
-                    if(response.code()==200) {
-                        contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
-                        return;
+                    try(Response response = PlayerMusic.gainMusicByCode(token, code)) {
+                        if(response==null) return;
+                        if(response.code()==200) {
+                            contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
+                            return;
+                        }
                     }
                 }
                 contact.sendMessage("好像失效了💦💦\n换一个试试吧！");
             }).build();
 
-    @DeclaredCommand("个人信息（旧版）")
+    //    @DeclaredCommand("个人信息（旧版）")
     public static final RegexCommand msgUserInfoLegacy = new RegexCommandBuilder()
             .regex("个人信息-l")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                loginDetect(contact, qq);
+                getToken(contact, qq);
                 Token token = userTokensMap.get(qq);
-                allUserInfos allInfo = UserInfoImage.getAllInfo(token);
-                UserInfo userInfo = allInfo.getUserInfo();
-                AccountInfo accountInfo = allInfo.getAccountInfo();
+
+
+                JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
+                UserInfo userInfo;
+                AccountInfo accountInfo;
+                try {
+                    userInfo = scheduler.async(() -> UserInfo.get(token)).get();
+                    accountInfo = scheduler.async(() -> AccountInfo.get(token)).get();
+                } catch(ExecutionException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
                 Image image = HttpUtil.getImageFromURL(userInfo.getHeadimgURL(), contact);
                 //TODO Gold
                 String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n战力：%d\n全国排名：%d".formatted(userInfo.getUserName(), userInfo.getTeamName(), userInfo.getMusicScore(), accountInfo.getGold(), userInfo.getLvRatio(), userInfo.getRankNation());
@@ -301,13 +306,25 @@ public class AllCommands {
                 String region = args[0];
                 StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
                 List<Machine> list = Machine.getMachineList(region);
-                for(int i = 0; i<5; i++) {
+                if(list.size()==0) {
+                    contact.sendMessage("在“" + region + "”似乎没有找到舞立方欸...");
+                    return;
+                }
+
+                int maxCount = Math.min(list.size(), 5);
+                for(int i = 0; i<maxCount; i++) {
                     Machine machine = list.get(i);
-                    String online = machine.Online ? "🔵在线" : "🔴离线";
-                    String singleInfo = "店名：%s %s\n地址：%s\n".formatted(machine.PlaceName, online, machine.Address);
+                    String show = machine.isShow() ? "[秀]" : "";
+                    String online = machine.isOnline() ? "🔵在线" : "🔴离线";
+                    String singleInfo = "店名：%s%s %s\n地址：%s\n"
+                            .formatted(show, machine.getPlaceName(), online, machine.getAddress());
                     machineListText.append("\n").append(singleInfo);
                 }
-                contact.sendMessage(machineListText + "⭐刷屏哒咩！群聊只显示5条，更多列表请私聊喽~");
+                if(list.size()>5) {
+                    contact.sendMessage(machineListText + "⭐刷屏哒咩！群聊只显示5条，更多列表请私聊~");
+                } else {
+                    contact.sendMessage(machineListText.toString());
+                }
             })
             .onCall(Scope.USER, (event, contact, qq, args) -> {
                 if(args==null) return;
@@ -315,35 +332,87 @@ public class AllCommands {
                 String region = args[0];
                 StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
                 List<Machine> list = Machine.getMachineList(region);
-                if(list==null) return;
+                if(list.size()==0) {
+                    contact.sendMessage("似乎没有找到舞立方欸...");
+                    return;
+                }
 
                 for(Machine machine : list) {
-                    String online = machine.Online ? "🔵在线" : "🔴离线";
-                    String singleInfo = "店名：%s %s\n地址：%s\n".formatted(machine.PlaceName, online, machine.Address);
+                    String show = machine.isShow() ? "[秀]" : "";
+                    String online = machine.isOnline() ? "🔵在线" : "🔴离线";
+                    String singleInfo = "店名：%s%s %s\n地址：%s\n".formatted(show, machine.getPlaceName(), online, machine.getAddress());
                     machineListText.append("\n").append(singleInfo);
                 }
                 contact.sendMessage(machineListText.toString());
             }).build();
 
-    //todo    @DeclaredCommand("查看其它个人信息")
+    @DeclaredCommand("查看其它个人信息")
     public static final ArgsCommand msgOthersInfo = new ArgsCommandBuilder()
             .prefix("看看你的", "康康你的", "看看")
             .form(ArgsCommand.NUMBER)
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 if(args==null) return;
+                long num = Long.parseLong(args[0]);
+                Token token = getTokenOrDefault(contact, qq, null);
+                if(token==null) {
+                    contact.sendMessage("Token null!!");
+                    return;
+                }
 
-                String num = args[0];
-                if(num.length()<8 && num.length()>5) { //舞立方ID
+                //判断QQ/ID
+                UserInfo userInfo = UserInfo.getNull();
+                if(num<99_999_999 && num>99_99) { //舞立方ID
+                    userInfo = UserInfo.get(token, (int) num);
+                } else if(userTokensMap.containsKey(num) && num>999_999) { //QQ
+                    UserInfo.get(token, userTokensMap.get(num).getUserId());
+                }
 
-                } else if(num.length()>7) { //QQ
-                    Token token = userTokensMap.get(Long.parseLong(num));
-                    token.getUserId();
+                //Todo 发送信息
+                InfoStatus status = userInfo.getStatus();
+                switch(status) {
+                    case PRIVATE -> contact.sendMessage("对方设置了隐私了...");
+                    case NONEXISTENT -> contact.sendMessage("id不存在!");
+                    default -> contact.sendMessage(userInfo.getUserName() + "\ncity:" + userInfo.getCityName());
+                }
+
+            }).build();
+
+    public static final RegexCommand setDefaultToken = new RegexCommandBuilder()
+            .regex("#addDefaultToken")
+            .onCall(Scope.ADMIN, (event, contact, qq, args) -> {
+                contact.sendMessage("请发送Bearer_Token（无bearer前缀）");
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
+                CompletableFuture<MessageEvent> future = new CompletableFuture<>();
+                channel.subscribeOnce(MessageEvent.class, future::complete);
+
+                String accessToken = null;
+                String refreshToken = null;
+                try {
+                    accessToken = future.get(1, TimeUnit.MINUTES).getMessage().contentToString();
+
+                    contact.sendMessage("请发送Refresh_Token");
+                    channel.subscribeOnce(MessageEvent.class, future::complete);
+                    refreshToken = future.get(1, TimeUnit.MINUTES).getMessage().contentToString();
+                } catch(InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                } catch(TimeoutException e) {
+                    e.printStackTrace();
+                    contact.sendMessage("超时了，请重新发送");
+                }
+                Token token = new Token(0, accessToken, refreshToken, 0);
+                if(token.isAvailable()) {
+                    defaultToken = token;
+                    userTokensMap.put(0L, token);
+                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
+                    contact.sendMessage("默认Token设置成功：\n\n" + defaultToken);
+                } else {
+                    contact.sendMessage("默认Token设置失败：已无效");
                 }
             }).build();
 
 
     /////////////////////////////////////////////////////////////////////////////////
-    public static Token loginDetect(Contact contact, Long qq) {
+    public static Token getToken(Contact contact, Long qq) {
         Token token = userTokensMap.get(qq);
         if(token==null) {
             // 登录检测
@@ -353,4 +422,22 @@ public class AllCommands {
         }
         return token;
     }
+
+    //TODO 先重写UserInfo & AccountInfo  (UserId==0)
+    //有了onNull就不要return null了吧...如何处理呢？
+    public static Token getTokenOrDefault(Contact contact, long qq, @Nullable BiConsumer<Contact, Long> onNull) {
+        Token token = userTokensMap.get(qq);
+        // 默认返回备份
+        if(token!=null) {
+            if(token.isAvailable()) return token; //默认token有效性
+                //返回默认token 默认的都null那就登录吧 :(
+            else if(defaultToken.isAvailable()) return defaultToken;
+        }
+
+        if(onNull!=null) onNull.accept(contact, qq);
+
+        //没有登录（本地保存记录）就 onNull.accept();
+        return null;
+    }
+
 }

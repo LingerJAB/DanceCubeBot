@@ -1,4 +1,4 @@
-package com.dancecube.api;
+package com.dancecube.info;
 
 import com.dancecube.token.Token;
 import com.google.gson.FieldNamingPolicy;
@@ -27,6 +27,7 @@ public class AccountInfo {
     public static AccountInfo get(Token token) {
         String accountInfoJson = "";
         Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", token.getBearerToken()));
+
         try {
             Response response = call.execute();
             accountInfoJson = response.body().string();
@@ -42,4 +43,11 @@ public class AccountInfo {
         return gson.fromJson(accountInfoJson, AccountInfo.class);
     }
 
+    @Override
+    public String toString() {
+        return "AccountInfo{" +
+                "userID=" + userID +
+                ", gold=" + gold +
+                '}';
+    }
 }

@@ -13,7 +13,7 @@ import net.mamoe.mirai.message.data.PlainText;
 
 import java.util.Map;
 
-import static com.mirai.command.AllCommands.loginDetect;
+import static com.mirai.command.AllCommands.getToken;
 
 // 不过滤通道
 public class MainHandler extends AbstractConfig {
@@ -66,7 +66,7 @@ public class MainHandler extends AbstractConfig {
 
     // #token 高级
     public static void showToken(Contact contact, long qq) {
-        Token token = loginDetect(contact, qq);
+        Token token = getToken(contact, qq);
         if(token==null) return;
         if(contact instanceof Group) {
             contact.sendMessage("私聊才能看的辣！");
@@ -76,7 +76,7 @@ public class MainHandler extends AbstractConfig {
     }
 
     public static void refreshToken(Contact contact, long qq) {
-        Token token = loginDetect(contact, qq);
+        Token token = getToken(contact, qq);
         if(token==null) return;
         if(contact instanceof Group) {
             contact.sendMessage("私聊才能用的辣！");

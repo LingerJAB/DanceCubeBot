@@ -21,10 +21,15 @@ public abstract class AbstractConfig {
         try {
             linuxRootPath = new File("..").getCanonicalPath();
             windowsConfigPath = new File(".").getCanonicalPath() + "/DcConfig/";
+
+//            configPath = new File(".").getCanonicalPath() + "/DcConfig/";
             configPath = linuxRootPath + "/DcConfig/";
         } catch(IOException e) {
             System.out.println("#DcCofig 读取出Bug辣！");
             e.printStackTrace();
         }
+
+        //Todo 默认Token IO
+        userTokensMap.put(0L, new Token(null));
     }
 }

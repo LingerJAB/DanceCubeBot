@@ -20,13 +20,14 @@ public class RegexCommandBuilder {
 
     public RegexCommandBuilder onCall(Scope scope, @NotNull MsgHandleable onCall) {
         command.addScope(scope);
+
         if(scope==Scope.GLOBAL) {
-            command.setGlobalOnCall(onCall);
+            command.setUserOnCall(onCall);
         } else {
-            if(scope==Scope.USER) {
-                command.setUserOnCall(onCall);
-            } else if(scope==Scope.GROUP) {
-                command.setGroupOnCall(onCall);
+            switch(scope) {
+                case USER -> command.setUserOnCall(onCall);
+                case GROUP -> command.setGroupOnCall(onCall);
+                case ADMIN -> command.setAdminOnCall(onCall);
             }
         }
         return this;

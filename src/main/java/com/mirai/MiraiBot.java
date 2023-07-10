@@ -3,6 +3,7 @@ package com.mirai;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.event.MainHandler;
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
+import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescriptionBuilder;
 import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.EventChannel;
@@ -23,12 +24,15 @@ public final class MiraiBot extends JavaPlugin {
                 .name("MiraiBot")
                 .author("Lin")
                 .build());
+
     }
 
     @Override
     public void onEnable() {
         getLogger().info("Plugin loaded!");
-        EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE).context(this.getCoroutineContext());
+        EventChannel<Event> channel = GlobalEventChannel.INSTANCE
+                .parentScope(MiraiBot.INSTANCE)
+                .context(this.getCoroutineContext());
 
         //定时器
         refreshTokensTimer();
@@ -39,17 +43,23 @@ public final class MiraiBot extends JavaPlugin {
 
     }
 
-    public static void refreshTokensTimer() {
+
+    public void refreshTokensTimer() {
         long period = 86400 * 500; //半天
 //        long period = 5000; //5s
 
+        JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
         String path = configPath + "UserTokens.json";
         userTokensMap = TokenBuilder.tokensFromFile(path);
 
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                userTokensMap.forEach((qq, token) -> token.refresh(true));
+                userTokensMap.forEach((qq, token) -> {
+                    scheduler.async(() -> {
+                        if(token.isAvailable()) token.refresh(true);
+                    });
+                });
                 TokenBuilder.tokensToFile(userTokensMap, path);
                 System.out.println(System.currentTimeMillis() + ":今日已刷新token");
             }
@@ -58,4 +68,3 @@ public final class MiraiBot extends JavaPlugin {
         new Timer().schedule(task, 5000, period);
     }
 }
-

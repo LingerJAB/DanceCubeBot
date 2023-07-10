@@ -23,10 +23,10 @@ public class ArgsCommandBuilder {
         if(scope==Scope.GLOBAL) {
             command.setGlobalOnCall(onCall);
         } else {
-            if(scope==Scope.USER) {
-                command.setUserOnCall(onCall);
-            } else if(scope==Scope.GROUP) {
-                command.setGroupOnCall(onCall);
+            switch(scope) {
+                case USER -> command.setUserOnCall(onCall);
+                case GROUP -> command.setGroupOnCall(onCall);
+                case ADMIN -> command.setAdminOnCall(onCall);
             }
         }
         return this;
