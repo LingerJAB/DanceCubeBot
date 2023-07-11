@@ -46,6 +46,14 @@ public class Token {
     /**
      * 仅临时创建
      */
+    public Token(int id, @Nullable String accessToken) {
+        this.userId = id;
+        this.accessToken = accessToken;
+    }
+
+    /**
+     * 仅临时创建
+     */
     public Token(@Nullable String accessToken) {
         this.userId = 0;
         this.accessToken = accessToken;

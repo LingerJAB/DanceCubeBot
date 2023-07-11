@@ -2,31 +2,31 @@ package com.dancecube.image;
 
 
 import com.dancecube.info.AccountInfo;
+import com.dancecube.info.ReplyItem;
 import com.dancecube.info.UserInfo;
+import com.dancecube.ratio.image.ImageDrawer;
+import com.dancecube.ratio.image.TextEffect;
 import com.dancecube.token.Token;
-import com.freewayso.image.combiner.ImageCombiner;
-import com.freewayso.image.combiner.enums.OutputFormat;
-import com.freewayso.image.combiner.enums.ZoomMode;
 import com.mirai.MiraiBot;
 import com.mirai.config.AbstractConfig;
 import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
+import org.junit.Test;
 
 import java.awt.*;
 import java.io.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-//import static com.dancecube.image.AllUserInfos.getAllInfo;
 
 public class UserInfoImage extends AbstractConfig {
     public static InputStream generate(Token token) {
-        String linuxBackgroundPathUrl = "file:" + configPath + "Images/Background.png";
-//        String linuxBackgroundPathUrl = "https://i.imgloc.com/2023/04/11/ip37wc.png";
-//        AllUserInfos allInfo = getAllInfo(token);
+        String bgPath = "file:" + configPath + "Images/Background.png";
+
+        UserInfo userInfo = UserInfo.get(token);
+        AccountInfo accountInfo = AccountInfo.get(token);
+        ReplyItem replyItem = ReplyItem.get(token);
 
         JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
-        UserInfo userInfo;
-        AccountInfo accountInfo;
         try {
             Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
             Future<AccountInfo> accountInfoFuture = scheduler.async(() -> AccountInfo.get(token));
@@ -36,43 +36,46 @@ public class UserInfoImage extends AbstractConfig {
             throw new RuntimeException(e);
         }
 
-        try {
-            ImageCombiner combiner = new ImageCombiner(linuxBackgroundPathUrl, OutputFormat.PNG);
-            combiner.addImageElement(userInfo.getHeadimgURL(), 120, 150).setWidth(137).setHeight(137).setZoomMode(ZoomMode.WidthHeight);
-            if(!userInfo.getHeadimgBoxPath().equals("")) // 头像框校验
-                combiner.addImageElement(userInfo.getHeadimgBoxPath(), 74, 104).setWidth(230).setHeight(230).setZoomMode(ZoomMode.WidthHeight);
+        ImageDrawer drawer = new ImageDrawer(bgPath);
+        drawer.antiAliasing();
 
-            if(!userInfo.getTitleUrl().equals("")) // 头衔校验
-                combiner.addImageElement(userInfo.getTitleUrl(), 108, 300).setWidth(161).setHeight(68).setZoomMode(ZoomMode.WidthHeight);
+        drawer.drawImage(ImageDrawer.read(userInfo.getHeadimgURL()), 120, 150, 137, 137);
 
-            combiner.addTextElement("%s\n\n战队：%s\n积分：%d\n金币：%d".formatted(userInfo.getUserName(), userInfo.getTeamName(), userInfo.getMusicScore(), accountInfo.getGold()), "得意黑", 36, 293, 137).setAutoBreakLine("\n");//.setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);
-            combiner.addTextElement("战力：%s\n全连率：%.2f%%\n全国排名：%d".formatted(userInfo.getLvRatio(), (float) userInfo.getComboPercent() / 100, userInfo.getRankNation()), "得意黑", 36, 95, 472).setAutoBreakLine("\n");//.setBreakLineSplitter("\n").setAutoBreakLine(168, 10, 40, LineAlign.Left);
+        if(!userInfo.getHeadimgBoxPath().equals("")) // 头像框校验
+            drawer.drawImage(ImageDrawer.read(userInfo.getHeadimgBoxPath()), 74, 104, 230, 230);
+        if(!userInfo.getTitleUrl().equals("")) // 头衔校验
+            drawer.drawImage(ImageDrawer.read(userInfo.getTitleUrl()), 108, 300, 161, 68);
 
-            combiner.combine();
-            return combiner.getCombinedImageStream();
-        } catch(Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+        Font font = new Font("得意黑", Font.PLAIN, 36);
+        Font font2 = new Font("得意黑", Font.PLAIN, 20);
+        TextEffect effect = new TextEffect(null, 0);
+        drawer.font(font)
+                .drawText("%s\n\n战队：%s\n积分：%d\n金币：%d"
+                        .formatted(userInfo.getUserName(),
+                                userInfo.getTeamName(),
+                                userInfo.getMusicScore(),
+                                accountInfo.getGold()), 293, 137, effect)
+                .drawText("战力：%s\n全连率：%.2f%%\n全国排名：%d\n游玩次数：%d"
+                        .formatted(userInfo.getLvRatio(),
+                                (float) userInfo.getComboPercent() / 100,
+                                userInfo.getRankNation(),
+                                replyItem.getPlayedTimes()), 106, 472, effect)
+                .font(font2)
+                .drawText("ID：" + userInfo.getUserID(), 293, 173)
+                .dispose();
+//        drawer.save("PNG", new File("C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png"));
 
+        return drawer.getImageStream("PNG");
     }
 
+    @Test
+    public void test() throws IOException {
+        Token token = new Token(939088, "O2fxf-_RBrEukJTwdN4UrbMWg8ECGN-JYUF46TWTSj47uxc2QICsiHvDIqBl1F79DwLUN2os3ZE-itHE70ukkNQG2AV6gbE_DI8pEhD1hbYQPOQqEgunIN4mOrFvGTcGJqptpdnJE876GfrCjWPoHxocfVr7ukEyS7CO5kSKA0G38e6TWfhjiMfKVLHJZOjGefE3rh8zPA6bqHLHoHNFq9Zybu4wwUc63CLBEgxOjnztN9BFgUZCxaZn260iVcur3sIvYXCwnBal4rbeTnTS15rL3JHIUszLT-JKzJJU7FxPlmLMeWCAvhAwizgkOj9CZtVaj8gX34riQmjKVP1RDcQmcL0YiNzdHnfyke5RiUwhjaKOIKpGgMVWMD9xKLeP");
+        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
+        saveImg(generate(token), path);
+    }
 
-//    @Test
-//    public void test() throws IOException {
-//        int id = 939088;
-//        String accKey = "81BJ6GM2FKqu-WS5Ii7C49ABsbeb7ThCHZ23QwgcaZCsvr5mnDgJJD62WWuEKHneq8IKRkUJGkPOixRoBCI_JeKqsdny8cqpSdOpDOlEnJiQLZNiqbx0B4wzOX5F3xxWrHQi5bGG3ogPEL_o-1KPdI903EoHsJJ3OPrXkNHfQ7q7dKo-aNZ-lu1GcQ_tIB-ZcXfjJIh_19t8t6YiJAiNb1-l4FIfcRsmBKGHDjDE7Je3o_JcUuljkz8-Xauy4QXMPLJJ_7hT5MsVF8SkKQmr8hEI-DMESGAleu5kGC6FWFiigclEw5Q3m4jZ1a7JR9M51pcnsPukIDbmNRm_SbKirDUTt_OAl3RnZZuMkTQg6O1cQRsi1g9fBA2TpsINOGfE-3kHpZvh2_db8bWk75ZeNl_gSf2q5_Aj6Ehr9-5HGSPipoUpZlDIA6W8TT0fq1gNFodrX4H3riiOuEZorNXrCyDJW4yZ4wymXtU4B2BUn9hCkpf4_g0PFGJ8Mgn30mNk7jVk_3RB5BeRzsETNrl5czk5YofYy5_9JV5alB77xAiCJPLiQZXtXKXhzxYaT3WIr1yNXSd_xb8wGjHSZYL-f68gJMwamiQBBOBxAJQ8g7R9sHYzwfCVlKI2fGMR6SMunm-1089Dmt-XLRRQClhkB3NKYlhhji6jfFfKkxd30-QIITXgq48RdWdvxE6ykDJvs6HbhNh0eXzUa4hWJuQXOW8MVNOzqYWOdJ7pYZQ0YySy39KQzYHjswdioRxKDdWdm4Ly2ItwxA-KYbWW2UXk_xsbxYAlCpV7H-D-Fen0_BuzdEHIphdF10Y6RyZst-_0kUwCwZ3LYaPoRHnj8s2I24EnlgrzHlwv5HLT0Gg0NojRug56SmyFN3oN4ie8Ypxc3sAMuZt3DondyTGAUmeXKIzTcj6Yw1obUjMZfD3YfsuX8TKlPh9GNIKOytNqbrTiQUxkBEsW_gIexOIE2ir5v373LmuB7CnJ2XVVkAgoOTA";
-//        Token token = new Token(id, accKey, "", 0L);
-//
-//        UserInfo userInfo = UserInfo.get(token);
-//        System.out.println(userInfo);
-//
-//        InputStream stream = generate(token);
-//        saveImg(stream);
-//        System.out.println(System.currentTimeMillis());
-//    }
-
-    public static void saveImg(InputStream stream) throws IOException {
+    public static void saveImg(InputStream stream, String path) throws IOException {
 
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         //创建一个Buffer字符串
@@ -91,7 +94,7 @@ public class UserInfoImage extends AbstractConfig {
         //得到图片的二进制数据，以二进制封装得到数据，具有通用性
         byte[] data = outStream.toByteArray();
         //new一个文件对象用来保存图片，默认保存当前工程根目录
-        File imageFile = new File("C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png");
+        File imageFile = new File(path);
         //创建输出流
         FileOutputStream fileOutStream = new FileOutputStream(imageFile);
         //写入数据

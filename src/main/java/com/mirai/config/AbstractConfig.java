@@ -32,6 +32,6 @@ public abstract class AbstractConfig {
         }
 
         //Todo 默认Token IO
-        userTokensMap.put(0L, new Token(null));
+        userTokensMap.put(0L, new Token(0, null));
     }
 }

@@ -8,69 +8,90 @@ import com.dancecube.ratio.rankingMusic.RankMusicInfo;
 import com.dancecube.ratio.rankingMusic.RecentMusicInfo;
 import com.dancecube.ratio.rankingMusic.SingleRank;
 import com.dancecube.token.Token;
+import org.junit.Test;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.dancecube.ratio.image.ImageDrawer.printAvailableFonts;
-
-public class ImageGenerator {
-    public static Token token = new Token(939088,
-            "IQN0ollrA8xdLUBDgrM3iG0MrDhR5IZVq0fxI6hN-aEiSQibwTSttky-fT_ruwv97gKANnSuPJrUoXDFnEWPwjuOLgSbX5rsw2ZnD1PRnzVla68u_oG0CVAkUmsS6Kp62nHVVet6F9wRnWRbsPfO7wnn5YmkMx1oz_wa0RVZqH-q2J4eUEjunPmjqLxTk_SU5DmoraDOq3XLq2rWM045Uci712ictoPKBG6v4kbWqiL5Kxe8TNAbgAoDpz8NYG_p8h6MfFyAAPpL_3twplsY2-40U38kEWJdDbfpvHYgdITLAXXMmByeaF8jsgEH6EzS1w_TFbJPtcs7Euz6mkb93eVsUZE3_vHYTd6HxXuXsVUrUMDaQs9-3m5DsaYrF8Je",
-            "",
-            9999);
-    public static UserInfo info = UserInfo.get(token);
-    public static String path = "C:\\Users\\Lin\\IdeaProjects\\LvRatioCalculator\\src\\Materials\\";
-    public static String officialImgPath = "C:\\Users\\Lin\\IdeaProjects\\LvRatioCalculator\\src\\all\\officialImg\\";
+public class UserRatioImage {
+    public static String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\src\\Materials\\";
+    public static String officialImgPath = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\src\\all\\officialImg\\";
     public static File defaultImg = new File(officialImgPath + "default.png");
 
-    public static void main(String... args) throws Exception {
-
+    public static InputStream generate(Token token, int id) {
+        UserInfo info = UserInfo.get(token, id);
         System.out.println(new File(path + "Card1.png").exists());
 
-        BufferedImage card1 = ImageIO.read(new File(path + "Card1.png"));
-        BufferedImage card2 = ImageIO.read(new File(path + "Card2.png"));
-        BufferedImage card3 = ImageIO.read(new File(path + "Card3.png"));
-        BufferedImage lvSSS = ImageIO.read(new File(path + "SSS.png"));
-        BufferedImage lvSS = ImageIO.read(new File(path + "SS.png"));
-        BufferedImage lvS = ImageIO.read(new File(path + "S.png"));
-        BufferedImage lvA = ImageIO.read(new File(path + "A.png"));
-        BufferedImage lvB = ImageIO.read(new File(path + "B.png"));
-        BufferedImage lvC = ImageIO.read(new File(path + "C.png"));
-        BufferedImage lvD = ImageIO.read(new File(path + "D.png"));
-//        BufferedImage cover = ImageIO.read(new File("C:\\Users\\Lin\\IdeaProjects\\LvRatioCalculator\\src\\all\\officialImg\\484.jpg"));
+        ImageDrawer drawer;
+        BufferedImage card1;
+        BufferedImage card2;
+        BufferedImage card3;
+        BufferedImage lvSSS;
+        BufferedImage lvSS;
+        BufferedImage lvS;
+        BufferedImage lvA;
+        BufferedImage lvB;
+        BufferedImage lvC;
+        BufferedImage lvD;
+        try {
+            card1 = ImageIO.read(new File(path + "Card1.png"));
+            card2 = ImageIO.read(new File(path + "Card2.png"));
+            card3 = ImageIO.read(new File(path + "Card3.png"));
+            lvSSS = ImageIO.read(new File(path + "SSS.png"));
+            lvSS = ImageIO.read(new File(path + "SS.png"));
+            lvS = ImageIO.read(new File(path + "S.png"));
+            lvA = ImageIO.read(new File(path + "A.png"));
+            lvB = ImageIO.read(new File(path + "B.png"));
+            lvC = ImageIO.read(new File(path + "C.png"));
+            lvD = ImageIO.read(new File(path + "D.png"));
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+        BufferedImage avatar;
+        BufferedImage box;
+        BufferedImage title;
+        BufferedImage backgroundImg;
 
-        BufferedImage avatar = ImageIO.read(new URL(info.getHeadimgURL()));
-        BufferedImage box = ImageIO.read(new URL(info.getHeadimgBoxPath()));
-        BufferedImage title = ImageIO.read(new URL(info.getTitleUrl()));
+        try {
+            backgroundImg = ImageIO.read(new File(path + "Main.png"));
+            drawer = new ImageDrawer(backgroundImg);
+            drawer.antiAliasing(); // 抗锯齿
 
-        BufferedImage backgroundImg = ImageIO.read(new File(path + "Main.png"));
-        ImageDrawer drawer = new ImageDrawer(backgroundImg);
-//        BufferedImage resultImg = ImageIO.read(new File(path + "result.png"));
+            // 个人信息 头像/头衔
+            avatar = ImageIO.read(new URL(info.getHeadimgURL()));
+            drawer.drawImage(avatar, 34, 180, 174, 174);
 
-        // 个人信息 头像/头衔
-        drawer.drawImage(avatar, 34, 180, 174, 174)
-                .drawImage(box, -24, 122, 290, 290)
-                .drawImage(title, 28, 373, 186, 79);
+            if(!info.getHeadimgBoxPath().equals("")) {
+                box = ImageIO.read(new URL(info.getHeadimgBoxPath()));
+                drawer.drawImage(box, -24, 122, 290, 290);
+            }
+            if(!info.getTitleUrl().equals("")) {
+                title = ImageIO.read(new URL(info.getTitleUrl()));
+                drawer.drawImage(title, 28, 373, 186, 79);
+            }
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        // 个人信息 文字
         // TODO 段位
         String text = """
-                是铃酱呐~
+                %s
 
                 战队：%s
                 排名：%d
-                战力：%d""".formatted(info.getTeamName(), info.getRankNation(), info.getLvRatio());
+                战力：%d""".formatted(info.getUserName(), info.getTeamName(), info.getRankNation(), info.getLvRatio());
         Font font = new Font("得意黑", Font.PLAIN, 45);
         drawer.color(Color.BLACK)
                 .font(font)
-                .drawText(text, 245, 189, new textEffect(null, 0));
+                .drawText(text, 245, 167, new TextEffect(null, 0));
 
         // B15
 
@@ -82,7 +103,6 @@ public class ImageGenerator {
         Font scoreFont = new Font("庞门正道标题体", Font.PLAIN, 52);
         Font infoFont = new Font("庞门正道标题体", Font.PLAIN, 15);
         Font levelFont = new Font("庞门正道标题体", Font.PLAIN, 23);
-        drawer.antiAliasing(); // 抗锯齿
         for(int row = 0; row<5; row++) { //列
             for(int col = 0; col<3; col++, index++) { //行
                 int dx2 = col * dx;
@@ -106,12 +126,12 @@ public class ImageGenerator {
                     default -> lvD;
                 };
                 imageEffect effect = new imageEffect(35, 35);
-                drawer.drawImage(cover, 15 + dx2, 620 + dy2, 130, 158, effect)
+                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
                         .drawImage(card, 15 + dx2, 620 + dy2)
                         .drawImage(grade, 285 + dx2, 715 + dy2)
-                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 650 + dy2, new textEffect(220, null))
+                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
                         .font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 658 + dy2)
-                        .font(infoFont).drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 740 + dy2, new textEffect(null, 1))
+                        .font(infoFont).drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 3))
                         .font(levelFont, Color.WHITE).drawText(String.valueOf(bestInfo.getLevel()), 17 + dx2, 749 + dy2);
             }
         }
@@ -119,7 +139,6 @@ public class ImageGenerator {
         ArrayList<RecentMusicInfo> allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
         List<RecentMusicInfo> recent15List = LvRatioCalculator.getSubRecent15List(allRecentList);
         index = 0;
-        drawer.antiAliasing(); // 抗锯齿
         for(int row = 0; row<5; row++) { //列
             for(int col = 0; col<3; col++, index++) { //行
                 int dx2 = col * dx;
@@ -130,6 +149,8 @@ public class ImageGenerator {
                     case 0 -> card1;
                     case 1 -> card2;
                     case 2 -> card3;
+                    //Todo Unexpected value: -1
+                    case -1 -> card3;
                     default -> throw new IllegalStateException("Unexpected value: " + musicInfo.getDifficulty());
                 };
                 BufferedImage grade = switch(musicInfo.getGrade()) {
@@ -142,40 +163,33 @@ public class ImageGenerator {
                     default -> lvD;
                 };
                 imageEffect effect = new imageEffect(35, 35);
-                drawer.drawImage(cover, 15 + dx2, 620 + dy2, 130, 158, effect) //y+1065
+                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
                         .drawImage(card, 15 + dx2, 620 + dy2)
                         .drawImage(grade, 285 + dx2, 715 + dy2)
-                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 650 + dy2, new textEffect(220, null))
+                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
                         .font(scoreFont).drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 658 + dy2)
-                        .font(infoFont).drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()), 230 + dx2, 740 + dy2, new textEffect(null, 1))
+                        .font(infoFont).drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 3))
                         .font(levelFont, Color.WHITE).drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 749 + dy2);
             }
         }
 
         drawer.dispose();
+//        drawer.save("PNG", new File(path + "result.png"));
 
-
-        Graphics2D graphics = drawer.getGraphics();
-
-        drawer.save("PNG", new File(path + "result.png"));
-
+        return drawer.getImageStream("PNG");
     }
 
-
-    public void test() throws Exception {
-        printAvailableFonts();
-    }
-
-    public static ArrayList<BufferedImage> getRankCovers(Token token) {
-        ArrayList<RankMusicInfo> allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-        List<RankMusicInfo> rank15List = LvRatioCalculator.getSubRank15List(allRankList);
-        ArrayList<BufferedImage> covers = new ArrayList<>();
-        for(RankMusicInfo musicInfo : rank15List) {
-            BufferedImage file = getCover(musicInfo.getId());
-            covers.add((file));
+    @Test
+    public void test() {
+        Token token = new Token(660997, "89ZHSafR_BM199Q5ox3jqUeQv4YPeV1_A8aeSl-D_GqJ0V0uqHE0AxFhqvD46nyOLoCVHrPbVwZkB7mz814DJkvUIsgZrTb-BZrfEuBLd_iz2tDtSr_i71La1U6MKF-U7Ccv4d3ocjwg-Pr07R4lOAKJlT7pqMDTcTaFnYLe6xnmHyQN6kTNzNhlKL3w6SSZub2XHxY8GgxTiXRtDaGXSrk31-ZOBAgPSW3VZ4fEs6NdsMfLo3OwQEIH1cynDBRGUnm1QashCBCSq6glewdiB05Axt3vXqNzsy2TBoqDZIpZzlMCasNM963v6I8wpwBv9aMBp_ic_YdgjWwefuF57pHgPRC0dfC6EJ-NbRifAFCNPVVAFiN32Hx5e5AWKWDR");
+        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
+        try {
+            ImageIO.write(ImageIO.read(generate(token, 660997)), "PNG", new FileOutputStream(path));
+        } catch(IOException e) {
+            throw new RuntimeException(e);
         }
-        return covers;
     }
+
 
     public static BufferedImage getCover(int id) {
         if(Officials.OFFICIAL_ID.contains(id)) {

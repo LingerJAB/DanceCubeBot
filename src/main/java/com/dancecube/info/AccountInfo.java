@@ -25,11 +25,11 @@ public class AccountInfo {
     private int gold;
 
     public static AccountInfo get(Token token) {
-        String accountInfoJson = "";
+        String accountInfoJson;
         Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetAccountInfo?userId=" + token.getUserId(), Map.of("Authorization", token.getBearerToken()));
 
-        try {
-            Response response = call.execute();
+        try(Response response = call.execute()) {
+//            Response response = call.execute();
             accountInfoJson = response.body().string();
         } catch(IOException e) {
             throw new RuntimeException(e);

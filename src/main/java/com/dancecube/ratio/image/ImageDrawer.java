@@ -13,12 +13,14 @@ public class ImageDrawer {
     public ImageDrawer(BufferedImage image) {
         originImage = image;
         graphics = originImage.createGraphics();
+        graphics.setColor(Color.BLACK);
     }
 
     public ImageDrawer(File file) {
         try {
             originImage = ImageIO.read(new FileInputStream(file));
             graphics = originImage.createGraphics();
+            graphics.setColor(Color.BLACK);
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
@@ -31,6 +33,7 @@ public class ImageDrawer {
             throw new RuntimeException(e);
         }
         graphics = originImage.createGraphics();
+        graphics.setColor(Color.BLACK);
     }
 
     public ImageDrawer color(Color color) {
@@ -54,7 +57,8 @@ public class ImageDrawer {
         return this;
     }
 
-    public ImageDrawer drawText(String text, int x, int y, textEffect effect) {
+    public ImageDrawer drawText(String text, int x, int y, TextEffect effect) {
+        y = y - graphics.getFontMetrics().getDescent() + graphics.getFontMetrics().getHeight();
         if(effect.spaceHeight!=null) {
             int lineHeight = graphics.getFontMetrics().getHeight();    // 获取文本行高
             for(String line : text.split("\n")) {
@@ -138,6 +142,20 @@ public class ImageDrawer {
         }
     }
 
+    public BufferedImage getBufferedImage() {
+        return originImage;
+    }
+
+    public InputStream getImageStream(String format) {
+        graphics.dispose();
+        try(ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            ImageIO.write(originImage, format, os);
+            return new ByteArrayInputStream(os.toByteArray());
+        } catch(IOException e) {
+            throw new RuntimeException("执行图片合成失败，无法输出文件流");
+        }
+    }
+
     public Graphics2D getGraphics() {
         return graphics;
     }
@@ -208,6 +226,7 @@ public class ImageDrawer {
         }
     }
 
+
 }
 
 class imageEffect {
@@ -227,12 +246,3 @@ class imageEffect {
     }
 }
 
-class textEffect {
-    Integer maxWidth;
-    Integer spaceHeight;
-
-    public textEffect(Integer maxWidth, Integer spaceHeight) {
-        this.maxWidth = maxWidth;
-        this.spaceHeight = spaceHeight;
-    }
-}
