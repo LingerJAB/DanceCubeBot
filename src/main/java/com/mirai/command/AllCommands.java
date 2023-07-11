@@ -191,7 +191,7 @@ public class AllCommands {
                 }
             }).build();
 
-    @DeclaredCommand("舞立方自制谱兑换")
+//    @DeclaredCommand("舞立方自制谱兑换")
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.USER, (event, contact, qq, args) -> {
@@ -314,7 +314,7 @@ public class AllCommands {
                 int maxCount = Math.min(list.size(), 5);
                 for(int i = 0; i<maxCount; i++) {
                     Machine machine = list.get(i);
-                    String show = machine.isShow() ? "[秀]" : "";
+                    String show = machine.isShow() ? "[⭐秀]" : "";
                     String online = machine.isOnline() ? "🔵在线" : "🔴离线";
                     String singleInfo = "店名：%s%s %s\n地址：%s\n"
                             .formatted(show, machine.getPlaceName(), online, machine.getAddress());
@@ -338,7 +338,7 @@ public class AllCommands {
                 }
 
                 for(Machine machine : list) {
-                    String show = machine.isShow() ? "[秀]" : "";
+                    String show = machine.isShow() ? "[⭐秀]" : "";
                     String online = machine.isOnline() ? "🔵在线" : "🔴离线";
                     String singleInfo = "店名：%s%s %s\n地址：%s\n".formatted(show, machine.getPlaceName(), online, machine.getAddress());
                     machineListText.append("\n").append(singleInfo);
@@ -364,7 +364,10 @@ public class AllCommands {
                 if(num<99_999_999 && num>99_99) { //舞立方ID
                     userInfo = UserInfo.get(token, (int) num);
                 } else if(userTokensMap.containsKey(num) && num>999_999) { //QQ
-                    UserInfo.get(token, userTokensMap.get(num).getUserId());
+                    userInfo = UserInfo.get(token, userTokensMap.get(num).getUserId());
+                } else {
+                    contact.sendMessage("不存在！小铃没有保存！");
+                    return;
                 }
 
                 //Todo 发送信息
@@ -377,10 +380,11 @@ public class AllCommands {
 
             }).build();
 
+    @DeclaredCommand("设置默认Token")
     public static final RegexCommand setDefaultToken = new RegexCommandBuilder()
-            .regex("#addDefaultToken")
+            .regex("#setDefaultToken")
             .onCall(Scope.ADMIN, (event, contact, qq, args) -> {
-                contact.sendMessage("请发送Bearer_Token（无bearer前缀）");
+                contact.sendMessage("请发送 Access Token 和 Refresh Token\n使用换行区分token！");
                 EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
                 channel.subscribeOnce(MessageEvent.class, future::complete);
@@ -388,16 +392,14 @@ public class AllCommands {
                 String accessToken = null;
                 String refreshToken = null;
                 try {
-                    accessToken = future.get(1, TimeUnit.MINUTES).getMessage().contentToString();
-
-                    contact.sendMessage("请发送Refresh_Token");
-                    channel.subscribeOnce(MessageEvent.class, future::complete);
-                    refreshToken = future.get(1, TimeUnit.MINUTES).getMessage().contentToString();
+                    String[] token = future.get(1, TimeUnit.MINUTES).getMessage().contentToString().split("\n");
+                    accessToken = token[0];
+                    refreshToken = token[1];
                 } catch(InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                 } catch(TimeoutException e) {
                     e.printStackTrace();
-                    contact.sendMessage("超时了，请重新发送");
+                    contact.sendMessage("超时了，请重新设置");
                 }
                 Token token = new Token(0, accessToken, refreshToken, 0);
                 if(token.isAvailable()) {
@@ -414,7 +416,7 @@ public class AllCommands {
     /////////////////////////////////////////////////////////////////////////////////
     public static Token getToken(Contact contact, Long qq) {
         Token token = userTokensMap.get(qq);
-        if(token==null) {
+        if(token==null || token.isAvailable()) {
             // 登录检测
             contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
             userInfoCommands.put(qq, new HashSet<>());
@@ -431,9 +433,9 @@ public class AllCommands {
         if(token!=null) {
             if(token.isAvailable()) return token; //默认token有效性
                 //返回默认token 默认的都null那就登录吧 :(
-            else if(defaultToken.isAvailable()) return defaultToken;
+            else if(defaultToken!=null && defaultToken.isAvailable()) return defaultToken;
+            else throw new RuntimeException("未设置 defaultToken ！！");
         }
-
         if(onNull!=null) onNull.accept(contact, qq);
 
         //没有登录（本地保存记录）就 onNull.accept();

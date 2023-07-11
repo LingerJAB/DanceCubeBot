@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 public class PlainTextHandler {
-    private static final int MAX_LENGTH = 1024;  //单次指令字符最大长度（用于过滤）
+    private static final int MAX_LENGTH = 32767;  //单次指令字符最大长度（用于过滤）
 
     public static HashSet<RegexCommand> regexCommands = AllCommands.regexCommands;  //所有正则指令
     public static HashSet<ArgsCommand> argsCommands = AllCommands.argsCommands;  //所有参数指令
@@ -41,30 +41,32 @@ public class PlainTextHandler {
         }
         if(message.length()>MAX_LENGTH) return;
 
-        ArrayList<String> prefixAndArgs = new ArrayList<>(Arrays.asList(message.strip().split("\\s+")));
+
+//        For-each debug太累了...
 
         // 执行正则指令
-        regexCommands.forEach(command -> {
-            // 匹配作用域
-            boolean find = command.getRegex().matcher(message).find();
+        for(RegexCommand regexCommand : regexCommands) {// 匹配作用域
+            boolean find = regexCommand.getRegex().matcher(message).find();
             if(find) {
-                runCommand(messageEvent, command);
+                runCommand(messageEvent, regexCommand);
             }
-        });
+        }
+
+        ArrayList<String> prefixAndArgs = new ArrayList<>(Arrays.asList(message.strip().split("\\s+")));
+        String msgPre = prefixAndArgs.remove(0); //前缀
+        String[] args = prefixAndArgs.toArray(new String[0]); //参数
 
         //执行参数指令
-        argsCommands.forEach(command -> {
-            if(prefixAndArgs.size()<2) return;
-            String msgPre = prefixAndArgs.remove(0);
+        for(ArgsCommand command : argsCommands) {
+            if(args.length<1) continue;
             String[] commandPrefixes = command.getPrefix();
             if(Arrays.asList(commandPrefixes).contains(msgPre)) {
-                String[] args = prefixAndArgs.toArray(new String[0]);
                 if(ArgsCommand.checkError(command, args)==-1) {
                     runCommand(messageEvent, command, args);
                 }
             }
 
-        });
+        }
 
 
     }

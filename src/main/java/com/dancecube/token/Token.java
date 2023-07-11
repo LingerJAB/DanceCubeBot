@@ -86,7 +86,7 @@ public class Token {
                 response.close();
                 if(response.code()!=200) {
                     available = false;
-                    throw new IOException(response.code() + " : ID:" + userId + " msg:" + response.message());
+                    throw new IOException("code:" + response.code() + " id:" + userId + " msg:" + response.message());
                 } else {
                     accessToken = json.get("access_token").getAsString();
                     refreshToken = json.get("refresh_token").getAsString();

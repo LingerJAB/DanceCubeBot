@@ -37,7 +37,7 @@ public class Machine {
                 Machine machine = new Machine();
                 JsonObject object = element.getAsJsonObject();
                 machine.placeName = object.get("PlaceName").getAsString();
-                machine.address = object.get("address").getAsString();
+                machine.address = object.get("Address").getAsString();
                 machine.online = object.get("Online").getAsBoolean();
                 machine.show = object.get("MachineType").getAsInt()==1;
                 machineList.add(machine);
@@ -96,6 +96,10 @@ public class Machine {
         return HttpUtil.httpApi(url
                 , Map.of("Authorization", token.getBearerToken()));
     }
-
+//
+//    @Test
+//    public void test() {
+//        System.out.println(getMachineList("六安"));
+//    }
 }
 

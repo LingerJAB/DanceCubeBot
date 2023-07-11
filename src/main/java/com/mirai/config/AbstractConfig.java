@@ -14,16 +14,18 @@ public abstract class AbstractConfig {
     public static String linuxRootPath;
 
     //如果是在Windows IDEA里运行，请将 configPath 换成 windowsConfigPath
-    public static String windowsConfigPath;
+    public static String windowsRootPath;
     public static String configPath;
 
     static {
         try {
             linuxRootPath = new File("..").getCanonicalPath();
-            windowsConfigPath = new File(".").getCanonicalPath() + "/DcConfig/";
+            windowsRootPath = new File(".").getCanonicalPath();
 
-//            configPath = new File(".").getCanonicalPath() + "/DcConfig/";
-            configPath = linuxRootPath + "/DcConfig/";
+            //在项目下创建 “WINDOWS_MARK” 文件，存在即使用Windows配置，Linux则不需要
+            configPath = (new File("./WINDOWS_MARK").exists() ? windowsRootPath : linuxRootPath) + "/DcConfig/";
+//            if(new File("./WINDOWS_MARK").exists()) configPath = windowsConfigPath + "/DcConfig/";
+//            configPath = linuxRootPath + "/DcConfig/";
         } catch(IOException e) {
             System.out.println("#DcCofig 读取出Bug辣！");
             e.printStackTrace();

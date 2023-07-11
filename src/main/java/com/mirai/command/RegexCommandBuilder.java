@@ -22,7 +22,7 @@ public class RegexCommandBuilder {
         command.addScope(scope);
 
         if(scope==Scope.GLOBAL) {
-            command.setUserOnCall(onCall);
+            command.setGlobalOnCall(onCall);
         } else {
             switch(scope) {
                 case USER -> command.setUserOnCall(onCall);
