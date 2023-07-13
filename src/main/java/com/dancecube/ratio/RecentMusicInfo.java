@@ -1,7 +1,7 @@
-package com.dancecube.ratio.rankingMusic;
+package com.dancecube.ratio;
 
-import com.dancecube.ratio.image.AccGrade;
 import com.google.gson.JsonObject;
+import com.tools.image.AccGrade;
 
 /**
  * 最近记录音乐信息

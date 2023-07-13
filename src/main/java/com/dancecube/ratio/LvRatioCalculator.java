@@ -1,4 +1,4 @@
-package com.dancecube.ratio.rankingMusic;
+package com.dancecube.ratio;
 
 import com.dancecube.music.Officials;
 import com.google.gson.JsonElement;
@@ -99,7 +99,7 @@ public class LvRatioCalculator {
     }
 
     public static List<RankMusicInfo> getSubRank15List(ArrayList<RankMusicInfo> list) {
-        ((List<RankMusicInfo>) list).sort((o1, o2) -> o1.getBestRatio()>o2.getBestRatio() ? -1 : (o1.getBestRatio()==o2.getBestRatio() ? 0 : 1));
+        ((List<RankMusicInfo>) list).sort((o1, o2) -> Float.compare(o2.getBestRatio(), o1.getBestRatio()));
         return ((List<RankMusicInfo>) list).subList(0, 15);
     }
 

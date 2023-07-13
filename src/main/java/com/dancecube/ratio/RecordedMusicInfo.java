@@ -1,4 +1,4 @@
-package com.dancecube.ratio.rankingMusic;
+package com.dancecube.ratio;
 
 public abstract class RecordedMusicInfo {
     int id;

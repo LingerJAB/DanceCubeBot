@@ -1,13 +1,17 @@
-package com.dancecube.ratio.image;
+package com.dancecube.image;
 
 import com.dancecube.info.UserInfo;
 import com.dancecube.music.AnyMusic;
 import com.dancecube.music.Officials;
-import com.dancecube.ratio.rankingMusic.LvRatioCalculator;
-import com.dancecube.ratio.rankingMusic.RankMusicInfo;
-import com.dancecube.ratio.rankingMusic.RecentMusicInfo;
-import com.dancecube.ratio.rankingMusic.SingleRank;
+import com.dancecube.ratio.LvRatioCalculator;
+import com.dancecube.ratio.RankMusicInfo;
+import com.dancecube.ratio.RecentMusicInfo;
+import com.dancecube.ratio.SingleRank;
 import com.dancecube.token.Token;
+import com.mirai.config.AbstractConfig;
+import com.tools.image.ImageDrawer;
+import com.tools.image.ImageEffect;
+import com.tools.image.TextEffect;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
@@ -21,15 +25,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserRatioImage {
-    public static String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\src\\Materials\\";
-    public static String officialImgPath = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\src\\all\\officialImg\\";
-    public static File defaultImg = new File(officialImgPath + "default.png");
+public class UserRatioImage extends AbstractConfig {
+    public static String path = configPath + "Images/Material/";
+    public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
 
     public static InputStream generate(Token token, int id) {
+        System.out.println("running...");
         UserInfo info = UserInfo.get(token, id);
-        System.out.println(new File(path + "Card1.png").exists());
-
         ImageDrawer drawer;
         BufferedImage card1;
         BufferedImage card2;
@@ -61,7 +63,7 @@ public class UserRatioImage {
         BufferedImage backgroundImg;
 
         try {
-            backgroundImg = ImageIO.read(new File(path + "Main.png"));
+            backgroundImg = ImageIO.read(new File(path + "Background1.png"));
             drawer = new ImageDrawer(backgroundImg);
             drawer.antiAliasing(); // 抗锯齿
 
@@ -91,9 +93,11 @@ public class UserRatioImage {
         Font font = new Font("得意黑", Font.PLAIN, 45);
         drawer.color(Color.BLACK)
                 .font(font)
-                .drawText(text, 245, 167, new TextEffect(null, 0));
+                .drawText(text, 245, 167,
+                        new TextEffect(230, 0));
 
         // B15
+
 
         ArrayList<RankMusicInfo> allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
         List<RankMusicInfo> rank15List = LvRatioCalculator.getSubRank15List(allRankList);
@@ -125,10 +129,17 @@ public class UserRatioImage {
                     case C -> lvC;
                     default -> lvD;
                 };
-                imageEffect effect = new imageEffect(35, 35);
+                int fx = switch(bestInfo.getGrade()) {
+                    case SSS -> 0;
+                    case SS -> -17;
+                    case S -> -6;
+                    case C -> 0;
+                    default -> 5;// case A B D
+                };
+                ImageEffect effect = new ImageEffect(35, 35);
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
                         .drawImage(card, 15 + dx2, 620 + dy2)
-                        .drawImage(grade, 285 + dx2, 715 + dy2)
+                        .drawImage(grade, 285 + fx + dx2, 715 + dy2)
                         .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
                         .font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 658 + dy2)
                         .font(infoFont).drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 3))
@@ -150,7 +161,7 @@ public class UserRatioImage {
                     case 1 -> card2;
                     case 2 -> card3;
                     //Todo Unexpected value: -1
-                    case -1 -> card3;
+                    case -1 -> card1;
                     default -> throw new IllegalStateException("Unexpected value: " + musicInfo.getDifficulty());
                 };
                 BufferedImage grade = switch(musicInfo.getGrade()) {
@@ -162,10 +173,17 @@ public class UserRatioImage {
                     case C -> lvC;
                     default -> lvD;
                 };
-                imageEffect effect = new imageEffect(35, 35);
+                int fx = switch(musicInfo.getGrade()) {
+                    case SSS -> 0;
+                    case SS -> -17;
+                    case S -> -6;
+                    case C -> 0;
+                    default -> 5;// case A B D
+                };
+                ImageEffect effect = new ImageEffect(35, 35);
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
                         .drawImage(card, 15 + dx2, 620 + dy2)
-                        .drawImage(grade, 285 + dx2, 715 + dy2)
+                        .drawImage(grade, 285 + fx + dx2, 715 + dy2)
                         .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
                         .font(scoreFont).drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 658 + dy2)
                         .font(infoFont).drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 3))
@@ -175,16 +193,16 @@ public class UserRatioImage {
 
         drawer.dispose();
 //        drawer.save("PNG", new File(path + "result.png"));
-
+        System.out.println("done!");
         return drawer.getImageStream("PNG");
     }
 
     @Test
     public void test() {
-        Token token = new Token(660997, "89ZHSafR_BM199Q5ox3jqUeQv4YPeV1_A8aeSl-D_GqJ0V0uqHE0AxFhqvD46nyOLoCVHrPbVwZkB7mz814DJkvUIsgZrTb-BZrfEuBLd_iz2tDtSr_i71La1U6MKF-U7Ccv4d3ocjwg-Pr07R4lOAKJlT7pqMDTcTaFnYLe6xnmHyQN6kTNzNhlKL3w6SSZub2XHxY8GgxTiXRtDaGXSrk31-ZOBAgPSW3VZ4fEs6NdsMfLo3OwQEIH1cynDBRGUnm1QashCBCSq6glewdiB05Axt3vXqNzsy2TBoqDZIpZzlMCasNM963v6I8wpwBv9aMBp_ic_YdgjWwefuF57pHgPRC0dfC6EJ-NbRifAFCNPVVAFiN32Hx5e5AWKWDR");
+        Token token = new Token(939088, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
         try {
-            ImageIO.write(ImageIO.read(generate(token, 660997)), "PNG", new FileOutputStream(path));
+            ImageIO.write(ImageIO.read(generate(token, 939088)), "PNG", new FileOutputStream(path));
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
@@ -192,28 +210,32 @@ public class UserRatioImage {
 
 
     public static BufferedImage getCover(int id) {
+        File file = new File(officialImgPath + id + ".jpg");
+        // 先从官谱音乐取封面
         if(Officials.OFFICIAL_ID.contains(id)) {
-            File file = new File(officialImgPath + id + ".jpg");
             try {
                 if(file.exists()) {
                     return ImageIO.read(file);
-                } else {
-                    File defaultImg = new File(officialImgPath + "default.png");
-                    if(!defaultImg.exists()) {
-                        throw new RuntimeException(defaultImg.getAbsolutePath() + "\n默认文件不存在！");
-                    }
-                    return ImageIO.read(defaultImg);
                 }
-            } catch(IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            AnyMusic music = new AnyMusic(id);
-            try {
-                return ImageIO.read(new URL(music.getCoverUrl()));
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }
+        }
+        //非官谱或未缓存则从DC服务器获取
+        AnyMusic music = new AnyMusic(id);
+        String coverUrl = music.getCoverUrl();
+        try {
+            if(coverUrl==null | "".equals(coverUrl)) {
+                File defaultImg = new File(officialImgPath + "default.png");
+                if(!defaultImg.exists()) {
+                    throw new RuntimeException(defaultImg.getAbsolutePath() + "\n默认文件不存在！");
+                }
+                return ImageIO.read(defaultImg);
+            } else {
+                return ImageIO.read(new URL(coverUrl));
+            }
+        } catch(IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

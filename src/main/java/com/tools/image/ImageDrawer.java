@@ -1,4 +1,4 @@
-package com.dancecube.ratio.image;
+package com.tools.image;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -62,6 +62,9 @@ public class ImageDrawer {
         if(effect.spaceHeight!=null) {
             int lineHeight = graphics.getFontMetrics().getHeight();    // 获取文本行高
             for(String line : text.split("\n")) {
+                if(effect.maxWidth!=null) {
+                    line = addDots(line, effect.maxWidth);
+                }
                 graphics.drawString(line, x, y);
                 y += lineHeight + effect.spaceHeight;
             }
@@ -79,7 +82,7 @@ public class ImageDrawer {
         return this;
     }
 
-    public ImageDrawer drawImage(BufferedImage bufferedImage, int x, int y, imageEffect effect) {
+    public ImageDrawer drawImage(BufferedImage bufferedImage, int x, int y, ImageEffect effect) {
         if(effect!=null) {
             bufferedImage = makeRoundCorner(bufferedImage, effect.arcW, effect.arcH);
         }
@@ -92,7 +95,7 @@ public class ImageDrawer {
         return this;
     }
 
-    public ImageDrawer drawImage(BufferedImage bufferedImage, int x, int y, int width, int height, imageEffect effect) {
+    public ImageDrawer drawImage(BufferedImage bufferedImage, int x, int y, int width, int height, ImageEffect effect) {
         if(effect!=null) {
             bufferedImage = makeRoundCorner(bufferedImage, effect.arcW, effect.arcH);
         }
@@ -227,22 +230,5 @@ public class ImageDrawer {
     }
 
 
-}
-
-class imageEffect {
-    int arcW = -1;
-    int arcH = -1;
-    int blur = -1;
-
-    public imageEffect(int arcW, int arcH) {
-        this.arcW = arcW;
-        this.arcH = arcH;
-    }
-
-    public imageEffect(int arcW, int arcH, int blur) {
-        this.arcW = arcW;
-        this.arcH = arcH;
-        this.blur = blur;
-    }
 }
 

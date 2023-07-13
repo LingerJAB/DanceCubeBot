@@ -1,4 +1,4 @@
-package com.dancecube.ratio.image;
+package com.tools.image;
 
 public class TextEffect {
     Integer maxWidth;

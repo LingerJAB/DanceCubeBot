@@ -10,7 +10,7 @@ import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
 import com.mirai.config.UserConfigUtils;
-import com.mirai.tools.HttpUtil;
+import com.tools.HttpUtil;
 import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
@@ -99,23 +99,6 @@ public class AllCommands {
                 contact.sendMessage(menu);
             }).build();
 
-    @DeclaredCommand("个人信息")
-    public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
-            .regex("个人信息")
-            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
-                if(token==null) return;
-                else if(!token.isAvailable()) {
-                    contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
-                    return;
-                }
-                InputStream inputStream = UserInfoImage.generate(token);
-                if(inputStream!=null) {
-                    Image image = HttpUtil.getImageFromStream(inputStream, contact);
-                    contact.sendMessage(image);
-                }
-            }).build();
-
     @DeclaredCommand("舞立方机器人登录")
     public static final RegexCommand dcLogin = new RegexCommandBuilder()
             .regex("登录|舞立方登录")
@@ -147,7 +130,6 @@ public class AllCommands {
                 }
                 logStatus.remove(qq);
             }).build();
-
 
     @DeclaredCommand("舞立方机台登录")
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
@@ -191,7 +173,23 @@ public class AllCommands {
                 }
             }).build();
 
-//    @DeclaredCommand("舞立方自制谱兑换")
+    @DeclaredCommand("个人信息")
+    public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
+            .regex("个人信息|mydc|mywlf")
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                Token token = getTokenOrDefault(contact, qq, (con, q) -> {
+                    contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
+                });
+                if(token==null) return;
+
+                InputStream inputStream = UserInfoImage.generate(token, token.getUserId());
+                if(inputStream!=null) {
+                    Image image = HttpUtil.getImageFromStream(inputStream, contact);
+                    contact.sendMessage(image);
+                }
+            }).build();
+
+    //    @DeclaredCommand("舞立方自制谱兑换")
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.USER, (event, contact, qq, args) -> {
@@ -239,7 +237,7 @@ public class AllCommands {
 
     //    @DeclaredCommand("个人信息（旧版）")
     public static final RegexCommand msgUserInfoLegacy = new RegexCommandBuilder()
-            .regex("个人信息-l")
+            .regex("个人信息-l|mydc-l")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 getToken(contact, qq);
                 Token token = userTokensMap.get(qq);
@@ -353,30 +351,40 @@ public class AllCommands {
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 if(args==null) return;
                 long num = Long.parseLong(args[0]);
-                Token token = getTokenOrDefault(contact, qq, null);
+                Token token = getTokenOrDefault(contact, qq, (con, q) -> {
+                    contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
+                });
                 if(token==null) {
-                    contact.sendMessage("Token null!!");
+                    contact.sendMessage("默认Token异常，请联系铃！");
                     return;
                 }
 
                 //判断QQ/ID
+                int id;
                 UserInfo userInfo = UserInfo.getNull();
                 if(num<99_999_999 && num>99_99) { //舞立方ID
-                    userInfo = UserInfo.get(token, (int) num);
+                    id = (int) num;
+//                    userInfo = UserInfo.get(token, (int) num);
                 } else if(userTokensMap.containsKey(num) && num>999_999) { //QQ
-                    userInfo = UserInfo.get(token, userTokensMap.get(num).getUserId());
+                    id = userTokensMap.get(num).getUserId();
                 } else {
                     contact.sendMessage("不存在！小铃没有保存！");
                     return;
                 }
 
-                //Todo 发送信息
-                InfoStatus status = userInfo.getStatus();
-                switch(status) {
-                    case PRIVATE -> contact.sendMessage("对方设置了隐私了...");
-                    case NONEXISTENT -> contact.sendMessage("id不存在!");
-                    default -> contact.sendMessage(userInfo.getUserName() + "\ncity:" + userInfo.getCityName());
+                userInfo = UserInfo.get(token, id);
+                if(userInfo.getStatus()==InfoStatus.NONEXISTENT) {
+                    contact.sendMessage("这个账号未保存或不存在！");
+                    return;
                 }
+
+                //发送图片
+                InputStream inputStream = UserInfoImage.generate(token, id);
+                if(inputStream!=null) {
+                    Image image = HttpUtil.getImageFromStream(inputStream, contact);
+                    contact.sendMessage(image);
+                }
+
 
             }).build();
 

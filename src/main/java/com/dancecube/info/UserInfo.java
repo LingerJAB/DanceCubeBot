@@ -1,10 +1,8 @@
 package com.dancecube.info;
 
 import com.dancecube.token.Token;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.mirai.tools.HttpUtil;
+import com.google.gson.*;
+import com.tools.HttpUtil;
 import okhttp3.Call;
 import okhttp3.Response;
 
@@ -69,7 +67,7 @@ public class UserInfo {
     }
 
     public String getTeamName() {
-        return teamName;
+        return teamName==null ? "" : teamName;
     }
 
     public String getTitleUrl() {
@@ -89,7 +87,7 @@ public class UserInfo {
     }
 
 
-    private UserInfo() {
+    public UserInfo() {
     }
 
     /**
@@ -125,25 +123,40 @@ public class UserInfo {
 
     public static UserInfo get(Token token, int id) {
         String userInfoJson = "";
-        Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + id,
-                Map.of("Authorization", token.getBearerToken()));
-        try(Response response = call.execute()) {
-            if(response.body()!=null) {
+        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + id,
+                Map.of("Authorization", token.getBearerToken()))) {
+            if(response!=null && response.body()!=null)
                 userInfoJson = response.body().string();
-            }
         } catch(IOException e) {
             e.printStackTrace();
         }
+        UserInfo userInfo = getNull();
 
         //状态判断
         switch(statusOf(userInfoJson)) {
             case PRIVATE -> {
-                UserInfo userInfo = new UserInfo();
+                String url = "https://dancedemo.shenghuayule.com/Dance/api/Common/Search?keyword=" + id + "&type=0&page=1&pagesize=1";
+                try(Response response = HttpUtil.httpApi(url,
+                        Map.of("Authorization", token.getBearerToken()))) {
+                    if(response!=null && response.body()!=null)
+                        userInfoJson = response.body().string();
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+                JsonArray jsonArray = JsonParser.parseString(userInfoJson).getAsJsonObject().get("List").getAsJsonArray();
+                if(jsonArray.size()>=1) {
+                    JsonObject jsonObject = jsonArray.get(0).getAsJsonObject();
+                    userInfo.userID = id;
+                    userInfo.userName = jsonObject.get("Name").getAsString();
+                    userInfo.headimgURL = jsonObject.get("HeadimgURL").getAsString();
+                    userInfo.lvRatio = jsonObject.get("LvRatio").getAsInt();
+                    userInfo.cityName = jsonObject.get("Region").getAsString();
+                }
                 userInfo.setStatus(InfoStatus.PRIVATE);
                 return userInfo;
             }
             case NONEXISTENT -> {
-                UserInfo userInfo = new UserInfo();
+                userInfo = new UserInfo();
                 userInfo.setStatus(InfoStatus.NONEXISTENT);
                 return userInfo;
             }
@@ -155,7 +168,8 @@ public class UserInfo {
                 .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
                 .create();
 
-        return gson.fromJson(userInfoJson, UserInfo.class);
+        userInfo = gson.fromJson(userInfoJson, UserInfo.class);
+        return userInfo;
     }
 
     @Override
@@ -168,6 +182,5 @@ public class UserInfo {
         if(message.contains("已设置保密")) return InfoStatus.PRIVATE;
         return InfoStatus.OPEN;
     }
-
 }
 

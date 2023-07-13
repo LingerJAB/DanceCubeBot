@@ -1,4 +1,4 @@
-package com.dancecube.ratio.rankingMusic;
+package com.dancecube.ratio;
 
 import com.google.gson.JsonObject;
 

@@ -2,42 +2,47 @@ package com.dancecube.image;
 
 
 import com.dancecube.info.AccountInfo;
+import com.dancecube.info.InfoStatus;
 import com.dancecube.info.ReplyItem;
 import com.dancecube.info.UserInfo;
-import com.dancecube.ratio.image.ImageDrawer;
-import com.dancecube.ratio.image.TextEffect;
 import com.dancecube.token.Token;
-import com.mirai.MiraiBot;
 import com.mirai.config.AbstractConfig;
-import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
+import com.tools.image.ImageDrawer;
+import com.tools.image.TextEffect;
 import org.junit.Test;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 
 public class UserInfoImage extends AbstractConfig {
-    public static InputStream generate(Token token) {
-        String bgPath = "file:" + configPath + "Images/Background.png";
+    //UserInfo生成
+    public static InputStream generate(Token token, int id) {
+        String bgPath = "file:" + configPath + "Images/UserInfoImage/Background2.png";
 
-        UserInfo userInfo = UserInfo.get(token);
-        AccountInfo accountInfo = AccountInfo.get(token);
-        ReplyItem replyItem = ReplyItem.get(token);
+        UserInfo userInfo = UserInfo.get(token, id);
+        // 不存在查询的id
+        if(userInfo.getStatus()==InfoStatus.NONEXISTENT) return null;
+//  todo replyitem & 位置
 
-        JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
-        try {
-            Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
-            Future<AccountInfo> accountInfoFuture = scheduler.async(() -> AccountInfo.get(token));
-            userInfo = userInfoFuture.get();
-            accountInfo = accountInfoFuture.get();
-        } catch(ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+//        JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
+//        try {
+//            Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
+//            Future<AccountInfo> accountInfoFuture = scheduler.async(() -> AccountInfo.get(token));
+//            userInfo = userInfoFuture.get();
+//            accountInfo = accountInfoFuture.get();
+//        } catch(ExecutionException | InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
 
         ImageDrawer drawer = new ImageDrawer(bgPath);
         drawer.antiAliasing();
+
+        //不存在用户
+        if(userInfo.getHeadimgURL()==null) return null;
 
         drawer.drawImage(ImageDrawer.read(userInfo.getHeadimgURL()), 120, 150, 137, 137);
 
@@ -48,66 +53,59 @@ public class UserInfoImage extends AbstractConfig {
 
         Font font = new Font("得意黑", Font.PLAIN, 36);
         Font font2 = new Font("得意黑", Font.PLAIN, 20);
-        TextEffect effect = new TextEffect(null, 0);
-        drawer.font(font)
-                .drawText("%s\n\n战队：%s\n积分：%d\n金币：%d"
-                        .formatted(userInfo.getUserName(),
-                                userInfo.getTeamName(),
-                                userInfo.getMusicScore(),
-                                accountInfo.getGold()), 293, 137, effect)
-                .drawText("战力：%s\n全连率：%.2f%%\n全国排名：%d\n游玩次数：%d"
-                        .formatted(userInfo.getLvRatio(),
-                                (float) userInfo.getComboPercent() / 100,
-                                userInfo.getRankNation(),
-                                replyItem.getPlayedTimes()), 106, 472, effect)
-                .font(font2)
-                .drawText("ID：" + userInfo.getUserID(), 293, 173)
-                .dispose();
-//        drawer.save("PNG", new File("C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png"));
+        TextEffect effect = new TextEffect(235, 0);
+        drawer.font(font);
+        //信息开放
+        if(userInfo.getStatus()!=InfoStatus.PRIVATE) {
+            String gold = "未登录";
+            String playedTimes = "未登录";
+            if(token.getUserId()==id) {
+                AccountInfo accountInfo = AccountInfo.get(token);
+                gold = String.valueOf(accountInfo.getGold());
+                ReplyItem replyItem = ReplyItem.get(token);
+                playedTimes = String.valueOf(replyItem.getPlayedTimes());
+            }
+            drawer.drawText("%s\n\n战队：%s\n战力：%d\n金币：%s"
+                            .formatted(userInfo.getUserName(),
+                                    userInfo.getTeamName().equals("") ? "无" : userInfo.getTeamName(),
+                                    userInfo.getLvRatio(),
+                                    gold), 293, 137, effect)
+                    .drawText("积分：%s\n全连率：%.2f%%\n全国排名：%d\n游玩次数：%s"
+                            .formatted(userInfo.getMusicScore(),
+                                    (float) userInfo.getComboPercent() / 100,
+                                    userInfo.getRankNation(),
+                                    playedTimes), 106, 472, effect)
+                    .font(font2)
+                    .drawText("ID：" + userInfo.getUserID(), 293, 173);
+        } else { //屏蔽
+            drawer.drawText("%s\n\n地区：%s\n战力：%d"
+                            .formatted(userInfo.getUserName(),
+                                    userInfo.getCityName().equals("") ? "无" : userInfo.getCityName(),
+                                    userInfo.getLvRatio()), 293, 137, effect)
+                    .drawText("该账号已设置隐私", 106, 472)
+                    .font(font2)
+                    .drawText("ID：" + userInfo.getUserID(), 293, 173);
+            ;
 
+        }
+        drawer.dispose();
         return drawer.getImageStream("PNG");
     }
 
     @Test
     public void test() throws IOException {
-        Token token = new Token(939088, "O2fxf-_RBrEukJTwdN4UrbMWg8ECGN-JYUF46TWTSj47uxc2QICsiHvDIqBl1F79DwLUN2os3ZE-itHE70ukkNQG2AV6gbE_DI8pEhD1hbYQPOQqEgunIN4mOrFvGTcGJqptpdnJE876GfrCjWPoHxocfVr7ukEyS7CO5kSKA0G38e6TWfhjiMfKVLHJZOjGefE3rh8zPA6bqHLHoHNFq9Zybu4wwUc63CLBEgxOjnztN9BFgUZCxaZn260iVcur3sIvYXCwnBal4rbeTnTS15rL3JHIUszLT-JKzJJU7FxPlmLMeWCAvhAwizgkOj9CZtVaj8gX34riQmjKVP1RDcQmcL0YiNzdHnfyke5RiUwhjaKOIKpGgMVWMD9xKLeP");
+        Token token = new Token(939800, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
-        saveImg(generate(token), path);
+        ImageIO.write(ImageDrawer.read(generate(token, 2550784)), "PNG", new File(path));
     }
-
-    public static void saveImg(InputStream stream, String path) throws IOException {
-
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        //创建一个Buffer字符串
-        byte[] buffer = new byte[1024];
-        //每次读取的字符串长度，如果为-1，代表全部读取完毕
-        int len = 0;
-        //使用一个输入流从buffer里把数据读取出来
-        while((len = stream.read(buffer))!=-1) {
-            //用输出流往buffer里写入数据，中间参数代表从哪个位置开始读，len代表读取的长度
-            outStream.write(buffer, 0, len);
-        }
-        //关闭输入流
-        stream.close();
-        //把outStream里的数据写入内存
-
-        //得到图片的二进制数据，以二进制封装得到数据，具有通用性
-        byte[] data = outStream.toByteArray();
-        //new一个文件对象用来保存图片，默认保存当前工程根目录
-        File imageFile = new File(path);
-        //创建输出流
-        FileOutputStream fileOutStream = new FileOutputStream(imageFile);
-        //写入数据
-        fileOutStream.write(data);
-    }
-
-    public static void getAvailableFonts() {
-        // 获取系统所有可用字体名称
-        GraphicsEnvironment e = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        String[] fontName = e.getAvailableFontFamilyNames();
-        for(String s : fontName) {
-            System.out.println(s);
-        }
-    }
+//
+//    public static void getAvailableFonts() {
+//        // 获取系统所有可用字体名称
+//        GraphicsEnvironment e = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//        String[] fontName = e.getAvailableFontFamilyNames();
+//        for(String s : fontName) {
+//            System.out.println(s);
+//        }
+//    }
 }
 

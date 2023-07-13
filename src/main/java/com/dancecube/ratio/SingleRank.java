@@ -1,7 +1,7 @@
-package com.dancecube.ratio.rankingMusic;
+package com.dancecube.ratio;
 
 
-import com.dancecube.ratio.image.AccGrade;
+import com.tools.image.AccGrade;
 
 public class SingleRank {
     int difficulty;
