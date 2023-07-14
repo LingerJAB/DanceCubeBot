@@ -27,4 +27,6 @@ dependencies {
     implementation 'org.yaml:snakeyaml:2.0'
     implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     implementation 'junit:junit:4.13.1'
+    implementation 'org.knowm.xchart:xchart:3.8.4'
+
 }

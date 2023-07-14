@@ -38,20 +38,19 @@ public class RankMusicInfo extends RecordedMusicInfo {
         return this.id;
     }
 
-
     public boolean isOfficial() {
         return official;
     }
 
+    @Override
     public float getBestRatio() {
         return getBestInfo().ratio;
     }
 
     public SingleRank getBestInfo() {
-        accList.sort((o1, o2) -> o1.ratio>o2.ratio ? -1 : (o1.ratio==o2.ratio ? 0 : 1));
+        accList.sort((o1, o2) -> Float.compare(o2.ratio, o1.ratio));
 //        return Math.round(accList.get(0).ratio);
         return accList.get(0);
-
     }
 
     @Override

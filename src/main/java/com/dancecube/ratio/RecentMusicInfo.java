@@ -59,7 +59,6 @@ public class RecentMusicInfo extends RecordedMusicInfo {
     }
 
     public float getBestRatio() {
-//        return Math.round((level + 2) * getAcc());
         return (level + 2) * getAcc();
     }
 

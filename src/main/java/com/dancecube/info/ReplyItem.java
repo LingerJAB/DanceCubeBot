@@ -12,12 +12,12 @@ import java.io.IOException;
 import java.util.Map;
 
 public class ReplyItem {
-    private float victoryRates;
-    private float teamVictoryRates;
-    private String playedAge;
-    private int danLevel;
-    private int playedTimes;
-    private int passedSongs;
+    private float victoryRates; //对战胜率
+    private float teamVictoryRates; //战队赛胜率
+    private String playedAge; //舞龄
+    private int danLevel; //段位
+    private int playedTimes; //游玩次数
+    private int passedSongs; //游玩次数
     private int addedCoins;
 
 
@@ -39,7 +39,7 @@ public class ReplyItem {
                 case 13 -> replyItem.victoryRates = Float.parseFloat(content.replace('%', ' '));
                 case 9 -> replyItem.teamVictoryRates = Float.parseFloat(content.replace('%', ' '));
                 case 3 -> replyItem.playedAge = content;
-                case 7 -> replyItem.danLevel = Integer.parseInt(content);
+                case 7 -> replyItem.danLevel = content.contains("无") ? -1 : Integer.parseInt(content);
                 case 5 -> replyItem.playedTimes = Integer.parseInt(content);
                 case 6 -> replyItem.passedSongs = Integer.parseInt(content);
                 case 10 -> replyItem.addedCoins = Integer.parseInt(content);

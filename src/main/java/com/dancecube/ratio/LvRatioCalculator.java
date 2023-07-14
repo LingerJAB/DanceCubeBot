@@ -50,12 +50,16 @@ public class LvRatioCalculator {
 
     }
 
-    private static <T extends RecordedMusicInfo> float average(ArrayList<T> legacyInfos) {
+    public static <T extends RecordedMusicInfo> float average(List<T> infos) {
+        return average(new ArrayList<>(infos));
+    }
+
+    public static <T extends RecordedMusicInfo> float average(ArrayList<T> infos) {
         float sum = 0;
-        for(RecordedMusicInfo info : legacyInfos) {
+        for(RecordedMusicInfo info : infos) {
             sum = info.getBestRatio() + sum;
         }
-        return sum / legacyInfos.size();
+        return sum / infos.size();
     }
 
     private static ArrayList<RankMusicInfo> getCategoryRankList(String json, boolean officialOnly) {

@@ -13,8 +13,6 @@ import net.mamoe.mirai.message.data.PlainText;
 
 import java.util.Map;
 
-import static com.mirai.command.AllCommands.getToken;
-
 // 不过滤通道
 public class MainHandler extends AbstractConfig {
 
@@ -22,7 +20,9 @@ public class MainHandler extends AbstractConfig {
     @EventHandler
     public static void eventCenter(MessageEvent event) {
         MessageChain messageChain = event.getMessage();
-        if(messageChain.size() - 1==messageChain.stream().filter(msg -> msg instanceof At | msg instanceof PlainText).toList().size()) {
+        if(messageChain.size() - 1==messageChain.stream()
+                .filter(msg -> msg instanceof At | msg instanceof PlainText)
+                .toList().size()) {
             PlainTextHandler.accept(event);
         } else { //其它多元的消息
             return;
@@ -37,8 +37,6 @@ public class MainHandler extends AbstractConfig {
         switch(message) {
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
-            case "#token" -> showToken(contact, qq);
-            case "#refresh" -> refreshToken(contact, qq);
             case "#about" -> showAbout(contact);
         }
     }
@@ -62,30 +60,6 @@ public class MainHandler extends AbstractConfig {
             sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
         }
         contact.sendMessage("加载成功！共%d条".formatted(userTokensMap.size()) + sb);
-    }
-
-    // #token 高级
-    public static void showToken(Contact contact, long qq) {
-        Token token = getToken(contact, qq);
-        if(token==null) return;
-        if(contact instanceof Group) {
-            contact.sendMessage("私聊才能看的辣！");
-        } else {
-            contact.sendMessage(token.toString());
-        }
-    }
-
-    public static void refreshToken(Contact contact, long qq) {
-        Token token = getToken(contact, qq);
-        if(token==null) return;
-        if(contact instanceof Group) {
-            contact.sendMessage("私聊才能用的辣！");
-        } else {
-            if(token.refresh(true))
-                contact.sendMessage("#Token已强制刷新#\n\n" + token);
-            else
-                contact.sendMessage("刷新失败，请重新登录！");
-        }
     }
 
     // #about 全局

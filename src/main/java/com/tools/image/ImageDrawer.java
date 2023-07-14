@@ -189,6 +189,22 @@ public class ImageDrawer {
 
     }
 
+    public static void write(BufferedImage image, String path) {
+        try {
+            ImageIO.write(image, "PNG", new File(path));
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void write(InputStream inputStream, String path) {
+        try {
+            write(ImageIO.read(inputStream), path);
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private BufferedImage makeRoundCorner(BufferedImage srcImage, int radiusW, int radiusH) {
         int width = srcImage.getWidth();
         int height = srcImage.getHeight();

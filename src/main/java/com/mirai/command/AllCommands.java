@@ -3,15 +3,13 @@ package com.mirai.command;
 import com.dancecube.api.Machine;
 import com.dancecube.api.PlayerMusic;
 import com.dancecube.image.UserInfoImage;
+import com.dancecube.image.UserRatioImage;
 import com.dancecube.info.AccountInfo;
-import com.dancecube.info.InfoStatus;
 import com.dancecube.info.UserInfo;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
-import com.mirai.config.UserConfigUtils;
 import com.tools.HttpUtil;
-import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.Event;
@@ -62,20 +60,6 @@ public class AllCommands {
 
     }
 
-    @DeclaredCommand("清空登录")
-    public static final ArgsCommand clearLogin = new ArgsCommandBuilder()
-            .prefix("#clearLogin")
-            .form(ArgsCommand.WORD)
-            .onCall(Scope.USER, (event, contact, qq, args) -> {
-                if(args==null) {
-                    return;
-                }
-                // 正在登录检测
-                switch(args[0]) {
-                    case "all" -> logStatus.clear();
-                    case "me" -> contact.sendMessage(logStatus.remove(qq) ? "已清空！" : "未找到登录！");
-                }
-            }).build();
 
     @DeclaredCommand("菜单")
     public static final RegexCommand msgMenu = new RegexCommandBuilder()
@@ -85,13 +69,12 @@ public class AllCommands {
                         舞小铃有以下功能哦！
                         1. 登录
                         -登录才能和舞小铃玩！
-                        2. 个人信息
+                        2. 我的信息/mydc/mywlf
                         -查询舞立方资料
-                        3. 机台登录 | 扫码
+                        3. 机台登录/扫码
                         -拍照即可扫码舞立方机台！
-                        4. 添加指令 [名称]
-                        -换个方式查看信息！
-                        5. 查找舞立方 [地名]
+                        4. 战力分析/myrt
+                        5. 查找(舞立方) [地名]
                         越详细地名越精确！
                         6. [自制谱兑换码]
                         私聊批量兑换好多兑换码！
@@ -175,12 +158,14 @@ public class AllCommands {
 
     @DeclaredCommand("个人信息")
     public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
-            .regex("个人信息|mydc|mywlf")
+            .regex("个人信息|看看我的|我的信息|我的舞立方|mydc|mywlf")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getTokenOrDefault(contact, qq, (con, q) -> {
-                    contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
-                });
-                if(token==null) return;
+                Token token = getTokenOrDefault(contact, qq, (con, q) ->
+                        contact.sendMessage("小铃这登录身份过期了💦\n重新私信登录恢复吧💦"));
+                if(token==null) {
+                    contact.sendMessage("默认Token异常，请联系大铃！");
+                    return;
+                }
 
                 InputStream inputStream = UserInfoImage.generate(token, token.getUserId());
                 if(inputStream!=null) {
@@ -189,7 +174,7 @@ public class AllCommands {
                 }
             }).build();
 
-    //    @DeclaredCommand("舞立方自制谱兑换")
+    @DeclaredCommand("舞立方自制谱兑换")
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.USER, (event, contact, qq, args) -> {
@@ -241,9 +226,6 @@ public class AllCommands {
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 getToken(contact, qq);
                 Token token = userTokensMap.get(qq);
-
-
-                JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
                 UserInfo userInfo;
                 AccountInfo accountInfo;
                 try {
@@ -259,44 +241,9 @@ public class AllCommands {
                 contact.sendMessage(image.plus(info));
             }).build();
 
-    @DeclaredCommand("添加指令")
-    public static final ArgsCommand addUserInfoCmd = new ArgsCommandBuilder()
-            .prefix("添加指令")
-            .form(ArgsCommand.CHAR)
-            .onCall(Scope.USER, (event, contact, qq, args) -> {
-                if(args==null) {
-                    return;
-                }
-                String newPrefix = args[0];
-                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
-                userInfoCommands.get(qq).add(newPrefix);
-                contact.sendMessage("已添加 \"" + newPrefix + "\" !");
-            }).build();
-
-    @DeclaredCommand("删除指令")
-    public static final ArgsCommand delUserInfoCmd = new ArgsCommandBuilder()
-            .prefix("删除指令")
-            .form(ArgsCommand.CHAR)
-            .onCall(Scope.USER, (event, contact, qq, args) -> {
-                if(args==null) {
-                    return;
-                }
-
-                String newPrefix = args[0];
-                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
-                if(!userInfoCommands.get(qq).contains(newPrefix)) {
-                    contact.sendMessage("未找到 \"" + newPrefix + "\" !");
-                    return;
-                }
-                userInfoCommands.get(qq).remove(newPrefix);
-                contact.sendMessage("已删除 \"" + newPrefix + "\" !");
-                UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
-            }).build();
-
-
     @DeclaredCommand("查找舞立方机台")
     public static final ArgsCommand msgMachineList = new ArgsCommandBuilder()
-            .prefix("查找舞立方", "查找机台", "舞立方")
+            .prefix("查找舞立方", "查找", "查找机台", "舞立方")
             .form(ArgsCommand.CHAR)
             .onCall(Scope.GROUP, (event, contact, qq, args) -> {
                 if(args==null) return;
@@ -351,41 +298,107 @@ public class AllCommands {
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 if(args==null) return;
                 long num = Long.parseLong(args[0]);
-                Token token = getTokenOrDefault(contact, qq, (con, q) -> {
-                    contact.sendMessage("由于不可抗因素，身份过期了💦\n重新私信登录即可恢复💦");
-                });
+                Token token = getTokenOrDefault(contact, qq, (con, q) ->
+                        contact.sendMessage("小铃这登录身份过期了💦\n重新私信登录恢复吧💦"));
                 if(token==null) {
-                    contact.sendMessage("默认Token异常，请联系铃！");
+                    contact.sendMessage("默认Token异常，请联系大铃！");
                     return;
                 }
 
                 //判断QQ/ID
                 int id;
-                UserInfo userInfo = UserInfo.getNull();
                 if(num<99_999_999 && num>99_99) { //舞立方ID
                     id = (int) num;
-//                    userInfo = UserInfo.get(token, (int) num);
                 } else if(userTokensMap.containsKey(num) && num>999_999) { //QQ
                     id = userTokensMap.get(num).getUserId();
                 } else {
-                    contact.sendMessage("不存在！小铃没有保存！");
+                    contact.sendMessage("? 小铃好像没看懂是什么");
                     return;
                 }
-
-                userInfo = UserInfo.get(token, id);
-                if(userInfo.getStatus()==InfoStatus.NONEXISTENT) {
+                //发送图片
+                InputStream inputStream = UserInfoImage.generate(token, id);
+                if(inputStream==null) {
                     contact.sendMessage("这个账号未保存或不存在！");
                     return;
                 }
+                Image image = HttpUtil.getImageFromStream(inputStream, contact);
+                contact.sendMessage(image);
+            }).build();
 
-                //发送图片
-                InputStream inputStream = UserInfoImage.generate(token, id);
+    @DeclaredCommand("战力分析")
+    public static final RegexCommand msgUserRatio = new RegexCommandBuilder()
+            .regex("战力分析|我的战力|查看战力|查询战力|myrt")
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                Token token = getToken(contact, qq);
+                if(token==null) return;
+
+                contact.sendMessage("小铃正在计算中,等一下下就好💦...");
+                InputStream inputStream = UserRatioImage.generate(token);
                 if(inputStream!=null) {
                     Image image = HttpUtil.getImageFromStream(inputStream, contact);
                     contact.sendMessage(image);
                 }
+            }).build();
 
+    //    @DeclaredCommand("添加指令")
+//    public static final ArgsCommand addUserInfoCmd = new ArgsCommandBuilder()
+//            .prefix("添加指令")
+//            .form(ArgsCommand.CHAR)
+//            .onCall(Scope.USER, (event, contact, qq, args) -> {
+//                if(args==null) {
+//                    return;
+//                }
+//                String newPrefix = args[0];
+//                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+//                userInfoCommands.get(qq).add(newPrefix);
+//                contact.sendMessage("已添加 \"" + newPrefix + "\" !");
+//            }).build();
 
+    //    @DeclaredCommand("删除指令")
+//    public static final ArgsCommand delUserInfoCmd = new ArgsCommandBuilder()
+//            .prefix("删除指令")
+//            .form(ArgsCommand.CHAR)
+//            .onCall(Scope.USER, (event, contact, qq, args) -> {
+//                if(args==null) return;
+//
+//                String newPrefix = args[0];
+//                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+//                if(!userInfoCommands.get(qq).contains(newPrefix)) {
+//                    contact.sendMessage("未找到 \"" + newPrefix + "\" !");
+//                    return;
+//                }
+//                userInfoCommands.get(qq).remove(newPrefix);
+//                contact.sendMessage("已删除 \"" + newPrefix + "\" !");
+//                UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
+//            }).build();
+
+    @DeclaredCommand("发送Token JSON")
+    public static final RegexCommand showToken = new RegexCommandBuilder()
+            .regex("#token")
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                Token token = getToken(contact, qq);
+                if(token==null) return;
+                if(contact instanceof Group) {
+                    contact.sendMessage("私聊才能看的辣！");
+                } else {
+                    contact.sendMessage(token.toString());
+                }
+            }).build();
+
+    @DeclaredCommand("强制刷新Token")
+    public static final RegexCommand refreshToken = new RegexCommandBuilder()
+            .regex("#refresh")
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                Token token = getToken(contact, qq);
+                if(token==null) return;
+                if(contact instanceof Group) {
+                    contact.sendMessage("私聊才能用的辣！");
+                    return;
+                }
+                if(token.refresh(true))
+                    contact.sendMessage("#Token已强制刷新#\n\n" + token);
+                else
+                    contact.sendMessage("刷新失败，请重新登录！");
             }).build();
 
     @DeclaredCommand("设置默认Token")
@@ -420,22 +433,35 @@ public class AllCommands {
                 }
             }).build();
 
-
-    /////////////////////////////////////////////////////////////////////////////////
     public static Token getToken(Contact contact, Long qq) {
         Token token = userTokensMap.get(qq);
-        if(token==null || token.isAvailable()) {
+        if(token==null || !token.isAvailable()) {
             // 登录检测
             contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
-            userInfoCommands.put(qq, new HashSet<>());
+//            userInfoCommands.put(qq, new HashSet<>());
             return null;
         }
         return token;
     }
 
-    //TODO 先重写UserInfo & AccountInfo  (UserId==0)
+    @DeclaredCommand("清空登录")
+    public static final ArgsCommand clearLogin = new ArgsCommandBuilder()
+            .prefix("#clearLogin")
+            .form(ArgsCommand.WORD)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                if(args==null) {
+                    return;
+                }
+                // 正在登录检测
+                switch(args[0]) {
+                    case "all" -> logStatus.clear();
+                    case "me" -> contact.sendMessage(logStatus.remove(qq) ? "已清空！" : "未找到登录！");
+                }
+            }).build();
+
     //有了onNull就不要return null了吧...如何处理呢？
-    public static Token getTokenOrDefault(Contact contact, long qq, @Nullable BiConsumer<Contact, Long> onNull) {
+    public static Token getTokenOrDefault(Contact contact, long qq,
+                                          @Nullable BiConsumer<Contact, Long> onNull) {
         Token token = userTokensMap.get(qq);
         // 默认返回备份
         if(token!=null) {

@@ -5,4 +5,8 @@ public abstract class RecordedMusicInfo {
     String name;
 
     abstract float getBestRatio();
+
+    public int getBestRatioInt() {
+        return Math.round(getBestRatio());
+    }
 }
