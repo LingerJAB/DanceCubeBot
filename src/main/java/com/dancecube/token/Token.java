@@ -61,9 +61,11 @@ public class Token {
 
     public boolean isAvailable() {
         if(!available | accessToken==null | refreshToken==null) return false;
-        Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
-                Map.of("Authorization", getBearerToken()));
-        boolean available = response!=null && response.code()==200;
+        boolean available;
+        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
+                Map.of("Authorization", getBearerToken()))) {
+            available = response!=null && response.code()==200;
+        }
         this.available = available;
         return available;
     }

@@ -1,5 +1,6 @@
 package com.mirai;
 
+import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.event.MainHandler;
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
@@ -10,6 +11,8 @@ import net.mamoe.mirai.event.EventChannel;
 import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.event.events.MessageEvent;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -34,11 +37,14 @@ public final class MiraiBot extends JavaPlugin {
                 .parentScope(MiraiBot.INSTANCE)
                 .context(this.getCoroutineContext());
 
-        //定时器
+        // 加载 DcConfig
+        MainHandler.loadTokens();
+
+        // 定时器
         refreshTokensTimer();
 
-        //加载 DcConfig
-//        MainHandler.loadTokens();
+
+        // 监听器
         channel.subscribeAlways(MessageEvent.class, MainHandler::eventCenter);
 
     }
@@ -55,16 +61,27 @@ public final class MiraiBot extends JavaPlugin {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                userTokensMap.forEach((qq, token) -> {
-                    scheduler.async(() -> {
-                        if(token.isAvailable()) token.refresh(true);
-                    });
-                });
+                Token defaultToken = userTokensMap.get(0L);
+                if(defaultToken==null) {
+                    userTokensMap.forEach((qq, token) ->
+                            scheduler.async(() -> {
+                                if(token.isAvailable()) token.refresh(true);
+                            }));
+                } else {
+                    userTokensMap.forEach((qq, token) ->
+                            scheduler.async(() -> {
+                                // 默认token不为用户token
+                                if(token.isAvailable() &
+                                        !defaultToken.getAccessToken().equals(token.getAccessToken()))
+                                    token.refresh(true);
+                            }));
+
+                }
                 TokenBuilder.tokensToFile(userTokensMap, path);
-                System.out.println(System.currentTimeMillis() + ":今日已刷新token");
+                System.out.println(new SimpleDateFormat("MM-dd hh:mm:ss").format(new Date()) + ": 今日已刷新token");
             }
         };
 
-        new Timer().schedule(task, 5000, period);
+        new Timer().schedule(task, period, period);
     }
 }

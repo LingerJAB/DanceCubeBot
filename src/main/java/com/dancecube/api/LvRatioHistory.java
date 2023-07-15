@@ -46,7 +46,7 @@ public class LvRatioHistory {
     public static ArrayList<LvRatioHistory> get(Token token) {
         ArrayList<LvRatioHistory> ratioList = new ArrayList<>();
 
-        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetLvRatioHistory?userId=939088",
+        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/User/GetLvRatioHistory?userId=" + token.getUserId(),
                 Map.of("Authorization", token.getBearerToken()))) {
 
             if(response!=null && response.body()!=null) {

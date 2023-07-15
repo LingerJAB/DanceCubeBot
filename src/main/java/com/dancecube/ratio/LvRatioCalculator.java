@@ -3,6 +3,7 @@ package com.dancecube.ratio;
 import com.dancecube.music.Officials;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.tools.HttpUtil;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -11,6 +12,7 @@ import okhttp3.ResponseBody;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class LvRatioCalculator {
@@ -83,17 +85,17 @@ public class LvRatioCalculator {
 
         OkHttpClient client = new OkHttpClient();
         String url = "https://dancedemo.shenghuayule.com/Dance/api/User/GetMyRankNew?musicIndex=";
-        String json;
+        String json = "";
         ArrayList<RankMusicInfo> musicInfos = new ArrayList<>();
 
         for(int i = 1; i<=6; i++) {
             Request request = new Request.Builder().url(url + i).get().addHeader("Authorization", auth).build();
             try {
-                Response response = client.newCall(request).execute();
+                try(Response response = client.newCall(request).execute()) {
 
-                ResponseBody body = response.body();
-                json = body.string();
-                body.close();
+                    ResponseBody body = response.body();
+                    if(body!=null) json = body.string();
+                }
             } catch(IOException e) {
                 throw new RuntimeException(e);
             }
@@ -109,17 +111,13 @@ public class LvRatioCalculator {
 
     public static ArrayList<RecentMusicInfo> getAllRecentList(String auth, boolean officialOnly) {
 
-        OkHttpClient client = new OkHttpClient();
         String url = "https://dancedemo.shenghuayule.com/Dance/api/User/GetLastPlay";
-        String json;
+        String json = "";
 
-        Request request = new Request.Builder().url(url).get().addHeader("Authorization", auth).build();
-        try {
-            Response response = client.newCall(request).execute();
-
-            ResponseBody body = response.body();
-            json = body.string();
-            body.close();
+        ResponseBody body = null;
+        try(Response response = HttpUtil.httpApi(url, Map.of("Authorization", auth))) {
+            if(response.body()!=null) body = response.body();
+            if(body!=null) json = body.string();
         } catch(IOException e) {
             throw new RuntimeException(e);
         }

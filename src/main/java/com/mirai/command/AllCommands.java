@@ -166,7 +166,7 @@ public class AllCommands {
                     contact.sendMessage("默认Token异常，请联系大铃！");
                     return;
                 }
-
+                if(token.getUserId()==660997) contact.sendMessage("我娶，迪神！");
                 InputStream inputStream = UserInfoImage.generate(token, token.getUserId());
                 if(inputStream!=null) {
                     Image image = HttpUtil.getImageFromStream(inputStream, contact);
@@ -413,7 +413,7 @@ public class AllCommands {
                 String accessToken = null;
                 String refreshToken = null;
                 try {
-                    String[] token = future.get(1, TimeUnit.MINUTES).getMessage().contentToString().split("\n");
+                    String[] token = future.get(1, TimeUnit.MINUTES).getMessage().contentToString().trim().split("\n");
                     accessToken = token[0];
                     refreshToken = token[1];
                 } catch(InterruptedException | ExecutionException e) {

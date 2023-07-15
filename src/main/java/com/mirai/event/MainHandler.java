@@ -52,14 +52,14 @@ public class MainHandler extends AbstractConfig {
     // #load 高级
     public static void loadTokens(Contact contact) {
         String path = configPath + "UserTokens.json";
-        userTokensMap = TokenBuilder.tokensFromFile(path, true);
+        userTokensMap = TokenBuilder.tokensFromFile(path, false);
         StringBuilder sb = new StringBuilder();
         for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
             Long qq = entry.getKey();
             Token token = entry.getValue();
             sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
         }
-        contact.sendMessage("加载成功！共%d条".formatted(userTokensMap.size()) + sb);
+        contact.sendMessage("不刷新加载成功！共%d条".formatted(userTokensMap.size()) + sb);
     }
 
     // #about 全局
@@ -74,4 +74,15 @@ public class MainHandler extends AbstractConfig {
         contact.sendMessage(content);
     }
 
+    public static void loadTokens() {
+        String path = configPath + "UserTokens.json";
+        userTokensMap = TokenBuilder.tokensFromFile(path, true);
+        StringBuilder sb = new StringBuilder();
+        for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
+            Long qq = entry.getKey();
+            Token token = entry.getValue();
+            sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
+        }
+        System.out.println("刷新加载成功！共%d条".formatted(userTokensMap.size()) + sb);
+    }
 }

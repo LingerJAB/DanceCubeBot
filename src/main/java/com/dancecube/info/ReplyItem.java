@@ -25,8 +25,10 @@ public class ReplyItem {
         ReplyItem replyItem = new ReplyItem();
         String itemsJson;
         Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/ReplyTextItem/GetAllList?machineId=0", Map.of("Authorization", token.getBearerToken()));
-        try(Response response = call.execute()) {
-            itemsJson = response.body().string();
+        try {
+            try(Response response = call.execute()) {
+                itemsJson = response.body().string();
+            }
         } catch(IOException e) {
             throw new RuntimeException(e);
         }

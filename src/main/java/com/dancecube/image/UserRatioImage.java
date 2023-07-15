@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -45,6 +46,7 @@ public class UserRatioImage extends AbstractConfig {
     public static final BufferedImage lvB;
     public static final BufferedImage lvC;
     public static final BufferedImage lvD;
+
 
     static {
         try {
@@ -66,16 +68,15 @@ public class UserRatioImage extends AbstractConfig {
     }
 
     public static InputStream generate(Token token) {
-        System.out.println("running...");
-        //todo 异步
+//        System.out.println("running...");
 
         UserInfo info;
         ArrayList<LvRatioHistory> ratioList;
-        ReplyItem replyItem;
+//        ReplyItem replyItem;
         if(itIsAReeeeaaaalWindowsMark()) {
             info = UserInfo.get(token);
             ratioList = LvRatioHistory.get(token);
-            replyItem = ReplyItem.get(token);
+//            replyItem = ReplyItem.get(token);
         } else {
             Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
             Future<ArrayList<LvRatioHistory>> ratioFuture = scheduler.async(() -> LvRatioHistory.get(token));
@@ -83,11 +84,11 @@ public class UserRatioImage extends AbstractConfig {
             try {
                 info = userInfoFuture.get();
                 ratioList = ratioFuture.get();
-                replyItem = replyItemFuture.get();
+//                replyItem = replyItemFuture.get();
             } catch(ExecutionException | InterruptedException e) {
                 info = UserInfo.get(token);
                 ratioList = LvRatioHistory.get(token);
-                replyItem = ReplyItem.get(token);
+//                replyItem = ReplyItem.get(token);
             }
         }
 
@@ -211,6 +212,7 @@ public class UserRatioImage extends AbstractConfig {
         float avg1 = LvRatioCalculator.average(rank15List);
         float avg2 = LvRatioCalculator.average(recent15List);
         float allAvg = (avg1 + avg2) / 2;
+        int randomIndex = new Random().nextInt(5); //0 ~ 4
         String extraInfoText = """
                 上次战力：%d   (%d月%d日)
                 B-15 战力：%.4f
@@ -225,7 +227,7 @@ public class UserRatioImage extends AbstractConfig {
 
 
         drawer.dispose();
-        System.out.println("done!");
+//        System.out.println("done!");
         return drawer.getImageStream("PNG");
     }
 
