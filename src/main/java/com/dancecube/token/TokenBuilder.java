@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import com.mirai.config.AbstractConfig;
 import com.tools.HttpUtil;
 import okhttp3.Call;
 import okhttp3.Response;
@@ -20,7 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class TokenBuilder extends AbstractConfig {
+import static com.mirai.config.AbstractConfig.configPath;
+
+public final class TokenBuilder {
 
     private static int index = 0;
     private final String id;
@@ -125,7 +126,7 @@ public final class TokenBuilder extends AbstractConfig {
     public static HashMap<Long, Token> tokensFromFile(String filePath, boolean refreshed) {
         Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
-        HashMap<Long, Token> userMap = null;
+        HashMap<Long, Token> userMap;
         try {
             userMap = new Gson().fromJson(new FileReader(filePath), type);
             // 读取并refresh()

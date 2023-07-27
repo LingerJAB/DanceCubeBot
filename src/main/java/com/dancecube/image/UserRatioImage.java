@@ -10,7 +10,6 @@ import com.dancecube.ratio.RankMusicInfo;
 import com.dancecube.ratio.RecentMusicInfo;
 import com.dancecube.ratio.SingleRank;
 import com.dancecube.token.Token;
-import com.mirai.config.AbstractConfig;
 import com.tools.image.AccGrade;
 import com.tools.image.ImageDrawer;
 import com.tools.image.ImageEffect;
@@ -31,7 +30,9 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class UserRatioImage extends AbstractConfig {
+import static com.mirai.config.AbstractConfig.*;
+
+public class UserRatioImage {
     public static String path = configPath + "Images/Material/";
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
 

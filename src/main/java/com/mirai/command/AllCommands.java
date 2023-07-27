@@ -5,6 +5,7 @@ import com.dancecube.api.PlayerMusic;
 import com.dancecube.image.UserInfoImage;
 import com.dancecube.image.UserRatioImage;
 import com.dancecube.info.AccountInfo;
+import com.dancecube.info.ReplyItem;
 import com.dancecube.info.UserInfo;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
@@ -160,10 +161,10 @@ public class AllCommands {
     public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
             .regex("个人信息|看看我的|我的信息|我的舞立方|mydc|mywlf")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getTokenOrDefault(contact, qq, (con, q) ->
-                        contact.sendMessage("小铃这登录身份过期了💦\n重新私信登录恢复吧💦"));
+                Token token;
+                token = getTokenOrDefault(contact, qq, null);
                 if(token==null) {
-                    contact.sendMessage("默认Token异常，请联系大铃！");
+                    contact.sendMessage("小铃看到登录身份过期了💦\n重新私信登录恢复吧💦");
                     return;
                 }
                 if(token.getUserId()==660997) contact.sendMessage("我娶，迪神！");
@@ -249,6 +250,8 @@ public class AllCommands {
                 if(args==null) return;
 
                 String region = args[0];
+                if(args[0].length()>15) return;
+
                 StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
                 List<Machine> list = Machine.getMachineList(region);
                 if(list.size()==0) {
@@ -340,6 +343,17 @@ public class AllCommands {
                 }
             }).build();
 
+    @DeclaredCommand("ReplyItem") //Todo Beta
+    public static final RegexCommand msgReplyItem = new RegexCommandBuilder()
+            .regex("myri")
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                Token token = getToken(contact, qq);
+                if(token==null) return;
+                contact.sendMessage(ReplyItem.get(token).toString());
+
+            }).build();
+
+
     //    @DeclaredCommand("添加指令")
 //    public static final ArgsCommand addUserInfoCmd = new ArgsCommandBuilder()
 //            .prefix("添加指令")
@@ -395,10 +409,8 @@ public class AllCommands {
                     contact.sendMessage("私聊才能用的辣！");
                     return;
                 }
-                if(token.refresh(true))
-                    contact.sendMessage("#Token已强制刷新#\n\n" + token);
-                else
-                    contact.sendMessage("刷新失败，请重新登录！");
+                if(token.refresh(true)) contact.sendMessage("#Token已强制刷新#\n\n" + token);
+                else contact.sendMessage("刷新失败，请重新登录！");
             }).build();
 
     @DeclaredCommand("设置默认Token")
@@ -459,20 +471,32 @@ public class AllCommands {
                 }
             }).build();
 
-    //有了onNull就不要return null了吧...如何处理呢？
-    public static Token getTokenOrDefault(Contact contact, long qq,
-                                          @Nullable BiConsumer<Contact, Long> onNull) {
+
+    /**
+     * 获取可用 Token (
+     * 有了onNull就不要return null了吧...如何处理呢？
+     *
+     * @param contact 操作对象
+     * @param qq      QQ
+     * @param onNull  当本地Token==null
+     * @return 可用的 Token / defaultToken
+     */
+    public static Token getTokenOrDefault(Contact contact, long qq, @Nullable BiConsumer<Contact, Long> onNull) {
         Token token = userTokensMap.get(qq);
-        // 默认返回备份
+
+        // 默认返回本地Token
         if(token!=null) {
-            if(token.isAvailable()) return token; //默认token有效性
-                //返回默认token 默认的都null那就登录吧 :(
-            else if(defaultToken!=null && defaultToken.isAvailable()) return defaultToken;
-            else throw new RuntimeException("未设置 defaultToken ！！");
+
+            //默认token有效性
+            if(token.isAvailable()) return token;
+
+            //返回默认token 默认的都null那就登录吧 :(
+            if(defaultToken!=null && defaultToken.isAvailable()) return defaultToken;
         }
+        //没有登录（本地保存记录）就 onNull.accept();
         if(onNull!=null) onNull.accept(contact, qq);
 
-        //没有登录（本地保存记录）就 onNull.accept();
+        //甚至连defaultToken==null
         return null;
     }
 

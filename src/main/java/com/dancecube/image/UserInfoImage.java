@@ -6,7 +6,6 @@ import com.dancecube.info.InfoStatus;
 import com.dancecube.info.ReplyItem;
 import com.dancecube.info.UserInfo;
 import com.dancecube.token.Token;
-import com.mirai.config.AbstractConfig;
 import com.tools.image.ImageDrawer;
 import com.tools.image.TextEffect;
 import org.junit.Test;
@@ -17,8 +16,10 @@ import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static com.mirai.config.AbstractConfig.*;
 
-public class UserInfoImage extends AbstractConfig {
+
+public class UserInfoImage {
     //UserInfo生成
     public static InputStream generate(Token token, int id) {
         //todo 随机背景

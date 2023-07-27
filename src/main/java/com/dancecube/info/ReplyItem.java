@@ -18,8 +18,7 @@ public class ReplyItem {
     private int danLevel; //段位
     private int playedTimes; //游玩次数
     private int passedSongs; //游玩次数
-    private int addedCoins;
-
+    private int addedCoins; //增加金币
 
     public static ReplyItem get(Token token) {
         ReplyItem replyItem = new ReplyItem();

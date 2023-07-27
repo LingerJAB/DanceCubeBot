@@ -1,6 +1,7 @@
 package com.mirai.config;
 
 import com.dancecube.token.Token;
+import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
 import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 
@@ -11,7 +12,7 @@ import java.util.HashSet;
 
 public abstract class AbstractConfig {
     public static JavaPluginScheduler scheduler;
-    public static HashMap<Long, Token> userTokensMap = new HashMap<>();
+    public static HashMap<Long, Token> userTokensMap;
     //    public static HashMap<Long, HashSet<String>> userInfoCommands = new HashMap<>();
     public static HashSet<Long> logStatus = new HashSet<>();
     public static String linuxRootPath;
@@ -22,6 +23,7 @@ public abstract class AbstractConfig {
     public static String configPath;
 
     static {
+
         windowsMark = new File("./WINDOWS_MARK").exists();
         try {
             linuxRootPath = new File("..").getCanonicalPath();
@@ -39,8 +41,9 @@ public abstract class AbstractConfig {
             e.printStackTrace();
         }
 
-        //Todo 默认Token IO
-        userTokensMap.put(0L, new Token(0, null));
+        // 导入Token
+        userTokensMap = TokenBuilder.tokensFromFile(configPath + "UserTokens.json");
+//        userTokensMap.put(0L, new Token(0, null));
     }
 
     public static boolean itIsAReeeeaaaalWindowsMark() {
