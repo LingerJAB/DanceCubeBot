@@ -181,7 +181,17 @@ public class UserRatioImage {
                 ImageEffect effect = new ImageEffect(35, 35);
 
                 String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
-                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect).drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fx + dx2, 715 + dy2).font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 651 + dy2).font(comboMissAccFont).drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 3)).drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 705 + dy2).font(levelFont, Color.WHITE).drawText(String.valueOf(bestInfo.getLevel()), 17 + dx2, 749 + dy2);
+                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
+                        .drawImage(card, 15 + dx2, 620 + dy2)
+                        .drawImage(grade, 285 + fx + dx2, 715 + dy2)
+                        .font(titleFont, Color.BLACK)
+                        .drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
+                        .font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 648 + dy2)
+                        .font(comboMissAccFont)
+                        .drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 2))
+                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 703 + dy2)
+                        .font(levelFont, Color.WHITE)
+                        .drawText(String.valueOf(bestInfo.getLevel()), 17 + dx2, 747 + dy2);
             }
         }
 
@@ -198,13 +208,21 @@ public class UserRatioImage {
                     case SSS, C -> 0;
                     case SS -> -17;
                     case S -> -6;
-                    default -> 5;// case A B D
+                    default -> 3;// case A B D
                 };
                 ImageEffect effect = new ImageEffect(35, 35);
                 String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
 
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
-                        .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fx + dx2, 715 + dy2).font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont).drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 651 + dy2).font(comboMissAccFont).drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 3)).drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 705 + dy2).font(levelFont, Color.WHITE).drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 749 + dy2);
+                        .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fx + dx2, 715 + dy2)
+                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont)
+                        .drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 648 + dy2)
+                        .font(comboMissAccFont)
+                        .drawText("%d\n%d\n%.2f%%"
+                                .formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 2))
+                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 703 + dy2)
+                        .font(levelFont, Color.WHITE)
+                        .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
             }
         }
 
@@ -223,7 +241,7 @@ public class UserRatioImage {
                    可真是个杂鱼呢~ ”
                 """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
-                avg1, avg2, allAvg, ((((int) allAvg) / 100) + 1) * 100);
+                avg1, avg2, allAvg, ((info.getLvRatio() / 100) + 1) * 100);
         drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
 
 

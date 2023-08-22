@@ -38,9 +38,10 @@ public class ReplyItem {
             String content = jsonObject.get("Content").getAsString();
             switch(type) {
                 case 13 -> replyItem.victoryRates = Float.parseFloat(content.replace('%', ' '));
-                case 9 -> replyItem.teamVictoryRates = Float.parseFloat(content.replace('%', ' '));
+                case 9 ->
+                        replyItem.teamVictoryRates = content.contains("无") ? 0 : Float.parseFloat(content.replace('%', ' '));
                 case 3 -> replyItem.playedAge = content;
-                case 7 -> replyItem.danLevel = content.contains("无") ? -1 : Integer.parseInt(content);
+                case 7 -> replyItem.danLevel = content.contains("无") ? 0 : Integer.parseInt(content);
                 case 5 -> replyItem.playedTimes = Integer.parseInt(content);
                 case 6 -> replyItem.passedSongs = Integer.parseInt(content);
                 case 10 -> replyItem.addedCoins = Integer.parseInt(content);

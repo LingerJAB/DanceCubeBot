@@ -85,7 +85,8 @@ public class AllCommands {
 
     @DeclaredCommand("舞立方机器人登录")
     public static final RegexCommand dcLogin = new RegexCommandBuilder()
-            .regex("登录|舞立方登录")
+//            .regex("登录|舞立方登录")
+            .multiStrings("登录", "舞立方登录")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 // 限私聊
                 if(contact instanceof Group) {
@@ -159,7 +160,8 @@ public class AllCommands {
 
     @DeclaredCommand("个人信息")
     public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
-            .regex("个人信息|看看我的|我的信息|我的舞立方|mydc|mywlf")
+//            .regex("个人信息|看看我的|我的信息|我的舞立方|mydc|mywlf")
+            .multiStrings("个人信息", "看看我的", "我的信息", "我的舞立方", "mydc", "mywlf")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token;
                 token = getTokenOrDefault(contact, qq, null);
@@ -237,7 +239,6 @@ public class AllCommands {
                 }
 
                 Image image = HttpUtil.getImageFromURL(userInfo.getHeadimgURL(), contact);
-                //TODO Gold
                 String info = "昵称：%s\n战队：%s\n积分：%d\n金币：%d\n战力：%d\n全国排名：%d".formatted(userInfo.getUserName(), userInfo.getTeamName(), userInfo.getMusicScore(), accountInfo.getGold(), userInfo.getLvRatio(), userInfo.getRankNation());
                 contact.sendMessage(image.plus(info));
             }).build();
@@ -330,7 +331,9 @@ public class AllCommands {
 
     @DeclaredCommand("战力分析")
     public static final RegexCommand msgUserRatio = new RegexCommandBuilder()
-            .regex("战力分析|我的战力|查看战力|查询战力|myrt")
+//
+//            .regex("战力分析|我的战力|查看战力|查询战力|myrt")
+            .multiStrings("战力分析", "我的战力", "查看战力", "查询战力", "myrt")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq);
                 if(token==null) return;
@@ -391,6 +394,21 @@ public class AllCommands {
             .regex("#token")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq);
+                if(token==null) return;
+                if(contact instanceof Group) {
+                    contact.sendMessage("私聊才能看的辣！");
+                } else {
+                    contact.sendMessage(token.toString());
+                }
+            }).build();
+
+//    public static final RegexCommand cmd=new RegexCommandBuilder().regex("^(lin|rin)$");
+
+    @DeclaredCommand("发送默认Token JSON")
+    public static final RegexCommand showDefaultToken = new RegexCommandBuilder()
+            .regex("#token0")
+            .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
+                Token token = userTokensMap.get(0L);
                 if(token==null) return;
                 if(contact instanceof Group) {
                     contact.sendMessage("私聊才能看的辣！");

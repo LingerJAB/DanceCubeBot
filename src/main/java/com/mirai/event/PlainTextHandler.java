@@ -56,6 +56,7 @@ public class PlainTextHandler {
         String msgPre = prefixAndArgs.remove(0); //前缀
         String[] args = prefixAndArgs.toArray(new String[0]); //参数
 
+
         //执行参数指令
         for(ArgsCommand command : argsCommands) {
             if(args.length<1) continue;

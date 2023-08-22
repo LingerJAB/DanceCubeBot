@@ -18,6 +18,18 @@ public class RegexCommandBuilder {
         return this;
     }
 
+    // TODO lineOnly -> ^(...|...)$
+    public RegexCommandBuilder multiStrings(String... strings) {
+        if(strings.length<1) throw new RuntimeException("regex不能为空值");
+        StringBuilder builder = new StringBuilder();
+        for(String string : strings) {
+            builder.append('|').append('^').append(string).append('$');
+        }
+        builder.deleteCharAt(0);
+        command.setRegex(Pattern.compile(builder.toString()));
+        return this;
+    }
+
     public RegexCommandBuilder onCall(Scope scope, @NotNull MsgHandleable onCall) {
         command.addScope(scope);
 
