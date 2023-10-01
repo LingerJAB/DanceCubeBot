@@ -118,7 +118,8 @@ public class AllCommands {
 
     @DeclaredCommand("舞立方机台登录")
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
-            .regex("机台登录|扫码")
+//            .regex("机台登录|扫码")
+            .multiStrings("机台登录", "扫码")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq);
                 if(token==null) return;
@@ -145,6 +146,57 @@ public class AllCommands {
                         try(Response response = Machine.qrLogin(token, qrUrl)) {
                             if(response!=null && response.code()==200) {
                                 contact.sendMessage("登录成功辣，快来出勤吧！");
+                            } else {
+                                contact.sendMessage("二维码失效了，换一个试试看吧");
+                            }
+                        }//401 404
+                    }
+                } catch(InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                } catch(TimeoutException e) {
+                    e.printStackTrace();
+                    contact.sendMessage(new QuoteReply(messageChain).plus("超时啦，请重新发送吧~"));
+                }
+            }).build();
+
+    @DeclaredCommand("借号扫码登录")
+    public static final ArgsCommand borrowMachineLogin = new ArgsCommandBuilder()
+            .prefix("借号")
+            .form(ArgsCommand.NUMBER)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                long friend = 0;
+                if(args!=null) friend = Long.parseLong(args[0]);
+                Token token = getToken(contact, friend);
+                if(token==null) {
+                    contact.sendMessage("对方没有登录！这个账号借不到了诶...");
+                    return;
+                } else if(token.getUserId()!=939088) {
+                    contact.sendMessage("未开放其它账号，不许登录！");
+                }
+
+                MessageChain messageChain = event.getMessage();
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
+                CompletableFuture<MessageEvent> future = new CompletableFuture<>();
+                channel.subscribeOnce(MessageEvent.class, future::complete);
+
+                contact.sendMessage(new QuoteReply(messageChain).plus(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！")));
+                SingleMessage message;
+                try {
+                    MessageChain nextMessage = future.get(3, TimeUnit.MINUTES).getMessage();
+                    List<SingleMessage> messageList = nextMessage.stream().filter(m -> m instanceof Image).toList();
+                    if(messageList.size()!=1) {
+                        contact.sendMessage(new QuoteReply(nextMessage).plus(new PlainText("这个不是图片吧...重新发送“机台登录”吧")));
+                    } else {  // 第一个信息
+                        message = messageList.get(0);
+                        String imageUrl = Image.queryUrl((Image) message);
+                        String qrUrl = HttpUtil.qrDecodeTencent(imageUrl);
+                        if(qrUrl==null) {  // 若扫码失败
+                            contact.sendMessage(new QuoteReply((MessageChain) message).plus(new PlainText("没有扫出来！再试一次吧！")));
+                            return;
+                        }
+                        try(Response response = Machine.qrLogin(token, qrUrl)) {
+                            if(response!=null && response.code()==200) {
+                                contact.sendMessage("借号成功辣，快来出勤吧！");
                             } else {
                                 contact.sendMessage("二维码失效了，换一个试试看吧");
                             }
@@ -270,7 +322,7 @@ public class AllCommands {
                     machineListText.append("\n").append(singleInfo);
                 }
                 if(list.size()>5) {
-                    contact.sendMessage(machineListText + "⭐刷屏哒咩！群聊只显示5条，更多列表请私聊~");
+                    contact.sendMessage(machineListText + "⭐刷屏哒咩！共" + list.size() + "条，请私聊查看更多~");
                 } else {
                     contact.sendMessage(machineListText.toString());
                 }
@@ -282,7 +334,7 @@ public class AllCommands {
                 StringBuilder machineListText = new StringBuilder("\"%s\"的舞立方机台列表：".formatted(region));
                 List<Machine> list = Machine.getMachineList(region);
                 if(list.size()==0) {
-                    contact.sendMessage("似乎没有找到舞立方欸...");
+                    contact.sendMessage("似乎没有找到舞立方诶...");
                     return;
                 }
 
@@ -467,7 +519,7 @@ public class AllCommands {
         Token token = userTokensMap.get(qq);
         if(token==null || !token.isAvailable()) {
             // 登录检测
-            contact.sendMessage("好像还没有登录欸(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
+            contact.sendMessage("好像还没有登录诶(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
 //            userInfoCommands.put(qq, new HashSet<>());
             return null;
         }
@@ -499,7 +551,8 @@ public class AllCommands {
      * @param onNull  当本地Token==null
      * @return 可用的 Token / defaultToken
      */
-    public static Token getTokenOrDefault(Contact contact, long qq, @Nullable BiConsumer<Contact, Long> onNull) {
+    public static Token getTokenOrDefault(Contact contact, long qq,
+                                          @Nullable BiConsumer<Contact, Long> onNull) {
         Token token = userTokensMap.get(qq);
 
         // 默认返回本地Token

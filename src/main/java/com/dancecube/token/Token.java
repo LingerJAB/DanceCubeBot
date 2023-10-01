@@ -9,6 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * 舞立方 Token 类，用于身份识别和验证
+ *
+ * @author Lin
+ */
 public class Token {
     private final int userId;
     private String accessToken;
@@ -59,6 +64,11 @@ public class Token {
         this.accessToken = accessToken;
     }
 
+    /**
+     * 通过查看账户未读消息检测是否Token可用
+     *
+     * @return Token是否可用
+     */
     public boolean isAvailable() {
         if(!available | accessToken==null | refreshToken==null) return false;
         boolean available;
@@ -75,6 +85,11 @@ public class Token {
         return userId==0;
     }
 
+    /**
+     * 刷新Token
+     *
+     * @return 是否成功刷新
+     */
     public boolean refresh() {
         return refresh(false);
     }
