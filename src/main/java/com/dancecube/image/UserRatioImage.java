@@ -237,9 +237,10 @@ public class UserRatioImage {
                 B-15 战力：%.4f
                 R-15 战力：%.4f
                 平均战力：%.5f
-                """ + getRatioComment(lvRatio).formatted(lvRatioHistory.getRatio(),
+                """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
-                avg1, avg2, allAvg, ((info.getLvRatio() / 100) + 1) * 100);
+                avg1, avg2, allAvg) + getRatioComment(lvRatio);
+        // 向上取整到百位 ((info.getLvRatio() / 100) + 1) * 100)
         drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
         drawer.dispose();
         return drawer.getImageStream("PNG");
