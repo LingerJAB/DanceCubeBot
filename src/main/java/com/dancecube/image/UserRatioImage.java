@@ -1,7 +1,6 @@
 package com.dancecube.image;
 
 import com.dancecube.api.LvRatioHistory;
-import com.dancecube.info.ReplyItem;
 import com.dancecube.info.UserInfo;
 import com.dancecube.music.AnyMusic;
 import com.dancecube.music.Officials;
@@ -36,32 +35,33 @@ public class UserRatioImage {
     public static String path = configPath + "Images/Material/";
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
 
-    public static final BufferedImage card1; //低级
-    public static final BufferedImage card2; //中级
-    public static final BufferedImage card3; //高级
 
-    public static final BufferedImage lvSSS;
-    public static final BufferedImage lvSS;
-    public static final BufferedImage lvS;
-    public static final BufferedImage lvA;
-    public static final BufferedImage lvB;
-    public static final BufferedImage lvC;
-    public static final BufferedImage lvD;
+    public static final BufferedImage CARD_1; //低级
+    public static final BufferedImage CARD_2; //中级
+    public static final BufferedImage CARD_3; //高级
+
+    public static final BufferedImage LV_SSS;
+    public static final BufferedImage LV_SS;
+    public static final BufferedImage LV_S;
+    public static final BufferedImage LV_A;
+    public static final BufferedImage LV_B;
+    public static final BufferedImage LV_C;
+    public static final BufferedImage LV_D;
 
 
     static {
         try {
             // 素材缓存
-            card1 = ImageIO.read(new File(path + "Card1.png"));
-            card2 = ImageIO.read(new File(path + "Card2.png"));
-            card3 = ImageIO.read(new File(path + "Card3.png"));
-            lvSSS = ImageIO.read(new File(path + "SSS.png"));
-            lvSS = ImageIO.read(new File(path + "SS.png"));
-            lvS = ImageIO.read(new File(path + "S.png"));
-            lvA = ImageIO.read(new File(path + "A.png"));
-            lvB = ImageIO.read(new File(path + "B.png"));
-            lvC = ImageIO.read(new File(path + "C.png"));
-            lvD = ImageIO.read(new File(path + "D.png"));
+            CARD_1 = ImageIO.read(new File(path + "Card1.png"));
+            CARD_2 = ImageIO.read(new File(path + "Card2.png"));
+            CARD_3 = ImageIO.read(new File(path + "Card3.png"));
+            LV_SSS = ImageIO.read(new File(path + "SSS.png"));
+            LV_SS = ImageIO.read(new File(path + "SS.png"));
+            LV_S = ImageIO.read(new File(path + "S.png"));
+            LV_A = ImageIO.read(new File(path + "A.png"));
+            LV_B = ImageIO.read(new File(path + "B.png"));
+            LV_C = ImageIO.read(new File(path + "C.png"));
+            LV_D = ImageIO.read(new File(path + "D.png"));
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
@@ -81,7 +81,7 @@ public class UserRatioImage {
         } else {
             Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
             Future<ArrayList<LvRatioHistory>> ratioFuture = scheduler.async(() -> LvRatioHistory.get(token));
-            Future<ReplyItem> replyItemFuture = scheduler.async(() -> ReplyItem.get(token));
+//            Future<ReplyItem> replyItemFuture = scheduler.async(() -> ReplyItem.get(token));
             try {
                 info = userInfoFuture.get();
                 ratioList = ratioFuture.get();
@@ -237,45 +237,52 @@ public class UserRatioImage {
                 B-15 战力：%.4f
                 R-15 战力：%.4f
                 平均战力：%.5f
-                  “连%d的战力都没有，
-                   可真是个杂鱼呢~ ”
-                """.formatted(lvRatioHistory.getRatio(),
+                """ + getRatioComment(lvRatio).formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
                 avg1, avg2, allAvg, ((info.getLvRatio() / 100) + 1) * 100);
         drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
-
-
         drawer.dispose();
-//        System.out.println("done!");
         return drawer.getImageStream("PNG");
     }
 
     private static BufferedImage getGradeImage(AccGrade grade) {
         return switch(grade) {
-            case SSS -> lvSSS;
-            case SS -> lvSS;
-            case S -> lvS;
-            case A -> lvA;
-            case B -> lvB;
-            case C -> lvC;
-            default -> lvD;
+            case SSS -> LV_SSS;
+            case SS -> LV_SS;
+            case S -> LV_S;
+            case A -> LV_A;
+            case B -> LV_B;
+            case C -> LV_C;
+            default -> LV_D;
         };
     }
 
     private static BufferedImage getCardImage(int difficulty) {
         return switch(difficulty) {
-            case 0, -1 -> card1; //-1为秀谱
-            case 1 -> card2;
-            case 2 -> card3;
+            case 0, -1 -> CARD_1; //-1为秀谱
+            case 1 -> CARD_2;
+            case 2 -> CARD_3;
             default -> throw new IllegalStateException("Unexpected value: " + difficulty);
         };
     }
 
     @Test
     public void test() {
-        Token token = new Token(939088, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
-        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
-        ImageDrawer.write(generate(token), path);
+//        Token token = new Token(939088, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
+//        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
+//        ImageDrawer.write(generate(token), path);
+
+        int ratio = 1808;
+        System.out.println("---------");
+        String comment = getRatioComment(ratio);
+        String str = """
+                上次战力：%d   (%d月%d日)
+                B-15 战力：%.4f
+                R-15 战力：%.4f
+                平均战力：%.5f
+                """ + getRatioComment(ratio);
+        System.out.println(str);
+        System.out.println("---------");
     }
 
     //todo 遍历+异步
@@ -308,4 +315,33 @@ public class UserRatioImage {
             throw new RuntimeException(e);
         }
     }
+
+    //常量放在这里我有病（
+    public static final String[] RATIO_COMMENTS = {
+            //   连1145的战力都没有
+            "  \"你已初步了解这款游戏了\n  继续练习吧~\"", //..1000
+            "  \"你已经适应10级的歌曲了\n  继续练习吧~\"", //1000..1300
+            "  \"你正在对线14级的歌了\n  继续加油~\"", //1300..1500
+            "  \"你即将迈入大佬的行列\n  加油加油！\"",//1500..1800
+            "  \"恭喜突破1800守门员\n  正式成为大佬啦！\"",//1800..1900
+            "  \"你即将成神\n  请继续和1819对线\"",//1900..2000
+            "  \"你已步入神的行列\n  快快杀19吧~\"",//2000..2080
+            //卧槽，外星人？！
+            "  \"你已经成为外星人\n  正在薄纱一切歌曲\""//2080..2100
+    };
+
+    public static String getRatioComment(int ratio) {
+        String comment;
+        if(ratio<1000) comment = RATIO_COMMENTS[0];
+        else if(ratio<1300) comment = RATIO_COMMENTS[1];
+        else if(ratio<1500) comment = RATIO_COMMENTS[2];
+        else if(ratio<1800) comment = RATIO_COMMENTS[3];
+        else if(ratio<1900) comment = RATIO_COMMENTS[4];
+        else if(ratio<2000) comment = RATIO_COMMENTS[5];
+        else if(ratio<2080) comment = RATIO_COMMENTS[6];
+        else if(ratio<2100) comment = RATIO_COMMENTS[7];
+        else comment = "";
+        return comment;
+    }
 }
+

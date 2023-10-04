@@ -11,6 +11,7 @@ import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
 import com.tools.HttpUtil;
+import kotlin.jvm.functions.Function1;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.Event;
@@ -19,6 +20,7 @@ import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.*;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -124,7 +126,7 @@ public class AllCommands {
                 Token token = getToken(contact, qq);
                 if(token==null) return;
                 MessageChain messageChain = event.getMessage();
-                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE).filter(getContactFilter(event));
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
                 channel.subscribeOnce(MessageEvent.class, future::complete);
 
@@ -175,7 +177,7 @@ public class AllCommands {
                 }
 
                 MessageChain messageChain = event.getMessage();
-                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE).filter(getContactFilter(event));
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
                 channel.subscribeOnce(MessageEvent.class, future::complete);
 
@@ -209,6 +211,18 @@ public class AllCommands {
                     contact.sendMessage(new QuoteReply(messageChain).plus("超时啦，请重新发送吧~"));
                 }
             }).build();
+
+    @NotNull
+    private static Function1<Event, Boolean> getContactFilter(MessageEvent event) {
+        return it -> {
+            if(!(it instanceof MessageEvent another)) return false;
+            // 过滤出发送者
+            if(event.getSubject().getId()!=another.getSubject().getId()) return false;
+            if(event.getSender().getId()!=another.getSender().getId()) return false;
+            MessageChain msg = another.getMessage();
+            return false;
+        };
+    }
 
     @DeclaredCommand("个人信息")
     public static final RegexCommand msgUserInfo = new RegexCommandBuilder()
