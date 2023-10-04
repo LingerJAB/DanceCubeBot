@@ -126,7 +126,7 @@ public class AllCommands {
                 Token token = getToken(contact, qq);
                 if(token==null) return;
                 MessageChain messageChain = event.getMessage();
-                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE).filter(getContactFilter(event));
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);//.filter(getContactFilter(event));
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
                 channel.subscribeOnce(MessageEvent.class, future::complete);
 
@@ -177,7 +177,7 @@ public class AllCommands {
                 }
 
                 MessageChain messageChain = event.getMessage();
-                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE).filter(getContactFilter(event));
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);//.filter(getContactFilter(event));
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
                 channel.subscribeOnce(MessageEvent.class, future::complete);
 
@@ -210,8 +210,12 @@ public class AllCommands {
                     e.printStackTrace();
                     contact.sendMessage(new QuoteReply(messageChain).plus("超时啦，请重新发送吧~"));
                 }
-            }).build();
+            })
+            .onCall(Scope.GROUP, (event, contact, qq, args) ->
+                    contact.sendMessage("私聊才能借号！"))
+            .build();
 
+    //Todo 过滤当前用户
     @NotNull
     private static Function1<Event, Boolean> getContactFilter(MessageEvent event) {
         return it -> {
