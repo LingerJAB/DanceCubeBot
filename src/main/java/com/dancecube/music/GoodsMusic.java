@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
+@Deprecated
 class GoodsMusic {
     @SerializedName("MusicID")
     private final int id;

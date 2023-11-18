@@ -3,6 +3,9 @@ package com.dancecube.ratio;
 
 import com.tools.image.AccGrade;
 
+/**
+ * RankMusic的一个其中难度记录
+ */
 public class SingleRank {
     int difficulty;
     int level;
@@ -43,13 +46,7 @@ public class SingleRank {
     }
 
     public AccGrade getGrade() {
-        if(acc>=98) return AccGrade.SSS;
-        else if(acc>=95) return AccGrade.SS;
-        else if(acc>=90) return AccGrade.S;
-        else if(acc>=80) return AccGrade.A;
-        else if(acc>=70) return AccGrade.B;
-        else if(acc>=60) return AccGrade.C;
-        else return AccGrade.D;
+        return AccGrade.get(score);
     }
 
     public float getRatio() {

@@ -15,6 +15,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * 历史战力
+ */
 public class LvRatioHistory {
     private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     private final Calendar calendar;

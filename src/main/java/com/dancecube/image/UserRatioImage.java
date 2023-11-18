@@ -2,8 +2,8 @@ package com.dancecube.image;
 
 import com.dancecube.api.LvRatioHistory;
 import com.dancecube.info.UserInfo;
-import com.dancecube.music.AnyMusic;
-import com.dancecube.music.Officials;
+import com.dancecube.music.Music;
+import com.dancecube.music.MusicUtil;
 import com.dancecube.ratio.LvRatioCalculator;
 import com.dancecube.ratio.RankMusicInfo;
 import com.dancecube.ratio.RecentMusicInfo;
@@ -22,18 +22,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Calendar;
+import java.text.DateFormat;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static com.mirai.config.AbstractConfig.*;
 
 public class UserRatioImage {
+    public static int times = 1;
     public static String path = configPath + "Images/Material/";
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
+    public static String fanmadeImgPath = configPath + "Images/Cover/FanmadeImage/";
 
 
     public static final BufferedImage CARD_1; //低级
@@ -68,6 +68,7 @@ public class UserRatioImage {
 
     }
 
+    @Deprecated
     public static InputStream generate(Token token) {
 //        System.out.println("running...");
 
@@ -120,7 +121,6 @@ public class UserRatioImage {
             throw new RuntimeException(e);
         }
 
-        // TODO 段位
         int lvRatio = info.getLvRatio();
         String userInfoText = """
                 %s
@@ -246,6 +246,257 @@ public class UserRatioImage {
         return drawer.getImageStream("PNG");
     }
 
+    public static InputStream generateOptimized(Token token) {
+//        System.out.println("running...");
+
+
+        // 个人信息
+        UserInfo info;
+        ArrayList<LvRatioHistory> ratioList;
+//        if(itIsAReeeeaaaalWindowsMark()) {
+        if(!itIsAReeeeaaaalWindowsMark()) {
+            info = UserInfo.get(token);
+            ratioList = LvRatioHistory.get(token);
+        } else {
+            CompletableFuture<UserInfo> userInfoFuture = CompletableFuture.supplyAsync(() -> UserInfo.get(token));
+            CompletableFuture<ArrayList<LvRatioHistory>> ratioFuture = CompletableFuture.supplyAsync(() -> LvRatioHistory.get(token));
+            try {
+                info = userInfoFuture.get();
+                ratioList = ratioFuture.get();
+//                replyItem = replyItemFuture.get();
+            } catch(ExecutionException | InterruptedException e) {
+                info = UserInfo.get(token);
+                ratioList = LvRatioHistory.get(token);
+//                replyItem = ReplyItem.get(token);
+            }
+        }
+
+        ImageDrawer drawer;
+//        BufferedImage avatar;
+//        BufferedImage box;
+//        BufferedImage title;
+//        BufferedImage backgroundImg;
+
+        try {
+            // efficiently final info
+            final UserInfo finalInfo = info;
+
+            // 获取背景图片
+            CompletableFuture<BufferedImage> backgroundImgFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return ImageIO.read(new File(path + "Background1.png"));
+                } catch(IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            // 个人信息 头像/头像框/头衔
+            CompletableFuture<BufferedImage> avatarFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    if(finalInfo.getHeadimgURL().equals("")) return null;
+                    return ImageIO.read(new URL(finalInfo.getHeadimgURL()));
+                } catch(IOException e) {
+                    return null;
+                }
+            });
+
+            CompletableFuture<BufferedImage> boxFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    if(finalInfo.getHeadimgBoxPath().equals("")) return null;
+                    return ImageIO.read(new URL(finalInfo.getHeadimgBoxPath()));
+                } catch(IOException e) {
+                    return null;
+                }
+            });
+
+            CompletableFuture<BufferedImage> titleFuture = CompletableFuture.supplyAsync(() -> {
+                if(finalInfo.getTitleUrl().equals("")) return null;
+                try {
+                    return ImageIO.read(new URL(finalInfo.getTitleUrl()));
+                } catch(IOException e) {
+                    return null;
+                }
+            });
+
+            //异步阻塞完绘制
+            drawer = new ImageDrawer(backgroundImgFuture.get());
+            drawer.antiAliasing(); // 抗锯齿
+
+            CompletableFuture.allOf(avatarFuture, boxFuture, titleFuture).join();
+            if(avatarFuture.get()!=null) drawer.drawImage(avatarFuture.get(), 34, 180, 174, 174);
+            if(boxFuture.get()!=null) drawer.drawImage(boxFuture.get(), -24, 122, 290, 290);
+            if(titleFuture.get()!=null) drawer.drawImage(titleFuture.get(), 28, 373, 186, 79);
+
+
+        } catch(InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        int lvRatio = info.getLvRatio();
+        String userInfoText = """
+                %s
+
+                战队：%s
+                排名：%d
+                战力：%d""".formatted(info.getUserName(), info.getTeamName(), info.getRankNation(), lvRatio);
+        Font infoFont = new Font("得意黑", Font.PLAIN, 45);
+        Font idFont = new Font("得意黑", Font.PLAIN, 30);
+        drawer.color(Color.BLACK).font(idFont).drawText("ID: " + token.getUserId(), 245, 200)
+                .font(infoFont).drawText(userInfoText, 245, 160, new TextEffect(230, 0));
+
+
+        // 异步获取两个列表
+        ArrayList<RankMusicInfo> allRankList;
+        ArrayList<RecentMusicInfo> allRecentList;
+        if(!itIsAReeeeaaaalWindowsMark()) {
+            allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
+            allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
+        } else {
+            CompletableFuture<ArrayList<RankMusicInfo>> rankMusicFuture = CompletableFuture.supplyAsync(() -> LvRatioCalculator.getAllRankList(token.getBearerToken(), true));
+            CompletableFuture<ArrayList<RecentMusicInfo>> recentMusicFuture = CompletableFuture.supplyAsync(() -> LvRatioCalculator.getAllRecentList(token.getBearerToken(), true));
+            try {
+                allRankList = rankMusicFuture.get();
+                allRecentList = recentMusicFuture.get();
+            } catch(ExecutionException | InterruptedException e) {
+                allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
+                allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
+            }
+
+        }
+        List<RankMusicInfo> rank15List = LvRatioCalculator.getSubRank15List(allRankList);
+        List<RecentMusicInfo> recent15List = LvRatioCalculator.getSubRecent15List(allRecentList);
+
+        //添加到自制谱列表获取
+        HashSet<Integer> waitingCoversSet = new HashSet<>();
+        for(RankMusicInfo value : rank15List) {
+            if(!isCoverExisting(value.getId())) waitingCoversSet.add(value.getId());
+        }
+        for(RecentMusicInfo value : recent15List) {
+            if(!isCoverExisting(value.getId())) waitingCoversSet.add(value.getId());
+        }
+
+        //异步下载不存在的封面
+        ExecutorService threadPool = Executors.newCachedThreadPool();
+        CountDownLatch latch = new CountDownLatch(waitingCoversSet.size());
+        waitingCoversSet.forEach(id -> threadPool.submit(() -> {
+            Music music = MusicUtil.getMusic(id);
+
+            File file = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
+                    + id + ".jpg");
+            music.getCoverToCache(file);
+            latch.countDown();
+        }));
+//        hashSet.forEach(value->getCover(value));
+//        threadPool.shutdown();
+        try {
+            latch.await();
+        } catch(InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        // B15
+        int index = 0;
+        int dx = 395, dy = 180; //x y延伸长度
+        Font titleFont = new Font("Microsoft YaHei UI", Font.BOLD, 32);
+        Font scoreFont = new Font("庞门正道标题体", Font.PLAIN, 52);
+        Font comboMissAccFont = new Font("庞门正道标题体", Font.PLAIN, 15);
+        Font levelFont = new Font("庞门正道标题体", Font.PLAIN, 23);
+
+        for(int row = 0; row<5; row++) { //列
+            for(int col = 0; col<3; col++, index++) { //行
+                int dx2 = col * dx;
+                int dy2 = row * dy;
+                RankMusicInfo musicInfo = rank15List.get(index);
+                BufferedImage cover = getCover(musicInfo.getId());
+                SingleRank bestInfo = musicInfo.getBestInfo();
+                BufferedImage card = getCardImage(bestInfo.getDifficulty());
+                BufferedImage grade = getGradeImage(bestInfo.getGrade());
+                int fx = switch(bestInfo.getGrade()) {
+                    case SSS, C -> 0;
+                    case SS -> -17;
+                    case S -> -6;
+                    default -> 5;// case A B D
+                };
+                ImageEffect effect = new ImageEffect(35, 35);
+
+                String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
+                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
+                        .drawImage(card, 15 + dx2, 620 + dy2)
+                        .drawImage(grade, 285 + fx + dx2, 715 + dy2)
+                        .font(titleFont, Color.BLACK)
+                        .drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
+                        .font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 646 + dy2)
+                        .font(comboMissAccFont)
+                        .drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2,
+                                new TextEffect(null, 1))
+                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 702 + dy2)
+                        .font(levelFont, Color.WHITE)
+                        .drawText(String.valueOf(bestInfo.getLevel()), 17 + dx2, 747 + dy2);
+            }
+        }
+
+        //R15
+        index = 0;
+        a:
+        for(int row = 0; row<5; row++) { //列
+            for(int col = 0; col<3; col++, index++) { //行
+                int dx2 = col * dx;
+                int dy2 = row * dy + 1065;
+                RecentMusicInfo musicInfo;
+
+                if(index>=recent15List.size()) break a;
+                musicInfo = recent15List.get(index);
+                BufferedImage cover = getCover(musicInfo.getId());
+                BufferedImage card = getCardImage(musicInfo.getDifficulty());
+                BufferedImage grade = getGradeImage(musicInfo.getGrade());
+                int fx = switch(musicInfo.getGrade()) {
+                    case SSS, C -> 0;
+                    case SS -> -17;
+                    case S -> -6;
+                    default -> 5;// case A B D
+                };
+                ImageEffect effect = new ImageEffect(35, 35);
+                String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
+
+                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
+                        .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fx + dx2, 715 + dy2)
+                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont)
+                        .drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 646 + dy2)
+                        .font(comboMissAccFont)
+                        .drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()),
+                                230 + dx2, 725 + dy2,
+                                new TextEffect(null, 1))
+                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 702 + dy2)
+                        .font(levelFont, Color.WHITE)
+                        .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
+            }
+        }
+
+        LvRatioHistory lvRatioHistory;
+        if(ratioList.size()>0) {
+            lvRatioHistory = ratioList.get(ratioList.size() - (ratioList.size()>1 ? 2 : 1));
+        } else {
+            lvRatioHistory = new LvRatioHistory(DateFormat.getDateInstance().getCalendar(), info.getLvRatio());
+        }
+        float avg1 = LvRatioCalculator.average(rank15List);
+        float avg2 = LvRatioCalculator.average(recent15List);
+        float allAvg = (avg1 + avg2) / 2;
+        Calendar calendar = lvRatioHistory.getCalendar();
+        String extraInfoText = """
+                上次战力：%d   (%d月%d日)
+                B-15 战力：%.4f
+                R-15 战力：%.4f
+                平均战力：%.5f
+                """.formatted(lvRatioHistory.getRatio(),
+                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
+                avg1, avg2, allAvg) + getRatioComment(lvRatio);
+        // 向上取整到百位 ((info.getLvRatio() / 100) + 1) * 100)
+        drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
+        drawer.dispose();
+        return drawer.getImageStream("PNG");
+    }
+
     private static BufferedImage getGradeImage(AccGrade grade) {
         return switch(grade) {
             case SSS -> LV_SSS;
@@ -269,52 +520,59 @@ public class UserRatioImage {
 
     @Test
     public void test() {
-//        Token token = new Token(939088, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
-//        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
-//        ImageDrawer.write(generate(token), path);
+        long timeMillis = System.currentTimeMillis();
 
-        int ratio = 1808;
-        System.out.println("---------");
-        String comment = getRatioComment(ratio);
-        String str = """
-                上次战力：%d   (%d月%d日)
-                B-15 战力：%.4f
-                R-15 战力：%.4f
-                平均战力：%.5f
-                """ + getRatioComment(ratio);
-        System.out.println(str);
-        System.out.println("---------");
+        System.out.println("Running...");
+        Token token = new Token(939088, "PoZchOfcWFgHSY7RNgHblCo5eOOQ9E_xaMlNdoQNlFa6zRQZt75OfleDgyXFazsgYwmI2GsZz9GAbRaeaw-iPZv_CwKpmCV_id8Hz8s0F1QiRlxLl9PG3lsYjh5UK8UPb_I3LsJ-GVVKZmJf-9GPjFGquzBbbcicw3D9xOgPsvNX-y8Y88vXdXlrQGsaM7Q6b_2UNbzHsvFXM1awYLGvd5TgQXqKVqVLQMArmAoCp_sRMw0juMAj_uLYNAJ-9KIeAum5RgUncJbkdA-7ESkFlHc-tRv8oKeUTEzn6r6WTmfV4sk-6F46ygcsdPprEMd7DNm895Efz5tpTnSMItuHK-JPAd0PcxML-rFwaReGiZ-8j6lgFSby_0KoE_tgbpQn");
+        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
+        ImageDrawer.write(generateOptimized(token), path);
+
+
+        System.out.println("\nDone! It takes " + deltaSeconds(timeMillis) + "s");
+
     }
 
-    //todo 遍历+异步
+    public static float deltaSeconds(long mills) {
+        return (float) (System.currentTimeMillis() - mills) / 1000;
+    }
+
+    public static boolean isCoverExisting(int id) {
+        //比file.exists()快
+        File coverFile = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
+                + id + ".jpg");
+        return coverFile.exists();
+    }
+
     public static BufferedImage getCover(int id) {
-        File file = new File(officialImgPath + id + ".jpg");
+//        System.out.printf("#%d 正在获取第%d张图片...   %n", id, times++);
+//        long millis = System.currentTimeMillis();
+
+        File file = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
+                + id + ".jpg");
         // 先从官谱音乐取封面
-        if(Officials.OFFICIAL_ID.contains(id)) {
-            try {
-                if(file.exists()) {
-                    return ImageIO.read(file);
-                }
-            } catch(Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        //非官谱或未缓存则从DC服务器获取
-        AnyMusic music = new AnyMusic(id);
-        String coverUrl = music.getCoverUrl();
         try {
-            if(coverUrl==null | "".equals(coverUrl)) {
-                File defaultImg = new File(officialImgPath + "default.png");
-                if(!defaultImg.exists()) {
-                    throw new RuntimeException(defaultImg.getAbsolutePath() + "\n默认文件不存在！");
-                }
-                return ImageIO.read(defaultImg);
-            } else {
-                return ImageIO.read(new URL(coverUrl));
-            }
+            return ImageIO.read(file);
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
+        //非官谱或未缓存则从DC服务器获取
+//        Music music = MusicUtil.getMusic(id);
+//        String coverUrl = music.getCoverUrl();
+//        try {
+//            if(coverUrl==null | "".equals(coverUrl)) {
+//                File defaultImg = new File(officialImgPath + "default.png");
+//                if(!defaultImg.exists()) {
+//                    throw new RuntimeException(defaultImg.getAbsolutePath() + "\n默认文件不存在！");
+//                }
+////                System.out.printf("#%d 默认图片共耗时%ss", id, deltaSeconds(millis));
+//                return ImageIO.read(defaultImg);
+//            } else {
+//                System.out.printf("#%d ⭐网络图片共耗时%ss%n", id, deltaSeconds(millis));
+//                return music.getCover();
+//            }
+//        } catch(IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     //常量放在这里我有病（

@@ -66,7 +66,7 @@ class OfficialMusic {
                 '}';
     }
 
-
+    @Deprecated
     public static void saveOfficialImg(OkHttpClient client, OfficialMusic music) {
         String name = music.getName();
         int id = music.getId();

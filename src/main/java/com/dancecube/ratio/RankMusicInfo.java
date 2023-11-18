@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 
 /**
- * 排名记录音乐信息
+ * 排名记录音乐信息 (Best)
  */
 public class RankMusicInfo extends RecordedMusicInfo {
     private boolean official;
@@ -57,6 +57,4 @@ public class RankMusicInfo extends RecordedMusicInfo {
     public String toString() {
         return "Name: %s\n#Ratio: %s\n#BestRatio: %.2f\n".formatted(name, accList, getBestRatio());
     }
-
-
 }

@@ -1,6 +1,6 @@
 package com.dancecube.ratio;
 
-import com.dancecube.music.Officials;
+import com.dancecube.music.MusicUtil;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.tools.HttpUtil;
@@ -16,10 +16,10 @@ import java.util.Map;
 
 
 public class LvRatioCalculator {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         //Input Your DanceCubeBase Bearer Token Here
-        String auth = "bearer " + "iDQH1yM8yK_WhbZffU_GU641aYxUJXnFyiZFF8iSe-taI3Fk5EnyBeFMuAn00A8uuRWTy_DIzNaWi1hygQQLU_QiROBC6ztsAvxd8Itz-djHQOrth4EQOnLcwTSEBz2JsF5lSb4_14QwxJrzG9UzGcMhPXZ-A5yLR3da21VzXYbzKgcLi2_ykNWKTnJhqBa6V4iRIZUdFx_bittJWpw8XOzpB4n8lLcYZGcu4YEsGvYLTrqnHn41fpbN-NpPrQaxZfC7I4GYJV9sPdoZMrdnlVQUyHuEY4kaw5FF7QNofrtXhjCuZE2ejdNiGulNRJpIIdc43mzA1j7O-XghsXY4XuuAfSajn79GGwg-7N146clzPt7v4PHIoyDOixlo5JLVEReEk8MjEYowuKICoSeA3z5rvLe45zH8bYtN0ojxSIZ_VyGqRWBR1LMTYlq98Yf_M8RBBVOt98pj0aXL5SoJl8fm2bo0CK-i-RZXu0fKbG8oxf107keXHbEGZ274c16k-IhIfvy1J_5QoomvUglMY0sSY4dgwk1UhBHd8phpiayQIFECdH_WV9CwehWliK2BZwYwl2Xh6IRmmUqsY2XI3zLQnzq52SwBnWx-Nu78hPjAKnNZFlTlE0PfSYa6xcSzRz3aci-mY-m9pLp1t3oJDxTSLR5Pw9UdxcWZ-D9C-CfRim-OzLVBrtmn0dEF07XNYYPTZwxq8DZwfAi-Xa5at7mHfOWDt1RXVCvwhAf8uYKcq12zp4uaZDXmjJefSpx5-524g1IOwpcpswYGZIhdfclfI-_fIgY_t7ciFl9zmYOgvgf60u6LGkm1KeycHztfFFQAJrBU3REIOWDqYHNL5oUYk-CaM2mEKYzb1DoITNBENuqicDb3_whU0IryMEiK";
+        String auth = "bearer " + "xxx";
 
         //The parameter officialOnly given true will ignore non-official music (including fan-made chart)
         ArrayList<RankMusicInfo> allRankList = getAllRankList(auth, true);
@@ -52,16 +52,19 @@ public class LvRatioCalculator {
 
     }
 
-    public static <T extends RecordedMusicInfo> float average(List<T> infos) {
-        return average(new ArrayList<>(infos));
+    /**
+     * 取成绩平均值
+     */
+    public static <T extends RecordedMusicInfo> float average(List<T> multiInfo) {
+        return average(new ArrayList<>(multiInfo));
     }
 
-    public static <T extends RecordedMusicInfo> float average(ArrayList<T> infos) {
+    public static <T extends RecordedMusicInfo> float average(ArrayList<T> multiInfo) {
         float sum = 0;
-        for(RecordedMusicInfo info : infos) {
+        for(RecordedMusicInfo info : multiInfo) {
             sum = info.getBestRatio() + sum;
         }
-        return sum / infos.size();
+        return sum / multiInfo.size();
     }
 
     private static ArrayList<RankMusicInfo> getCategoryRankList(String json, boolean officialOnly) {
@@ -106,6 +109,9 @@ public class LvRatioCalculator {
 
     public static List<RankMusicInfo> getSubRank15List(ArrayList<RankMusicInfo> list) {
         ((List<RankMusicInfo>) list).sort((o1, o2) -> Float.compare(o2.getBestRatio(), o1.getBestRatio()));
+        if(list.size()<15) {
+            return list;
+        }
         return ((List<RankMusicInfo>) list).subList(0, 15);
     }
 
@@ -121,21 +127,22 @@ public class LvRatioCalculator {
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-
         ArrayList<RecentMusicInfo> musicInfoList = new ArrayList<>();
         for(JsonElement element : JsonParser.parseString(json).getAsJsonArray()) {
             RecentMusicInfo musicInfo = RecentMusicInfo.get(element.getAsJsonObject());
 
-            if(officialOnly & Officials.OFFICIAL_ID.contains(musicInfo.id))
+            if(officialOnly & MusicUtil.isOfficial(musicInfo.id))
                 musicInfoList.add(musicInfo);
-            else
-                musicInfoList.add(musicInfo);
+//            else
+//                musicInfoList.add(musicInfo);
         }
         return musicInfoList;
     }
 
     public static List<RecentMusicInfo> getSubRecent15List(ArrayList<RecentMusicInfo> list) {
-        //        musicInfos.sort((o1, o2) -> o1.getBestRatio()>o2.getBestRatio() ? -1 : (o1.getBestRatio()==o2.getBestRatio() ? 0 : 1));
+        if(list.size()<15) {
+            return list;
+        }
         return ((List<RecentMusicInfo>) list).subList(0, 15);
     }
 

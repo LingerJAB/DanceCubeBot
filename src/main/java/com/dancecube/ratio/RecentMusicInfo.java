@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.tools.image.AccGrade;
 
 /**
- * 最近记录音乐信息
+ * 最近游玩的记录音乐信息
  */
 public class RecentMusicInfo extends RecordedMusicInfo {
     private int difficulty;
@@ -26,8 +26,6 @@ public class RecentMusicInfo extends RecordedMusicInfo {
     private int score;
     private int combo;
     private int miss;
-
-    //TODO
 
     public static RecentMusicInfo get(JsonObject object) {
         RecentMusicInfo musicInfo = new RecentMusicInfo();
@@ -63,13 +61,7 @@ public class RecentMusicInfo extends RecordedMusicInfo {
     }
 
     public AccGrade getGrade() {
-        if(acc>=98) return AccGrade.SSS;
-        else if(acc>=95) return AccGrade.SS;
-        else if(acc>=90) return AccGrade.S;
-        else if(acc>=80) return AccGrade.A;
-        else if(acc>=70) return AccGrade.B;
-        else if(acc>=60) return AccGrade.C;
-        else return AccGrade.D;
+        return AccGrade.get(acc);
     }
 
     @Override

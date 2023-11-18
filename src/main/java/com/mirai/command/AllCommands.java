@@ -215,7 +215,7 @@ public class AllCommands {
                     contact.sendMessage("私聊才能借号！"))
             .build();
 
-    //Todo 过滤当前用户
+    //Todo 过滤当前用户 （回复变成别的群的bug）
     @NotNull
     private static Function1<Event, Boolean> getContactFilter(MessageEvent event) {
         return it -> {
@@ -401,15 +401,13 @@ public class AllCommands {
 
     @DeclaredCommand("战力分析")
     public static final RegexCommand msgUserRatio = new RegexCommandBuilder()
-//
-//            .regex("战力分析|我的战力|查看战力|查询战力|myrt")
             .multiStrings("战力分析", "我的战力", "查看战力", "查询战力", "myrt")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq);
                 if(token==null) return;
 
                 contact.sendMessage("小铃正在计算中,等一下下就好💦...");
-                InputStream inputStream = UserRatioImage.generate(token);
+                InputStream inputStream = UserRatioImage.generateOptimized(token);
                 if(inputStream!=null) {
                     Image image = HttpUtil.getImageFromStream(inputStream, contact);
                     contact.sendMessage(image);
@@ -423,7 +421,6 @@ public class AllCommands {
                 Token token = getToken(contact, qq);
                 if(token==null) return;
                 contact.sendMessage(ReplyItem.get(token).toString());
-
             }).build();
 
 
@@ -472,7 +469,21 @@ public class AllCommands {
                 }
             }).build();
 
-//    public static final RegexCommand cmd=new RegexCommandBuilder().regex("^(lin|rin)$");
+    @DeclaredCommand("发送用户Token JSON")
+    public static final ArgsCommand showOthersToken = new ArgsCommandBuilder()
+            .prefix("#token")
+            .form(ArgsCommand.NUMBER)
+            .onCall(Scope.ADMIN, (event, contact, qq, args) -> {
+                if(args==null) return;
+                Token token = getToken(contact, Long.parseLong(args[0]));
+                if(token==null) return;
+                if(contact instanceof Group) {
+                    contact.sendMessage("私聊才能看的辣！");
+                } else {
+                    contact.sendMessage(token.toString());
+                }
+            }).build();
+
 
     @DeclaredCommand("发送默认Token JSON")
     public static final RegexCommand showDefaultToken = new RegexCommandBuilder()
@@ -503,7 +514,7 @@ public class AllCommands {
 
     @DeclaredCommand("设置默认Token")
     public static final RegexCommand setDefaultToken = new RegexCommandBuilder()
-            .regex("#setDefaultToken")
+            .regex("#setToken0")
             .onCall(Scope.ADMIN, (event, contact, qq, args) -> {
                 contact.sendMessage("请发送 Access Token 和 Refresh Token\n使用换行区分token！");
                 EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);
