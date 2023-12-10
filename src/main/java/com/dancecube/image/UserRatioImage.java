@@ -350,7 +350,7 @@ public class UserRatioImage {
         ArrayList<RecentMusicInfo> allRecentList;
         if(!itIsAReeeeaaaalWindowsMark()) {
             allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-            allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
+            allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), false);
         } else {
             CompletableFuture<ArrayList<RankMusicInfo>> rankMusicFuture = CompletableFuture.supplyAsync(() -> LvRatioCalculator.getAllRankList(token.getBearerToken(), true));
             CompletableFuture<ArrayList<RecentMusicInfo>> recentMusicFuture = CompletableFuture.supplyAsync(() -> LvRatioCalculator.getAllRecentList(token.getBearerToken(), true));
@@ -359,7 +359,7 @@ public class UserRatioImage {
                 allRecentList = recentMusicFuture.get();
             } catch(ExecutionException | InterruptedException e) {
                 allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-                allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
+                allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), false);
             }
 
         }
@@ -369,10 +369,10 @@ public class UserRatioImage {
         //添加到自制谱列表获取
         HashSet<Integer> waitingCoversSet = new HashSet<>();
         for(RankMusicInfo value : rank15List) {
-            if(!isCoverExisting(value.getId())) waitingCoversSet.add(value.getId());
+            if(isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
         }
         for(RecentMusicInfo value : recent15List) {
-            if(!isCoverExisting(value.getId())) waitingCoversSet.add(value.getId());
+            if(isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
         }
 
         //异步下载不存在的封面
@@ -386,8 +386,6 @@ public class UserRatioImage {
             music.getCoverToCache(file);
             latch.countDown();
         }));
-//        hashSet.forEach(value->getCover(value));
-//        threadPool.shutdown();
         try {
             latch.await();
         } catch(InterruptedException e) {
@@ -523,7 +521,7 @@ public class UserRatioImage {
         long timeMillis = System.currentTimeMillis();
 
         System.out.println("Running...");
-        Token token = new Token(939088, "PoZchOfcWFgHSY7RNgHblCo5eOOQ9E_xaMlNdoQNlFa6zRQZt75OfleDgyXFazsgYwmI2GsZz9GAbRaeaw-iPZv_CwKpmCV_id8Hz8s0F1QiRlxLl9PG3lsYjh5UK8UPb_I3LsJ-GVVKZmJf-9GPjFGquzBbbcicw3D9xOgPsvNX-y8Y88vXdXlrQGsaM7Q6b_2UNbzHsvFXM1awYLGvd5TgQXqKVqVLQMArmAoCp_sRMw0juMAj_uLYNAJ-9KIeAum5RgUncJbkdA-7ESkFlHc-tRv8oKeUTEzn6r6WTmfV4sk-6F46ygcsdPprEMd7DNm895Efz5tpTnSMItuHK-JPAd0PcxML-rFwaReGiZ-8j6lgFSby_0KoE_tgbpQn");
+        Token token = new Token(939088, "6RIGXEYHV_W0L-wybLpT9Zn_ij4mTW-iAzh7YiEJTH40QKkqIlB0PLR4AtP9eXF-YlAn8wXTGTE-4rw_Y285789xQcCBxxuHAiI1iJKjegzDGsfKtizQG3VUr82Bmw9a4vqaTYNlUKm49UCBykRhnO73FBHyQYWtDE10W5nxaCrvhBJNF9u3nAe-IwPioEOqd_2kdUi1gqctPwNAD-ZgQ6uMwF0ChBvglaa0vGj2g8tHvdsFln049L9ZRnGdQmqSLvBrXlMQDgt0ucX_4r_P7mObLUl2usgymbeIbMXw5pUn5_CdygX2900hkcXg40m5-MxGltu8jaPJ8r26osKlRKodNBxLmpidTvLZxYCPQ7tjhzpx8lImQ1cGYbCsPI0B");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
         ImageDrawer.write(generateOptimized(token), path);
 
@@ -536,11 +534,11 @@ public class UserRatioImage {
         return (float) (System.currentTimeMillis() - mills) / 1000;
     }
 
-    public static boolean isCoverExisting(int id) {
+    public static boolean isCoverAbsent(int id) {
         //比file.exists()快
         File coverFile = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
                 + id + ".jpg");
-        return coverFile.exists();
+        return !coverFile.exists();
     }
 
     public static BufferedImage getCover(int id) {

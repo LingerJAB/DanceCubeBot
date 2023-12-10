@@ -10,20 +10,24 @@ import net.mamoe.mirai.message.data.MessageChain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashSet;
 
 public class PlainTextHandler {
-    private static final int MAX_LENGTH = 32767;  //单次指令字符最大长度（用于过滤）
 
-    public static HashSet<RegexCommand> regexCommands = AllCommands.regexCommands;  //所有正则指令
-    public static HashSet<ArgsCommand> argsCommands = AllCommands.argsCommands;  //所有参数指令
     public static HashSet<Long> adminsSet = new HashSet<>();
 
     static {
+        //  TODO 修改类加载顺序，避免无法获取而抛出异常
         // 初始化AllCommands所有指令
         AllCommands.init();
         adminsSet.add(2862125721L);
     }
+
+    public static HashSet<RegexCommand> regexCommands = AllCommands.regexCommands;  //所有正则指令
+    public static HashSet<ArgsCommand> argsCommands = AllCommands.argsCommands;  //所有参数指令
+
+    private static final int MAX_LENGTH = 32767;  //单次指令字符最大长度（用于过滤）
 
 
     //事件处理
@@ -41,8 +45,6 @@ public class PlainTextHandler {
         }
         if(message.length()>MAX_LENGTH) return;
 
-
-//        For-each debug太累了...
 
         // 执行正则指令
         for(RegexCommand regexCommand : regexCommands) {// 匹配作用域
@@ -66,18 +68,32 @@ public class PlainTextHandler {
                     runCommand(messageEvent, command, args);
                 }
             }
-
         }
 
 
     }
 
+    private static final MsgHandleable MUTE = (event, contact, qq, args) -> contact.sendMessage("小铃困啦，白天再来玩吧，先晚安安啦~");
+
+    // 宵禁
+    public static boolean isMutedNow() {
+        // 获取当前时间
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        // 如果当前时间是 3 点到 4 点，则将 `autoMuted` 设置为 true
+        return hour>=3 && hour<=4;
+    }
 
     //含参指令
     private static void runCommand(MessageEvent messageEvent, AbstractCommand command, String[] args) {
+
         HashSet<Scope> scopes = command.getScopes(); //作用域
         long qq = messageEvent.getSender().getId(); // qq不为contact.getId()
         Contact contact = messageEvent.getSubject(); //发送对象
+
+        if(isMutedNow()) {
+            MUTE.handle(messageEvent, contact, qq, args);
+            if(!adminsSet.contains(qq)) return;
+        }
 
         if(scopes.contains(Scope.GLOBAL))
             command.onCall(Scope.GLOBAL, messageEvent, contact, qq, args);
@@ -89,8 +105,7 @@ public class PlainTextHandler {
             command.onCall(Scope.ADMIN, messageEvent, contact, qq, args);
     }
 
-
-    // 无参指令
+    // 无参指令（其实就是给上面的runCommand传了个args=null）
     private static void runCommand(MessageEvent messageEvent, AbstractCommand command) {
         runCommand(messageEvent, command, null);
     }

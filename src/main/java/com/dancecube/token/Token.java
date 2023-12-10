@@ -18,6 +18,7 @@ public class Token {
     private final int userId;
     private String accessToken;
     private String refreshToken;
+    // 是否过期，并且无法刷新Token
     private boolean available = true;
     private long recTime;
 
@@ -66,41 +67,32 @@ public class Token {
 
     /**
      * 通过查看账户未读消息检测是否Token可用
+     * <p><b>*不严谨判定：</b>{@code available}表示是否可用访问API，但<b>不能判定{@code refresh_token}是否可再次刷新。</b>
+     * 但事实上，{@code refresh_token}的{@code expire_in}并不准确，应该尽可能的刷新。
+     * <p>
+     * 而对于<b>能够即时刷新的定时程序</b>来说，可用认为{@code available}等价于{@code refreshable}</p>
      *
      * @return Token是否可用
      */
-    public boolean isAvailable() {
-        if(!available | accessToken==null | refreshToken==null) return false;
-        boolean available;
-        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
-                Map.of("Authorization", getBearerToken()))) {
-            available = response!=null && response.code()==200;
-        }
-        this.available = available;
-        return available;
+    public boolean checkAvailable() {
+        return !(!available | accessToken==null | refreshToken==null);
+        //        boolean available;
+//        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
+//                Map.of("Authorization", getBearerToken()))) {
+//            available = response!=null && response.code()==200;
+//        }
+//        return available;
     }
 
     //如果是默认Token(公共token)
+    @Deprecated
     public boolean isDefault() {
         return userId==0;
     }
 
-    /**
-     * 刷新Token
-     *
-     * @return 是否成功刷新
-     */
     public boolean refresh() {
-        return refresh(false);
-    }
-
-    /**
-     * @param ignoreWaiting 忽略默认等待时间
-     */
-    public boolean refresh(boolean ignoreWaiting) {
         if(!available) return false;
-        //每refresh间隔为一个星期，防止出错改为4天
-        if(!ignoreWaiting && System.currentTimeMillis() - recTime<345_600_000) return false;
+
         try {
             Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/token",
                     Map.of("content-type", "application/x-www-form-urlencoded"),
@@ -135,13 +127,13 @@ public class Token {
                     "accessToken"="%s",
                     "refreshToken"="%s",
                     "recTime"=%d
+                    "desc"="token时长：%.3f天（大于7天可能需要重新登录）"
                 }
-                token时长：%.3f天（大于7天需要重新登录）
                 """)
                 .formatted(userId, accessToken, refreshToken, recTime, (float) (System.currentTimeMillis() - recTime) / 86400_000);
     }
 
-    public void forceValidity() {
+    public void forceAccessible() {
         this.available = true;
     }
 }

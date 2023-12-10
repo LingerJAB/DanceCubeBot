@@ -21,7 +21,7 @@ public class LvRatioCalculator {
         //Input Your DanceCubeBase Bearer Token Here
         String auth = "bearer " + "xxx";
 
-        //The parameter officialOnly given true will ignore non-official music (including fan-made chart)
+        //The parameter officialOnly given true will ignore non-official music (including fan-made charts)
         ArrayList<RankMusicInfo> allRankList = getAllRankList(auth, true);
         ArrayList<RecentMusicInfo> allRecentList = getAllRecentList(auth, true);
         ArrayList<RankMusicInfo> rank15List = new ArrayList<>(getSubRank15List(allRankList));
@@ -41,7 +41,7 @@ public class LvRatioCalculator {
             System.out.printf("#%d Name:%s, Ratio: %.2f\n", i + 1, musicInfo.getName(), musicInfo.getBestRatio());
         }
 
-        //Sum up
+        //Summing up
         System.out.println("\n# Sum #");
         float best15Avg = average(rank15List);
         float recent15Avg = average(recent15List);
@@ -131,10 +131,9 @@ public class LvRatioCalculator {
         for(JsonElement element : JsonParser.parseString(json).getAsJsonArray()) {
             RecentMusicInfo musicInfo = RecentMusicInfo.get(element.getAsJsonObject());
 
-            if(officialOnly & MusicUtil.isOfficial(musicInfo.id))
-                musicInfoList.add(musicInfo);
-//            else
-//                musicInfoList.add(musicInfo);
+            if(officialOnly & !MusicUtil.isOfficial(musicInfo.id))
+                continue;
+            musicInfoList.add(musicInfo);
         }
         return musicInfoList;
     }

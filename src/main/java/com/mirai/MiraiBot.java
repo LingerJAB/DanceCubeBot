@@ -3,18 +3,23 @@ package com.mirai;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.event.MainHandler;
+import com.mirai.task.SchedulerTask;
+import net.mamoe.mirai.console.extension.PluginComponentStorage;
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
 import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
-import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescriptionBuilder;
+import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription;
 import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.EventChannel;
 import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.event.events.MessageEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
 import static com.mirai.config.AbstractConfig.configPath;
 import static com.mirai.config.AbstractConfig.userTokensMap;
@@ -23,11 +28,12 @@ public final class MiraiBot extends JavaPlugin {
     public static final MiraiBot INSTANCE = new MiraiBot();
 
     private MiraiBot() {
-        super(new JvmPluginDescriptionBuilder("com.mirai.lin", "0.1.0")
-                .name("MiraiBot")
-                .author("Lin")
-                .build());
+        super(JvmPluginDescription.loadFromResource("plugin.yml", MiraiBot.class.getClassLoader()));
+    }
 
+    @Override
+    public void onLoad(@NotNull PluginComponentStorage $this$onLoad) {
+        super.onLoad($this$onLoad);
     }
 
     @Override
@@ -37,11 +43,11 @@ public final class MiraiBot extends JavaPlugin {
                 .parentScope(MiraiBot.INSTANCE)
                 .context(this.getCoroutineContext());
 
-        // 加载 DcConfig
-        MainHandler.loadTokens();
+        // 输出加载Token
+        onLoadToken();
 
-        // 定时器
-        refreshTokensTimer();
+        // Token刷新器
+        SchedulerTask.autoRefreshToken();
 
 
         // 监听器
@@ -49,10 +55,16 @@ public final class MiraiBot extends JavaPlugin {
 
     }
 
+    @Override
+    public void onDisable() {
+        // 保存Tokens
+        TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
+        System.out.printf("保存成功！共%d条%n", userTokensMap.size());
+    }
 
+    @Deprecated
     public void refreshTokensTimer() {
         long period = 86400 * 500; //半天
-//        long period = 5000; //5s
 
         JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
         String path = configPath + "UserTokens.json";
@@ -65,15 +77,15 @@ public final class MiraiBot extends JavaPlugin {
                 if(defaultToken==null) {
                     userTokensMap.forEach((qq, token) ->
                             scheduler.async(() -> {
-                                if(token.isAvailable()) token.refresh(true);
+                                if(token.checkAvailable()) token.refresh();
                             }));
                 } else {
                     userTokensMap.forEach((qq, token) ->
                             scheduler.async(() -> {
                                 // 默认token不为用户token
-                                if(token.isAvailable() &
+                                if(token.checkAvailable() &
                                         !defaultToken.getAccessToken().equals(token.getAccessToken()))
-                                    token.refresh(true);
+                                    token.refresh();
                             }));
 
                 }
@@ -82,6 +94,19 @@ public final class MiraiBot extends JavaPlugin {
             }
         };
 
-        new Timer().schedule(task, period, period);
+        new Timer().schedule(task, 0, 86400);
+    }
+
+    public void onLoadToken() {
+        StringBuilder sb = new StringBuilder();
+        if(userTokensMap==null) return;
+
+        for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
+            Long qq = entry.getKey();
+            Token token = entry.getValue();
+            sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
+        }
+        Logger.getGlobal().info(("刷新加载成功！共%d条".formatted(userTokensMap.size()) + sb));
     }
 }
+

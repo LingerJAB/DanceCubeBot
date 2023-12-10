@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 
 public abstract class AbstractConfig {
     public static JavaPluginScheduler scheduler;
@@ -42,10 +43,17 @@ public abstract class AbstractConfig {
         }
 
         // 导入Token
-        userTokensMap = TokenBuilder.tokensFromFile(configPath + "UserTokens.json");
+        userTokensMap = Objects.requireNonNullElse(
+                TokenBuilder.tokensFromFile(configPath + "UserTokens.json"),
+                new HashMap<>());
 //        userTokensMap.put(0L, new Token(0, null));
     }
 
+    /**
+     * 让我看看是不是Windows！
+     *
+     * @return 这是个Windows系统
+     */
     public static boolean itIsAReeeeaaaalWindowsMark() {
         return windowsMark;
     }

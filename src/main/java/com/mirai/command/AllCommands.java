@@ -10,6 +10,7 @@ import com.dancecube.info.UserInfo;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import com.mirai.MiraiBot;
+import com.mirai.config.UserConfigUtils;
 import com.tools.HttpUtil;
 import kotlin.jvm.functions.Function1;
 import net.mamoe.mirai.contact.Contact;
@@ -25,8 +26,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +45,13 @@ public class AllCommands {
 
     public static HashSet<RegexCommand> regexCommands = new HashSet<>();  //所有正则指令
     public static HashSet<ArgsCommand> argsCommands = new HashSet<>();  //所有参数指令
-    public static Token defaultToken = userTokensMap.get(0L);
+    private static final BiConsumer<Contact, Long> onNoLoginCall = (contact, qq) ->
+            contact.sendMessage("好像还没有登录诶(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
+    private static final BiConsumer<Contact, Long> onInvalidCall = (contact, qq) ->
+            contact.sendMessage("小铃看到登录身份过期了💦\n重新私信登录恢复吧💦");
+
+    @Deprecated
+    public static Token defaultToken = Objects.requireNonNullElse(userTokensMap.get(0L), new Token(""));
 
     // 初始化所有指令
     public static void init() {
@@ -113,7 +122,7 @@ public class AllCommands {
                 } else {
                     contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s".formatted(token.getUserId()));
                     userTokensMap.put(qq, token);  // 重复登录只会覆盖新的token
-                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
+//                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
                 }
                 logStatus.remove(qq);
             }).build();
@@ -123,8 +132,9 @@ public class AllCommands {
 //            .regex("机台登录|扫码")
             .multiStrings("机台登录", "扫码")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
+
                 MessageChain messageChain = event.getMessage();
                 EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);//.filter(getContactFilter(event));
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
@@ -168,9 +178,11 @@ public class AllCommands {
             .onCall(Scope.USER, (event, contact, qq, args) -> {
                 long friend = 0;
                 if(args!=null) friend = Long.parseLong(args[0]);
-                Token token = getToken(contact, friend);
+
+                Token token = getToken(contact, friend,
+                        ((c, l) -> contact.sendMessage("对方没有登录！这个账号借不到了诶...")),
+                        (c, l) -> contact.sendMessage("过期！这个账号借不到了诶..."));
                 if(token==null) {
-                    contact.sendMessage("对方没有登录！这个账号借不到了诶...");
                     return;
                 } else if(token.getUserId()!=939088) {
                     contact.sendMessage("未开放其它账号，不许登录！");
@@ -233,13 +245,13 @@ public class AllCommands {
 //            .regex("个人信息|看看我的|我的信息|我的舞立方|mydc|mywlf")
             .multiStrings("个人信息", "看看我的", "我的信息", "我的舞立方", "mydc", "mywlf")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token;
-                token = getTokenOrDefault(contact, qq, null);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) {
-                    contact.sendMessage("小铃看到登录身份过期了💦\n重新私信登录恢复吧💦");
                     return;
                 }
-                if(token.getUserId()==660997) contact.sendMessage("我娶，迪神！");
+
+                if(token.getUserId()==660997) contact.sendMessage("😨我娶，迪神！");
+
                 InputStream inputStream = UserInfoImage.generate(token, token.getUserId());
                 if(inputStream!=null) {
                     Image image = HttpUtil.getImageFromStream(inputStream, contact);
@@ -251,7 +263,7 @@ public class AllCommands {
     public static final RegexCommand gainMusicByCode = new RegexCommandBuilder()
             .regex("[a-zA-Z0-9]{15}", false)
             .onCall(Scope.USER, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
 
                 String message = event.getMessage().contentToString();
@@ -273,7 +285,7 @@ public class AllCommands {
                 contact.sendMessage("好像都失效了💦💦\n换几个试试吧！");
             })
             .onCall(Scope.GROUP, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
 
                 String message = event.getMessage().contentToString();
@@ -294,6 +306,7 @@ public class AllCommands {
             }).build();
 
     //    @DeclaredCommand("个人信息（旧版）")
+    @Deprecated
     public static final RegexCommand msgUserInfoLegacy = new RegexCommandBuilder()
             .regex("个人信息-l|mydc-l")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
@@ -365,6 +378,7 @@ public class AllCommands {
                 contact.sendMessage(machineListText.toString());
             }).build();
 
+    @Deprecated
     @DeclaredCommand("查看其它个人信息")
     public static final ArgsCommand msgOthersInfo = new ArgsCommandBuilder()
             .prefix("看看你的", "康康你的", "看看")
@@ -403,7 +417,7 @@ public class AllCommands {
     public static final RegexCommand msgUserRatio = new RegexCommandBuilder()
             .multiStrings("战力分析", "我的战力", "查看战力", "查询战力", "myrt")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
 
                 contact.sendMessage("小铃正在计算中,等一下下就好💦...");
@@ -418,49 +432,54 @@ public class AllCommands {
     public static final RegexCommand msgReplyItem = new RegexCommandBuilder()
             .regex("myri")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
                 contact.sendMessage(ReplyItem.get(token).toString());
             }).build();
 
 
-    //    @DeclaredCommand("添加指令")
-//    public static final ArgsCommand addUserInfoCmd = new ArgsCommandBuilder()
-//            .prefix("添加指令")
-//            .form(ArgsCommand.CHAR)
-//            .onCall(Scope.USER, (event, contact, qq, args) -> {
-//                if(args==null) {
-//                    return;
-//                }
-//                String newPrefix = args[0];
+    @Deprecated
+    @DeclaredCommand("添加指令")
+    public static final ArgsCommand addUserInfoCmd = new ArgsCommandBuilder()
+            .prefix("添加指令")
+            .form(ArgsCommand.CHAR)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                if(args==null) {
+                    return;
+                }
+                String newPrefix = args[0];
 //                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
 //                userInfoCommands.get(qq).add(newPrefix);
-//                contact.sendMessage("已添加 \"" + newPrefix + "\" !");
-//            }).build();
+                contact.sendMessage("已添加 \"" + newPrefix + "\" !");
+            }).build();
 
-    //    @DeclaredCommand("删除指令")
-//    public static final ArgsCommand delUserInfoCmd = new ArgsCommandBuilder()
-//            .prefix("删除指令")
-//            .form(ArgsCommand.CHAR)
-//            .onCall(Scope.USER, (event, contact, qq, args) -> {
-//                if(args==null) return;
-//
-//                String newPrefix = args[0];
-//                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
-//                if(!userInfoCommands.get(qq).contains(newPrefix)) {
-//                    contact.sendMessage("未找到 \"" + newPrefix + "\" !");
-//                    return;
-//                }
-//                userInfoCommands.get(qq).remove(newPrefix);
-//                contact.sendMessage("已删除 \"" + newPrefix + "\" !");
-//                UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
-//            }).build();
+    @Deprecated
+    @SuppressWarnings("all")
+    @DeclaredCommand("删除指令")
+    public static final ArgsCommand delUserInfoCmd = new ArgsCommandBuilder()
+            .prefix("删除指令")
+            .form(ArgsCommand.CHAR)
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                if(args==null) return;
+                //TODO 假的cmds
+                HashMap<Long, HashSet<String>> userInfoCommands = new HashMap<>();
+
+                String newPrefix = args[0];
+                if(!userInfoCommands.containsKey(qq)) userInfoCommands.put(qq, new HashSet<>());
+                if(!userInfoCommands.get(qq).contains(newPrefix)) {
+                    contact.sendMessage("未找到 \"" + newPrefix + "\" !");
+                    return;
+                }
+                userInfoCommands.get(qq).remove(newPrefix);
+                contact.sendMessage("已删除 \"" + newPrefix + "\" !");
+                UserConfigUtils.configsToFile(userInfoCommands, configPath + "UserCommands.json");
+            }).build();
 
     @DeclaredCommand("发送Token JSON")
     public static final RegexCommand showToken = new RegexCommandBuilder()
             .regex("#token")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
                 if(contact instanceof Group) {
                     contact.sendMessage("私聊才能看的辣！");
@@ -502,16 +521,17 @@ public class AllCommands {
     public static final RegexCommand refreshToken = new RegexCommandBuilder()
             .regex("#refresh")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq);
+                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
                 if(contact instanceof Group) {
                     contact.sendMessage("私聊才能用的辣！");
                     return;
                 }
-                if(token.refresh(true)) contact.sendMessage("#Token已强制刷新#\n\n" + token);
+                if(token.refresh()) contact.sendMessage("#Token已强制刷新#\n\n" + token);
                 else contact.sendMessage("刷新失败，请重新登录！");
             }).build();
 
+    @Deprecated
     @DeclaredCommand("设置默认Token")
     public static final RegexCommand setDefaultToken = new RegexCommandBuilder()
             .regex("#setToken0")
@@ -533,29 +553,18 @@ public class AllCommands {
                     e.printStackTrace();
                     contact.sendMessage("超时了，请重新设置");
                 }
-                Token token = new Token(0, accessToken, refreshToken, 0);
-                if(token.isAvailable()) {
+                Token token = new Token(0, accessToken, refreshToken, System.currentTimeMillis());
+                if(token.checkAvailable()) {
                     defaultToken = token;
                     userTokensMap.put(0L, token);
-                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
+//                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
                     contact.sendMessage("默认Token设置成功：\n\n" + defaultToken);
                 } else {
                     contact.sendMessage("默认Token设置失败：已无效");
                 }
             }).build();
 
-    public static Token getToken(Contact contact, Long qq) {
-        Token token = userTokensMap.get(qq);
-        if(token==null || !token.isAvailable()) {
-            // 登录检测
-            contact.sendMessage("好像还没有登录诶(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
-//            userInfoCommands.put(qq, new HashSet<>());
-            return null;
-        }
-        return token;
-    }
-
-    @DeclaredCommand("清空登录")
+    @DeclaredCommand("清空登录等待")//todo 退出登录
     public static final ArgsCommand clearLogin = new ArgsCommandBuilder()
             .prefix("#clearLogin")
             .form(ArgsCommand.WORD)
@@ -580,18 +589,18 @@ public class AllCommands {
      * @param onNull  当本地Token==null
      * @return 可用的 Token / defaultToken
      */
-    public static Token getTokenOrDefault(Contact contact, long qq,
-                                          @Nullable BiConsumer<Contact, Long> onNull) {
+    @Deprecated
+    public static Token getTokenOrDefault(Contact contact, long qq, @Nullable BiConsumer<Contact, Long> onNull) {
         Token token = userTokensMap.get(qq);
 
         // 默认返回本地Token
         if(token!=null) {
 
             //默认token有效性
-            if(token.isAvailable()) return token;
+            if(token.checkAvailable()) return token;
 
             //返回默认token 默认的都null那就登录吧 :(
-            if(defaultToken!=null && defaultToken.isAvailable()) return defaultToken;
+            if(defaultToken!=null && defaultToken.checkAvailable()) return defaultToken;
         }
         //没有登录（本地保存记录）就 onNull.accept();
         if(onNull!=null) onNull.accept(contact, qq);
@@ -600,4 +609,46 @@ public class AllCommands {
         return null;
     }
 
+
+    public static Token getToken(Contact contact, Long qq) {
+        Token token = userTokensMap.get(qq);
+        if(token==null || !token.checkAvailable()) {
+            // 登录检测
+            contact.sendMessage("好像还没有登录诶(´。＿。｀)\n私信发送\"登录\"一起来玩吧！");
+//            userInfoCommands.put(qq, new HashSet<>());
+            return null;
+        }
+        return token;
+    }
+
+
+    /**
+     * 获取Token
+     * <p>*本方法<b>没有提供</b>仅过期但可用的操作，如需请使用{@link Token#checkAvailable()}</p>
+     *
+     * @param contact   聊天场景
+     * @param qq        账号
+     * @param onInvalid 本地存在，<b>但不可用/过期</b>时的操作
+     * @param onNoLogin 本地不存在时的操作
+     * @return 本地Token，无效或不存在时返回null
+     */
+    @Nullable
+    public static Token getToken(Contact contact, long qq, BiConsumer<Contact, Long> onNoLogin, BiConsumer<Contact, Long> onInvalid) {
+        Token token = userTokensMap.get(qq);
+
+        // Token不存在
+        if(token==null) {
+            if(onNoLogin!=null) onNoLogin.accept(contact, qq);
+            return null;
+        }
+
+        // Token存在，但过期
+        if(!token.checkAvailable()) {
+            if(onInvalid!=null) onInvalid.accept(contact, qq);
+            return null;
+        } else {
+            // Token可用
+            return token;
+        }
+    }
 }

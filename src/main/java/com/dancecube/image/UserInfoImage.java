@@ -11,7 +11,6 @@ import com.tools.image.TextEffect;
 import org.junit.Test;
 
 import java.awt.*;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -47,8 +46,8 @@ public class UserInfoImage {
         drawer.font(font);
         //信息开放
         if(userInfo.getStatus()!=InfoStatus.PRIVATE) {
-            String gold = "未登录";
-            String playedTimes = "未登录";
+            String gold = "不可见";
+            String playedTimes = "不可见";
             if(token.getUserId()==id) {
                 ReplyItem replyItem;
                 AccountInfo accountInfo;
@@ -101,7 +100,7 @@ public class UserInfoImage {
     }
 
     @Test
-    public void test() throws IOException {
+    public void test() {
         Token token = new Token(939800, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
         ImageDrawer.write(generate(token, 2550784), path);

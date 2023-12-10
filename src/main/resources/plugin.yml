@@ -1,0 +1,7 @@
+#file: noinspection YAMLSchemaValidation
+id: com.mirai.lin
+version: 0.1.0
+name: DanceCubeBot
+author: Lin
+dependencies: [ ] # 或者不写这行
+info: Just A DanceCubeBot

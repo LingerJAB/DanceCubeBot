@@ -76,12 +76,9 @@ public class MusicUtil {
 
     public static Music getMusic(int id) {
         // 获取歌曲对象（主要是AudioURL）
-        int page = 1;
-        int index = 6;
-
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetMusicRanking?page=%d&musicIndex=%d&musicId=%d".formatted(page, index, id))
+                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetMusicRanking?page=1&musicIndex=6&musicId=" + id)
                 .get().build();
         String string;
         try {

@@ -46,7 +46,7 @@ public class SingleRank {
     }
 
     public AccGrade getGrade() {
-        return AccGrade.get(score);
+        return AccGrade.get(acc);
     }
 
     public float getRatio() {

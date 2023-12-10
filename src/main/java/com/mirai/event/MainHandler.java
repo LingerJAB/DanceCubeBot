@@ -2,7 +2,6 @@ package com.mirai.event;
 
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
-import com.mirai.config.AbstractConfig;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.EventHandler;
@@ -13,9 +12,11 @@ import net.mamoe.mirai.message.data.PlainText;
 
 import java.util.Map;
 
-// 不过滤通道
-public class MainHandler extends AbstractConfig {
+import static com.mirai.config.AbstractConfig.configPath;
+import static com.mirai.config.AbstractConfig.userTokensMap;
 
+// 不过滤通道
+public class MainHandler {
 
     @EventHandler
     public static void eventCenter(MessageEvent event) {
@@ -44,8 +45,7 @@ public class MainHandler extends AbstractConfig {
 
     // #save 高级
     public static void saveTokens(Contact contact) {
-        String path = configPath + "UserTokens.json";
-        TokenBuilder.tokensToFile(userTokensMap, path);
+        TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
         contact.sendMessage("保存成功！共%d条".formatted(userTokensMap.size()));
     }
 
@@ -74,10 +74,11 @@ public class MainHandler extends AbstractConfig {
         contact.sendMessage(content);
     }
 
+    @Deprecated
     public static void loadTokens() {
-        String path = configPath + "UserTokens.json";
-        userTokensMap = TokenBuilder.tokensFromFile(path, true);
         StringBuilder sb = new StringBuilder();
+        if(userTokensMap==null) return;
+
         for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
             Long qq = entry.getKey();
             Token token = entry.getValue();

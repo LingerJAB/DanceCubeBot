@@ -3,7 +3,6 @@ package com.tools;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
-import com.mirai.config.AbstractConfig;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -30,7 +29,9 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class HttpUtil extends AbstractConfig {
+import static com.mirai.config.AbstractConfig.configPath;
+
+public final class HttpUtil {
     static String gaodeApiKey;
     static String tencentSecretId;
     static String tencentSecretKey;
