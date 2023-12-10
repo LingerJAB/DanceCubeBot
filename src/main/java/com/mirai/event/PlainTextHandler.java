@@ -18,7 +18,6 @@ public class PlainTextHandler {
     public static HashSet<Long> adminsSet = new HashSet<>();
 
     static {
-        //  TODO 修改类加载顺序，避免无法获取而抛出异常
         // 初始化AllCommands所有指令
         AllCommands.init();
         adminsSet.add(2862125721L);

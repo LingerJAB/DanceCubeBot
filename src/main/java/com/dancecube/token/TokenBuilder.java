@@ -104,7 +104,7 @@ public final class TokenBuilder {
     }
 
 
-    // HashMap写入json文件 不用数组是为了覆盖原key TODO 仅宵禁刷新
+    // HashMap写入json文件 不用数组是为了覆盖原key
     public static void tokensToFile(HashMap<Long, Token> tokenMap, String filePath) {
         Type type = new TypeToken<HashMap<Long, Token>>() {
         }.getType();
