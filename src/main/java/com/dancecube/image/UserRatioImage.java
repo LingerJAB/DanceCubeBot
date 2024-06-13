@@ -2,8 +2,7 @@ package com.dancecube.image;
 
 import com.dancecube.api.LvRatioHistory;
 import com.dancecube.info.UserInfo;
-import com.dancecube.music.Music;
-import com.dancecube.music.MusicUtil;
+import com.dancecube.music.CoverUtil;
 import com.dancecube.ratio.LvRatioCalculator;
 import com.dancecube.ratio.RankMusicInfo;
 import com.dancecube.ratio.RecentMusicInfo;
@@ -27,13 +26,11 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.mirai.config.AbstractConfig.*;
+import static com.mirai.config.AbstractConfig.itIsAReeeeaaaalWindowsMark;
+import static com.mirai.config.AbstractConfig.scheduler;
 
 public class UserRatioImage {
     public static int times = 1;
-    public static String path = configPath + "Images/Material/";
-    public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
-    public static String fanmadeImgPath = configPath + "Images/Cover/FanmadeImage/";
 
 
     public static final BufferedImage CARD_1; //低级
@@ -52,16 +49,16 @@ public class UserRatioImage {
     static {
         try {
             // 素材缓存
-            CARD_1 = ImageIO.read(new File(path + "Card1.png"));
-            CARD_2 = ImageIO.read(new File(path + "Card2.png"));
-            CARD_3 = ImageIO.read(new File(path + "Card3.png"));
-            LV_SSS = ImageIO.read(new File(path + "SSS.png"));
-            LV_SS = ImageIO.read(new File(path + "SS.png"));
-            LV_S = ImageIO.read(new File(path + "S.png"));
-            LV_A = ImageIO.read(new File(path + "A.png"));
-            LV_B = ImageIO.read(new File(path + "B.png"));
-            LV_C = ImageIO.read(new File(path + "C.png"));
-            LV_D = ImageIO.read(new File(path + "D.png"));
+            CARD_1 = ImageIO.read(new File(CoverUtil.path + "Card1.png"));
+            CARD_2 = ImageIO.read(new File(CoverUtil.path + "Card2.png"));
+            CARD_3 = ImageIO.read(new File(CoverUtil.path + "Card3.png"));
+            LV_SSS = ImageIO.read(new File(CoverUtil.path + "SSS.png"));
+            LV_SS = ImageIO.read(new File(CoverUtil.path + "SS.png"));
+            LV_S = ImageIO.read(new File(CoverUtil.path + "S.png"));
+            LV_A = ImageIO.read(new File(CoverUtil.path + "A.png"));
+            LV_B = ImageIO.read(new File(CoverUtil.path + "B.png"));
+            LV_C = ImageIO.read(new File(CoverUtil.path + "C.png"));
+            LV_D = ImageIO.read(new File(CoverUtil.path + "D.png"));
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
@@ -101,7 +98,7 @@ public class UserRatioImage {
         BufferedImage backgroundImg;
 
         try {
-            backgroundImg = ImageIO.read(new File(path + "Background1.png"));
+            backgroundImg = ImageIO.read(new File(CoverUtil.path + "Background1.png"));
             drawer = new ImageDrawer(backgroundImg);
             drawer.antiAliasing(); // 抗锯齿
 
@@ -168,7 +165,7 @@ public class UserRatioImage {
                 int dx2 = col * dx;
                 int dy2 = row * dy;
                 RankMusicInfo musicInfo = rank15List.get(index);
-                BufferedImage cover = getCover(musicInfo.getId());
+                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
                 SingleRank bestInfo = musicInfo.getBestInfo();
                 BufferedImage card = getCardImage(bestInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(bestInfo.getGrade());
@@ -201,7 +198,7 @@ public class UserRatioImage {
                 int dx2 = col * dx;
                 int dy2 = row * dy + 1065;
                 RecentMusicInfo musicInfo = recent15List.get(index);
-                BufferedImage cover = getCover(musicInfo.getId());
+                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
                 BufferedImage card = getCardImage(musicInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(musicInfo.getGrade());
                 int fx = switch(musicInfo.getGrade()) {
@@ -233,11 +230,11 @@ public class UserRatioImage {
         float allAvg = (avg1 + avg2) / 2;
         int randomIndex = new Random().nextInt(5); //0 ~ 4
         String extraInfoText = """
-                上次战力：%d   (%d月%d日)
-                B-15 战力：%.4f
-                R-15 战力：%.4f
-                平均战力：%.5f
-                """.formatted(lvRatioHistory.getRatio(),
+                                       上次战力：%d   (%d月%d日)
+                                       B-15 战力：%.4f
+                                       R-15 战力：%.4f
+                                       平均战力：%.5f
+                                       """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
                 avg1, avg2, allAvg) + getRatioComment(lvRatio);
         // 向上取整到百位 ((info.getLvRatio() / 100) + 1) * 100)
@@ -247,9 +244,6 @@ public class UserRatioImage {
     }
 
     public static InputStream generateOptimized(Token token) {
-//        System.out.println("running...");
-
-
         // 个人信息
         UserInfo info;
         ArrayList<LvRatioHistory> ratioList;
@@ -284,7 +278,7 @@ public class UserRatioImage {
             // 获取背景图片
             CompletableFuture<BufferedImage> backgroundImgFuture = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return ImageIO.read(new File(path + "Background1.png"));
+                    return ImageIO.read(new File(CoverUtil.path + "Background1.png"));
                 } catch(IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -369,21 +363,17 @@ public class UserRatioImage {
         //添加到自制谱列表获取
         HashSet<Integer> waitingCoversSet = new HashSet<>();
         for(RankMusicInfo value : rank15List) {
-            if(isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
+            if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
         }
         for(RecentMusicInfo value : recent15List) {
-            if(isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
+            if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
         }
 
         //异步下载不存在的封面
         ExecutorService threadPool = Executors.newCachedThreadPool();
         CountDownLatch latch = new CountDownLatch(waitingCoversSet.size());
         waitingCoversSet.forEach(id -> threadPool.submit(() -> {
-            Music music = MusicUtil.getMusic(id);
-
-            File file = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
-                    + id + ".jpg");
-            music.getCoverToCache(file);
+            CoverUtil.downloadCover(id);
             latch.countDown();
         }));
         try {
@@ -405,8 +395,9 @@ public class UserRatioImage {
             for(int col = 0; col<3; col++, index++) { //行
                 int dx2 = col * dx;
                 int dy2 = row * dy;
+                //todo checkIndex
                 RankMusicInfo musicInfo = rank15List.get(index);
-                BufferedImage cover = getCover(musicInfo.getId());
+                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
                 SingleRank bestInfo = musicInfo.getBestInfo();
                 BufferedImage card = getCardImage(bestInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(bestInfo.getGrade());
@@ -445,7 +436,7 @@ public class UserRatioImage {
 
                 if(index>=recent15List.size()) break a;
                 musicInfo = recent15List.get(index);
-                BufferedImage cover = getCover(musicInfo.getId());
+                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
                 BufferedImage card = getCardImage(musicInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(musicInfo.getGrade());
                 int fx = switch(musicInfo.getGrade()) {
@@ -482,11 +473,11 @@ public class UserRatioImage {
         float allAvg = (avg1 + avg2) / 2;
         Calendar calendar = lvRatioHistory.getCalendar();
         String extraInfoText = """
-                上次战力：%d   (%d月%d日)
-                B-15 战力：%.4f
-                R-15 战力：%.4f
-                平均战力：%.5f
-                """.formatted(lvRatioHistory.getRatio(),
+                                       上次战力：%d   (%d月%d日)
+                                       B-15 战力：%.4f
+                                       R-15 战力：%.4f
+                                       平均战力：%.5f
+                                       """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
                 avg1, avg2, allAvg) + getRatioComment(lvRatio);
         // 向上取整到百位 ((info.getLvRatio() / 100) + 1) * 100)
@@ -518,59 +509,19 @@ public class UserRatioImage {
 
     @Test
     public void test() {
-        long timeMillis = System.currentTimeMillis();
-
         System.out.println("Running...");
-        Token token = new Token(939088, "6RIGXEYHV_W0L-wybLpT9Zn_ij4mTW-iAzh7YiEJTH40QKkqIlB0PLR4AtP9eXF-YlAn8wXTGTE-4rw_Y285789xQcCBxxuHAiI1iJKjegzDGsfKtizQG3VUr82Bmw9a4vqaTYNlUKm49UCBykRhnO73FBHyQYWtDE10W5nxaCrvhBJNF9u3nAe-IwPioEOqd_2kdUi1gqctPwNAD-ZgQ6uMwF0ChBvglaa0vGj2g8tHvdsFln049L9ZRnGdQmqSLvBrXlMQDgt0ucX_4r_P7mObLUl2usgymbeIbMXw5pUn5_CdygX2900hkcXg40m5-MxGltu8jaPJ8r26osKlRKodNBxLmpidTvLZxYCPQ7tjhzpx8lImQ1cGYbCsPI0B");
+        Token token = new Token(939088,
+                "jo_-yldaIba9hASxFduTWZzfjwnu5JU7PvgmhT_S8vc8QOfmykdnFFiydB6-oS-PzU2XeK1K7q7IzGXSOZsel8AuhDawk5_Z7_dK1y4Xes-yb711n-r4kXL0D14sw4r3dHpIrzloR81WtHBh_Tq_fOrYnYwR8LHnLrksgeIi82-tB0Zx0xr2WNrK66eTZ3fKoLKbQ21DP36nsHDCafqqsDGgT_H-a7rttiZOwXajZDa7eWn6nXSvKvk2bhkqElORNeoYDAixccezJaWH2wujf--gEmWPvdxhNjtd2A2HTvxjZ6oMG2fRbeqgv8ste2VqHdqg2FddvZY6rWo69svgpUNmzhoB3L5aoMBklD13bV6hyJw3J_4PzniyAA14sM2q1fyuYji5XNsyLUc7DnemJlI1Jqb_rYOwlTKu38u3SnuJ_tfI2aFeJK2SUtofYAFk5oxfULh2uIRUWNXU9vXpkA_hZm5KCAv32cGYhPtvr_zCXrnQLAR0pGj1sagPeHCkGiMJVA0GnERkrETJtWpotQq_ABgrMH1mJJ_ptf1Hf7rFTcsPs3l4I9AkB1KtkVxJ2c04fcwObaL9D2bZRa8lokh7F6dN-w7-xEwEDBj4pi67YByoCq2pKwEB9wp9oNjY4pX3mP9Uvc3gtR6Nam-Ifd6SaRfnDNEcKivYNWlor6pjH2DXo56ltBGPro0jKGTtOoP7H9Zk4eVnAok_5wWplpXTtb_NTLG307zoH5kpwhvAnggOv0FZE5SYtad6qIXUeLcShpqybTZ7ZwBoiNGurrYLWsydtSS9PtgT1qdOD70WxR8kHkXjXI0lh5m4xiS8ZE_tbzwos7DyuE93OR_ruA");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
         ImageDrawer.write(generateOptimized(token), path);
 
 
-        System.out.println("\nDone! It takes " + deltaSeconds(timeMillis) + "s");
+//        System.out.println("\nDone! It takes " + deltaSeconds(timeMillis) + "s");
 
     }
 
     public static float deltaSeconds(long mills) {
         return (float) (System.currentTimeMillis() - mills) / 1000;
-    }
-
-    public static boolean isCoverAbsent(int id) {
-        //比file.exists()快
-        File coverFile = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
-                + id + ".jpg");
-        return !coverFile.exists();
-    }
-
-    public static BufferedImage getCover(int id) {
-//        System.out.printf("#%d 正在获取第%d张图片...   %n", id, times++);
-//        long millis = System.currentTimeMillis();
-
-        File file = new File((MusicUtil.isOfficial(id) ? officialImgPath : fanmadeImgPath)
-                + id + ".jpg");
-        // 先从官谱音乐取封面
-        try {
-            return ImageIO.read(file);
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-        //非官谱或未缓存则从DC服务器获取
-//        Music music = MusicUtil.getMusic(id);
-//        String coverUrl = music.getCoverUrl();
-//        try {
-//            if(coverUrl==null | "".equals(coverUrl)) {
-//                File defaultImg = new File(officialImgPath + "default.png");
-//                if(!defaultImg.exists()) {
-//                    throw new RuntimeException(defaultImg.getAbsolutePath() + "\n默认文件不存在！");
-//                }
-////                System.out.printf("#%d 默认图片共耗时%ss", id, deltaSeconds(millis));
-//                return ImageIO.read(defaultImg);
-//            } else {
-//                System.out.printf("#%d ⭐网络图片共耗时%ss%n", id, deltaSeconds(millis));
-//                return music.getCover();
-//            }
-//        } catch(IOException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 
     //常量放在这里我有病（

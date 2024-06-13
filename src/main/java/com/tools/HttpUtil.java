@@ -3,6 +3,7 @@ package com.tools;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.mirai.config.AbstractConfig;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -16,12 +17,9 @@ import net.mamoe.mirai.utils.ExternalResource;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.yaml.snakeyaml.Yaml;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -29,29 +27,8 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mirai.config.AbstractConfig.configPath;
 
-public final class HttpUtil {
-    static String gaodeApiKey;
-    static String tencentSecretId;
-    static String tencentSecretKey;
-
-    static {
-        try {
-            // Authorization错误时查看控制台ip白名单
-            Map<String, Map<String, String>> map = new Yaml().load(new FileReader(configPath + "ApiKeys.yml"));
-            Map<String, String> tencentScannerKeys = map.get("tencentScannerKeys");
-            Map<String, String> gaodeMapKeys = map.get("gaodeMapKeys");
-
-            gaodeApiKey = gaodeMapKeys.get("apiKey");
-            tencentSecretId = tencentScannerKeys.get("secretId");
-            tencentSecretKey = tencentScannerKeys.get("secretKey");
-
-        } catch(FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
+public class HttpUtil {
 
     public static Image getImageFromURL(String strUrl, Contact contact) {
         Image image = null;
@@ -115,7 +92,7 @@ public final class HttpUtil {
     public static String qrDecodeTencent(String imgUrl) {
         String url = "";
         try {
-            Credential cred = new Credential(tencentSecretId, tencentSecretKey);
+            Credential cred = new Credential(AbstractConfig.tencentSecretId, AbstractConfig.tencentSecretKey);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
             HttpProfile httpProfile = new HttpProfile();
             httpProfile.setEndpoint("ocr.tencentcloudapi.com");
@@ -138,7 +115,7 @@ public final class HttpUtil {
     }
 
     public static String getLocationInfo(String region) {
-        Response response = httpApi("https://restapi.amap.com/v3/geocode/geo?address=" + region.strip() + "&output=json&key=" + gaodeApiKey);
+        Response response = httpApi("https://restapi.amap.com/v3/geocode/geo?address=" + region.strip() + "&output=json&key=" + AbstractConfig.gaodeApiKey);
         String result = "";
         try {
             if(response!=null && response.body()!=null) {
@@ -153,8 +130,8 @@ public final class HttpUtil {
 
     @Nullable  // 用于获取HTTP API资源
     public static Response httpApi(String url) {
-        OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder().url(url).get().build();
+        OkHttpClient client = new OkHttpClient();
 
         try {
             return client.newCall(request).execute();

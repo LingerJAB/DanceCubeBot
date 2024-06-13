@@ -112,7 +112,7 @@ public class AllCommands {
                 TokenBuilder builder = new TokenBuilder();
                 Image image = HttpUtil.getImageFromURL(builder.getQrcodeUrl(), contact);
 
-                contact.sendMessage(new PlainText("快快用微信扫码，在五分钟内登录上吧~").plus(image));
+                contact.sendMessage(new PlainText("🤗快用微信扫码，在五分钟内登录上吧~").plus(image));
 
                 logStatus.add(qq);
                 Token token = builder.getToken();
@@ -120,7 +120,7 @@ public class AllCommands {
                 if(token==null) {
                     contact.sendMessage("超时啦~ 请重试一下吧！");
                 } else {
-                    contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s".formatted(token.getUserId()));
+                    contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s\n\n⭐要是账号不匹配的话，重新登录下就好了".formatted(token.getUserId()));
                     userTokensMap.put(qq, token);  // 重复登录只会覆盖新的token
 //                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
                 }
@@ -136,11 +136,12 @@ public class AllCommands {
                 if(token==null) return;
 
                 MessageChain messageChain = event.getMessage();
-                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE);//.filter(getContactFilter(event));
+                EventChannel<Event> channel = GlobalEventChannel.INSTANCE.parentScope(MiraiBot.INSTANCE)
+                        .filter(ev -> ev instanceof MessageEvent && ((MessageEvent) ev).getSender().getId()==qq);
                 CompletableFuture<MessageEvent> future = new CompletableFuture<>();
                 channel.subscribeOnce(MessageEvent.class, future::complete);
 
-                contact.sendMessage(new QuoteReply(messageChain).plus(new PlainText("请在3分钟之内发送机台二维码图片哦！\n一定要清楚才好！")));
+                contact.sendMessage(new QuoteReply(messageChain).plus(new PlainText("请在3分钟之内发送机台二维码图片！\n一定要清楚才好！")));
                 SingleMessage message;
                 try {
                     MessageChain nextMessage = future.get(3, TimeUnit.MINUTES).getMessage();
@@ -284,26 +285,27 @@ public class AllCommands {
                 }
                 contact.sendMessage("好像都失效了💦💦\n换几个试试吧！");
             })
-            .onCall(Scope.GROUP, (event, contact, qq, args) -> {
-                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
-                if(token==null) return;
-
-                String message = event.getMessage().contentToString();
-                Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
-
-                if(matcher.find()) {
-                    String code = matcher.group();
-                    contact.sendMessage("检测到了兑换码！小铃在努力兑换 \"%s\" ...".formatted(code));
-                    try(Response response = PlayerMusic.gainMusicByCode(token, code)) {
-                        if(response==null) return;
-                        if(response.code()==200) {
-                            contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
-                            return;
-                        }
-                    }
-                }
-                contact.sendMessage("好像失效了💦💦\n换一个试试吧！");
-            }).build();
+//            .onCall(Scope.GROUP, (event, contact, qq, args) -> {
+//                Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
+//                if(token==null) return;
+//
+//                String message = event.getMessage().contentToString();
+//                Matcher matcher = Pattern.compile("[a-zA-Z0-9]{15}").matcher(message);
+//
+//                if(matcher.find()) {
+//                    String code = matcher.group();
+//                    contact.sendMessage("检测到了兑换码！小铃在努力兑换 \"%s\" ...".formatted(code));
+//                    try(Response response = PlayerMusic.gainMusicByCode(token, code)) {
+//                        if(response==null) return;
+//                        if(response.code()==200) {
+//                            contact.sendMessage("\"" + code + "\"兑换成功啦！快去背包找找吧");
+//                            return;
+//                        }
+//                    }
+//                }
+//                contact.sendMessage("好像失效了💦💦\n换一个试试吧！");
+//            })
+            .build();
 
     //    @DeclaredCommand("个人信息（旧版）")
     @Deprecated
@@ -353,7 +355,7 @@ public class AllCommands {
                     machineListText.append("\n").append(singleInfo);
                 }
                 if(list.size()>5) {
-                    contact.sendMessage(machineListText + "⭐刷屏哒咩！共" + list.size() + "条，请私聊查看更多~");
+                    contact.sendMessage(machineListText + "⭐刷屏哒咩！请私聊查询全部" + list.size() + "条~");
                 } else {
                     contact.sendMessage(machineListText.toString());
                 }
@@ -389,7 +391,7 @@ public class AllCommands {
                 Token token = getTokenOrDefault(contact, qq, (con, q) ->
                         contact.sendMessage("小铃这登录身份过期了💦\n重新私信登录恢复吧💦"));
                 if(token==null) {
-                    contact.sendMessage("默认Token异常，请联系大铃！");
+//                    contact.sendMessage("默认Token异常，请联系大铃！");
                     return;
                 }
 
@@ -400,7 +402,7 @@ public class AllCommands {
                 } else if(userTokensMap.containsKey(num) && num>999_999) { //QQ
                     id = userTokensMap.get(num).getUserId();
                 } else {
-                    contact.sendMessage("? 小铃好像没看懂是什么");
+                    contact.sendMessage("唔...小铃好像不认识他");
                     return;
                 }
                 //发送图片
@@ -415,12 +417,12 @@ public class AllCommands {
 
     @DeclaredCommand("战力分析")
     public static final RegexCommand msgUserRatio = new RegexCommandBuilder()
-            .multiStrings("战力分析", "我的战力", "查看战力", "查询战力", "myrt")
+            .multiStrings("战力分析", "我的战力", "查看战力", "myrt")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
                 if(token==null) return;
 
-                contact.sendMessage("小铃正在计算中,等一下下就好💦...");
+                contact.sendMessage("小铃正在计算中,等一下下💦...");
                 InputStream inputStream = UserRatioImage.generateOptimized(token);
                 if(inputStream!=null) {
                     Image image = HttpUtil.getImageFromStream(inputStream, contact);
@@ -437,6 +439,12 @@ public class AllCommands {
                 contact.sendMessage(ReplyItem.get(token).toString());
             }).build();
 
+    @DeclaredCommand("登陆")
+    public static final RegexCommand denglu = new RegexCommandBuilder()
+            .regex("登陆")
+            .onCall(Scope.USER, (event, contact, qq, args) -> {
+                contact.sendMessage("（生气）你当小铃飞机场啊！登陆登陆的...");
+            }).build();
 
     @Deprecated
     @DeclaredCommand("添加指令")
@@ -561,6 +569,23 @@ public class AllCommands {
                     contact.sendMessage("默认Token设置成功：\n\n" + defaultToken);
                 } else {
                     contact.sendMessage("默认Token设置失败：已无效");
+                }
+            }).build();
+
+    @DeclaredCommand("热更新") // TODO 刷新
+    public static final ArgsCommand hotUpdate = new ArgsCommandBuilder()
+            .prefix("#update")
+            .form(Pattern.compile("all|id|reply"))
+            .onCall(Scope.ADMIN, (event, contact, qq, args) -> {
+                if(args==null) return;
+                String param = args[0];
+
+                if(param.equals("all") || param.equals("id")) {
+                    contact.sendMessage(TokenBuilder.updateIds().toString());
+                    contact.sendMessage("已成功刷新TokenID");
+                }
+                if(param.equals("all") || param.equals("reply")) {
+                    contact.sendMessage("nope...");
                 }
             }).build();
 

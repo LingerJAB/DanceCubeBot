@@ -16,7 +16,7 @@ class OfficialMusic {
     private final int id;
     @SerializedName("Name")
     private final String name;
-    @SerializedName("Cover")
+    @SerializedName("CoverUtil")
     private final String coverUrl;
 //    private final ArrayList<Integer> levels;
 

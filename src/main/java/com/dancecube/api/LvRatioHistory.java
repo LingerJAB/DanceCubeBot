@@ -55,7 +55,11 @@ public class LvRatioHistory {
             if(response!=null && response.body()!=null) {
                 String json = response.body().string();
 
-                for(JsonElement element : JsonParser.parseString(json).getAsJsonArray()) {
+                JsonElement parseString = JsonParser.parseString(json);
+                if(!parseString.isJsonArray()) {
+                    return new ArrayList<>();
+                }
+                for(JsonElement element : parseString.getAsJsonArray()) {
                     JsonObject object = element.getAsJsonObject();
                     try {
                         Calendar instance = Calendar.getInstance();
@@ -64,7 +68,7 @@ public class LvRatioHistory {
                         int ratio = object.get("LvRatio").getAsInt();
                         ratioList.add(new LvRatioHistory(instance, ratio));
                     } catch(ParseException e) {
-                        throw new RuntimeException(e);
+                        return new ArrayList<>();
                     }
                 }
             }

@@ -1,6 +1,8 @@
 package com.dancecube.ratio;
 
+import com.dancecube.info.UserInfo;
 import com.dancecube.music.MusicUtil;
+import com.dancecube.token.Token;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.tools.HttpUtil;
@@ -19,7 +21,7 @@ public class LvRatioCalculator {
     public static void main(String[] args) {
 
         //Input Your DanceCubeBase Bearer Token Here
-        String auth = "bearer " + "xxx";
+        String auth = "bearer " + "rD_7AhyHSCrKNCXuPx31-U5VF5_ikh6rb9KoM7W_a_9zzBEwyShRYxnufk1utHMHPAOfi8kx6ZjQ-oEn3IeBLm-tzlzcILuSmnNJPfxD_U297pLVCjWChJjQg-ZwtxO8qRzdNLkrhzGXesTp8ZFh4TqFGf8e6kb-yOam-27cEzg39YKQEbm9qP4Pn7ZMUki85Wyx-9RrVfh8QoAV5_jhf69lrEBoaHmFjAlAh8CwaFHzJB_azqGojgJC5iPLpri-0ISGXSJZLkNO5fEL4-gKpjRtSlh-IiQKJBfzLAx4SN6yXAg5D7cZ7owg0CV1kKoVFHflK8i7r5Tdw2aGDXpNhxKutrxl8KHW4fCslVgSEoy8l9Al05wixV7Dj_ws21qlIpqZaufnDC2E-ZMnqLKCm4gggX6AM54IL3-MpszEtjgzR-caBsWg4EPTj926PLOUFEl-h8-JcfROuJtEb6pRFJOUCGmDaRjiqvEGHY_oMW4qFR0A1HYTbyvUqVOvb7vbjIwywq2xILDYhz8mzScoOfmUA3xN_syD7f8lzjHEaF_rDEEYRnO-6SneQ-hsj0TF8vJHYcI6Ah8xd3xyvC-Fd-Qqo7xrtS5Wwq9e2MiFw8jzpG1cJlzIJSxsYgCSMahc0bBnODWaZ0UXQameYVfpcF_klSbUgQWFGbNBb8UvEl5W3jMPkW55W8c1ChEP1DK6tCiJgHEHVIRs3km6jWqGlP0fB0kh1CoD9hRJRzxM1O2lq34G65byrhlrImnDPhhtF3xhM6D9umeMFB8Zg9TNb3ay_uWjDSfIc2SJXShMs9heYln5CjmoN7gvE9_qOhtfinqhQeXNVP0JEOx4U4MQG0iqfC1H1P8MdZPPEZGDA9-v1QAHey04eBfVFPCHZGX-";
 
         //The parameter officialOnly given true will ignore non-official music (including fan-made charts)
         ArrayList<RankMusicInfo> allRankList = getAllRankList(auth, true);
@@ -49,6 +51,7 @@ public class LvRatioCalculator {
         System.out.printf("Recent 15 Ratio: %.2f\n", recent15Avg);
         System.out.println("Your average ratio: " + (best15Avg + recent15Avg) / 2);
 
+        System.out.println("Your Accurate Ratio:" + UserInfo.get(new Token(auth.substring(7)), 939088).getLvRatio());
 
     }
 
@@ -77,7 +80,7 @@ public class LvRatioCalculator {
                 if(musicInfo.isOfficial())
                     infos.add(musicInfo);
             } else {
-                infos.add(musicInfo);
+//                infos.add(musicInfo);
             }
 
         });
@@ -131,8 +134,7 @@ public class LvRatioCalculator {
         for(JsonElement element : JsonParser.parseString(json).getAsJsonArray()) {
             RecentMusicInfo musicInfo = RecentMusicInfo.get(element.getAsJsonObject());
 
-            if(officialOnly & !MusicUtil.isOfficial(musicInfo.id))
-                continue;
+            if(officialOnly & !MusicUtil.isOfficial(musicInfo.id)) continue;
             musicInfoList.add(musicInfo);
         }
         return musicInfoList;

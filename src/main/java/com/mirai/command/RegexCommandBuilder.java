@@ -32,7 +32,6 @@ public class RegexCommandBuilder {
 
     public RegexCommandBuilder onCall(Scope scope, @NotNull MsgHandleable onCall) {
         command.addScope(scope);
-
         if(scope==Scope.GLOBAL) {
             command.setGlobalOnCall(onCall);
         } else {

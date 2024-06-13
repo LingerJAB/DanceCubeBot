@@ -1,11 +1,5 @@
 package com.dancecube.music;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-
 // 无视官方铺面/自制铺面获取封面
 public class Music {
     private final String name;
@@ -28,23 +22,5 @@ public class Music {
 
     public int getId() {
         return id;
-    }
-
-    public BufferedImage getCover() {
-        try {
-            return ImageIO.read(new URL(coverUrl));
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public BufferedImage getCoverToCache(File file) {
-        BufferedImage image = getCover();
-        try {
-            ImageIO.write(image, "jpg", file);
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-        return image;
     }
 }

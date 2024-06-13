@@ -127,7 +127,7 @@ public class Token {
                     "accessToken"="%s",
                     "refreshToken"="%s",
                     "recTime"=%d
-                    "desc"="token时长：%.3f天（大于7天可能需要重新登录）"
+                    "desc"="token时长为%.3f天（大于7天可能需要重新登录）"
                 }
                 """)
                 .formatted(userId, accessToken, refreshToken, recTime, (float) (System.currentTimeMillis() - recTime) / 86400_000);

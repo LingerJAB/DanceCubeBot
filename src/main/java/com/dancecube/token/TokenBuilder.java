@@ -18,25 +18,35 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.mirai.config.AbstractConfig.configPath;
 
 public final class TokenBuilder {
+    //公用 ids
+    private static ArrayList<String> ids = initIds();
 
-    private static int index = 0;
+    //公用 pointer
+    private static int pointer = 0;
+
+    //临时 index
+    private final int index;
+
+    //临时个人 id,多线程不会阻塞
     private final String id;
-    private static final ArrayList<String> ids = initIds();
 
-    private static ArrayList<String> initIds() {
+
+    public static ArrayList<String> initIds() {
         try {
             FileReader reader = new FileReader(configPath + "TokenIds.json");
             String[] strings = new Gson().fromJson(reader, String[].class);
+            System.out.println(Arrays.toString(strings));
             return new ArrayList<>(Arrays.asList(strings));
         } catch(FileNotFoundException e) {
             throw new RuntimeException("TokenIds.json 文件未找到，请重新配置");
@@ -44,13 +54,23 @@ public final class TokenBuilder {
     }
 
     public TokenBuilder() {
+        this.index = pointer;
         this.id = getId();
+    }
+
+    public static ArrayList<String> updateIds() {
+        TokenBuilder.ids = initIds();
+        return ids;
+    }
+
+    public static int getSize() {
+        return ids.size();
     }
 
     private static String getId() {
         //ID会一段时间释放，需要换用ID
-        if(index>ids.size() - 1) index = 0;
-        return ids.get(index++);
+        if(pointer>getSize() - 1) pointer = 0;
+        return ids.get(pointer++);
     }
 
     public String getQrcodeUrl() {
@@ -58,9 +78,12 @@ public final class TokenBuilder {
     }
 
     private String getQrcodeUrl(String id) {
+        //对于含有'+' '/'等符号的TokenId会自动url编码
+        id = URLEncoder.encode(id, StandardCharsets.UTF_8);
+
+        String string = "";
         try {
             Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode?id=" + id);
-            String string;
             if(response!=null && response.body()!=null) {
                 string = response.body().string();
                 response.close(); // 释放
@@ -70,20 +93,59 @@ public final class TokenBuilder {
         } catch(IOException e) {
             throw new RuntimeException(e);
         } catch(NullPointerException e) {
-            System.out.println("# ID:" + id + " 不可用已删除，还剩下" + ids.size() + "条");
+            System.out.println(string);
+            ids.remove(index);
+            System.out.println("# ID:" + id + " 不可用已删除，还剩下" + getSize() + "条");
             throw new RuntimeException(e);
         }
     }
 
+    public String getNewID() {
+        try {
+            Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode");
+
+            String string;
+            if(response!=null && response.body()!=null) {
+                string = response.body().string();
+                if(response.code()==400) return null;
+                response.close(); // 释放
+                JsonObject jsonObject = JsonParser.parseString(string).getAsJsonObject();
+                System.out.println(jsonObject);
+                return jsonObject.get("ID").getAsString();
+            }
+            return "";
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void test() throws IOException {
+        URL url = new URL("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode");
+        byte[] allBytes = url.openStream().readAllBytes();
+        String json = new String(allBytes);
+        Pattern compile = Pattern.compile("\"ID\":\"(\\S+)\",\"Q");
+        Matcher matcher = compile.matcher(json);
+        matcher.find();
+        System.out.println(matcher.group(1));
+    }
+
     public Token getToken() {
+        return getToken(id);
+    }
+
+    public Token getToken(String id) {
         long curTime = System.currentTimeMillis();
-        Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/token", Map.of("content-type", "application/x-www-form-urlencoded"), Map.of("client_type", "qrcode", "grant_type", "client_credentials", "client_id", id));
+        Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/token",
+                Map.of("content-type", "application/x-www-form-urlencoded"),
+                Map.of("client_type", "qrcode",
+                        "grant_type", "client_credentials",
+                        "client_id", URLEncoder.encode(id, Charset.defaultCharset())));
         Response response;
         //五分钟计时
         long wait = System.currentTimeMillis();
-        while(System.currentTimeMillis() - curTime<300_000) {
-            if(System.currentTimeMillis() - wait<2000) continue;  //等待2s时间（防止高频）
-//            System.out.println(System.currentTimeMillis()+" minus "+ wait);
+        while(System.currentTimeMillis() - curTime<300_000) {  // 5min超时
+            if(System.currentTimeMillis() - wait<4000) continue;  //等待4s时间（防止高频）
             wait = System.currentTimeMillis(); //重新赋值等待时间
 
             try {
@@ -92,7 +154,10 @@ public final class TokenBuilder {
                 //未登录为 400 登录为 200
                 if(response.body()!=null && response.code()==200) {
                     JsonObject json = JsonParser.parseString(response.body().string()).getAsJsonObject();
-                    return new Token(json.get("userId").getAsInt(), json.get("access_token").getAsString(), json.get("refresh_token").getAsString(), 0);
+                    return new Token(json.get("userId").getAsInt(),
+                            json.get("access_token").getAsString(),
+                            json.get("refresh_token").getAsString(),
+                            curTime);
                 }
                 response.close();  // 关闭释放
             } catch(IOException e) {
@@ -141,21 +206,21 @@ public final class TokenBuilder {
 
 
     @Test
-    public void test() {
-//        String accessToken ="Bj1iYAA5z4bemJ0gn-QKgGiw1xE9sh21FP6kcm8Iy2sXcRx_i2tLeAiqrvxfdi53BtHVY_3M4N5yip0w4FpcH1RM-GsqHaWQL9LnAl5BpdZQUblqOjb-t_2XFstbvxMS1FQ8BF3j65XrwSpOjIx9QOg_-igNomTpfx-31Itz7S-s7ua1KGcUBT9ippgg3p3S8Os_jFxs7wJPYLzn_tbj8fD5VgtjFZJhIH2-NIM_XpGhDfSaxXWyFmDbTEIY1iM6p24Lyswk1U_fJ4US93ozD7JS8c1gJQ_mijrmgVwlDDrrmacEtLvaFSaOSBEfFtstqi7alZFcOgWlzwn-JtP1gmu-1ToOoqubjLpOqBmeOl5QN7xejkB-oC5DzQ9ES4XS";
-//        String refreshToken ="a8ada5b46b4044af8315506e03d35335";
-//        Token token=new Token(939088,accessToken,refreshToken,0);
-//        System.out.println(token);
-//        System.out.println(token.checkAvailable());
-//
-//        token.refresh();
-//        System.out.println(token.checkAvailable());
-//        System.out.println(token);
-        autoRefreshToken();
-        try {
-            TimeUnit.MINUTES.sleep(1);
-        } catch(InterruptedException e) {
-            throw new RuntimeException(e);
+    public void main() {
+        for(; ; ) {
+            System.out.println("start?");
+            Scanner scanner = new Scanner(System.in);
+            String reply = scanner.nextLine();
+            if(reply.equals("n")) {
+                break;
+            } else if(reply.equals("y")) {
+                TokenBuilder builder = new TokenBuilder();
+                System.out.println("url:" + builder.getQrcodeUrl());
+                System.out.println("loading...");
+                System.out.println(builder.getToken());
+            } else {
+                System.out.println("#your reply:" + reply);
+            }
         }
     }
 

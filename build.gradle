@@ -2,7 +2,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.7.21'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.7.21'
 
-    id 'net.mamoe.mirai-console' version '2.12.2'
+    id 'net.mamoe.mirai-console' version '2.16.0'
 }
 
 
@@ -17,8 +17,6 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'net.mamoe:mirai-core:2.16.0'
-
     implementation 'com.google.zxing:javase:3.5.1'
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'com.google.code.gson:gson:2.10.1'
@@ -28,5 +26,4 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter:5.9.2'
     implementation 'junit:junit:4.13.2'
     implementation 'org.quartz-scheduler:quartz:2.3.2'
-
 }

@@ -3,6 +3,7 @@ package com.dancecube.music;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.mirai.config.AbstractConfig;
+import com.tools.HttpUtil;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Map;
 
 public class MusicUtil {
     public static HashSet<Integer> OFFICIAL_IDS;
@@ -41,22 +43,14 @@ public class MusicUtil {
     }
 
     public static boolean updateIdsFromAPI(String path) {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("https://dancedemo.shenghuayule.com/Dance/Music/GetMusicList?getAdvanced=false&getNotDisplay=true&getAudio=true&category=0")
-                .get().build();
-        Response response;
-        try {
-            response = client.newCall(request).execute();
+        String json = "";
+        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/Music/GetMusicList",
+                Map.of("getAdvanced", "true", "getNotDisplay", "false", "category", "0"))) {
+            if(response!=null && response.body()!=null) {
+                json = response.body().string();
+            }
         } catch(IOException e) {
-            return false;
-        }
-        String json;
-        try {
-            json = response.body().string();
-            response.close();
-        } catch(IOException e) {
-            return false;
+            e.printStackTrace();
         }
         if(OFFICIAL_IDS==null) OFFICIAL_IDS = new HashSet<>();
         JsonParser.parseString(json).getAsJsonArray().forEach(obj -> {
@@ -75,30 +69,43 @@ public class MusicUtil {
 
 
     public static Music getMusic(int id) {
-        // 获取歌曲对象（主要是AudioURL）
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetMusicRanking?page=1&musicIndex=6&musicId=" + id)
-                .get().build();
-        String string;
-        try {
-            Response response = client.newCall(request).execute();
-            string = response.body().string();
+        String name;
+        String coverUrl = "";
+        String json = "";
+        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/MusicData/GetInfo?musicId=" + id)) {
+            if(response!=null && response.body()!=null) {
+                json = response.body().string();
+            }
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-        JsonObject object = JsonParser.parseString(string).getAsJsonObject().get("List").getAsJsonArray().get(0).getAsJsonObject();
-        String name = object.get("Name").getAsString();
-        String coverUrl = object.get("Cover").getAsString();
+
+        JsonObject MusicJsonObject = JsonParser.parseString(json).getAsJsonObject();
+        name = MusicJsonObject.get("Name").getAsString();
+        for(JsonElement element : MusicJsonObject.get("MusicFileList").getAsJsonArray()) {
+            JsonObject obj = element.getAsJsonObject();
+            if("背景图片".equals(obj.get("FileTypeText").getAsString())) {
+                coverUrl = obj.get("Url").getAsString();
+            }
+        }
+
         return new Music(name, id, coverUrl);
     }
 
-    public static void main(String[] args) throws IOException {
-        System.out.println(updateIdsFromAPI(path));
-        System.out.println(OFFICIAL_IDS);
+    // 刷新OFFICIAL_IDS与下载图片
+    public static void main(String[] args) throws Exception {
+        Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/MusicData/GetInfo?musicId=" + 6179);
+        System.out.println(response.body().string());
+        System.out.println("\n一共" + OFFICIAL_IDS.size() + "项");
 
+        for(Integer id : OFFICIAL_IDS) {
+            if(CoverUtil.isCoverAbsent(id)) {
+                System.out.println("id" + id);
+                CoverUtil.downloadCover(id);
+                System.out.println("id=" + id + " is done!");
+            }
+        }
         System.out.println("\n# All right!");
-
     }
 
 
@@ -130,9 +137,4 @@ public class MusicUtil {
         }
         return musicHashSet;
     }
-
-    public static void saveCover(Music music) {
-
-    }
 }
-

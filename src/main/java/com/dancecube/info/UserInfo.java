@@ -4,6 +4,8 @@ import com.dancecube.token.Token;
 import com.google.gson.*;
 import com.tools.HttpUtil;
 import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
@@ -102,8 +104,12 @@ public class UserInfo {
 
     public static UserInfo get(Token token) {
         String userInfoJson = "";
-        Call call = HttpUtil.httpApiCall("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId(),
-                Map.of("Authorization", token.getBearerToken()));
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url("https://dancedemo.shenghuayule.com/Dance/api/User/GetInfo?userId=" + token.getUserId())
+                .addHeader("Authorization", token.getBearerToken())
+                .get().build();
+        Call call = client.newCall(request);
         try(Response response = call.execute()) {
 
             if(response.body()!=null) {
