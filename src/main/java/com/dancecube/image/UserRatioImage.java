@@ -3,10 +3,9 @@ package com.dancecube.image;
 import com.dancecube.api.LvRatioHistory;
 import com.dancecube.info.UserInfo;
 import com.dancecube.music.CoverUtil;
-import com.dancecube.ratio.LvRatioCalculator;
 import com.dancecube.ratio.RankMusicInfo;
+import com.dancecube.ratio.RatioCalculator;
 import com.dancecube.ratio.RecentMusicInfo;
-import com.dancecube.ratio.SingleRank;
 import com.dancecube.token.Token;
 import com.tools.image.AccGrade;
 import com.tools.image.ImageDrawer;
@@ -22,12 +21,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.*;
 
 import static com.mirai.config.AbstractConfig.itIsAReeeeaaaalWindowsMark;
-import static com.mirai.config.AbstractConfig.scheduler;
 
 public class UserRatioImage {
     public static int times = 1;
@@ -48,7 +48,7 @@ public class UserRatioImage {
 
     static {
         try {
-            // 素材缓存
+            // 素材缓存到内存
             CARD_1 = ImageIO.read(new File(CoverUtil.path + "Card1.png"));
             CARD_2 = ImageIO.read(new File(CoverUtil.path + "Card2.png"));
             CARD_3 = ImageIO.read(new File(CoverUtil.path + "Card3.png"));
@@ -65,189 +65,10 @@ public class UserRatioImage {
 
     }
 
-    @Deprecated
-    public static InputStream generate(Token token) {
-//        System.out.println("running...");
-
-        UserInfo info;
-        ArrayList<LvRatioHistory> ratioList;
-//        ReplyItem replyItem;
-        if(itIsAReeeeaaaalWindowsMark()) {
-            info = UserInfo.get(token);
-            ratioList = LvRatioHistory.get(token);
-//            replyItem = ReplyItem.get(token);
-        } else {
-            Future<UserInfo> userInfoFuture = scheduler.async(() -> UserInfo.get(token));
-            Future<ArrayList<LvRatioHistory>> ratioFuture = scheduler.async(() -> LvRatioHistory.get(token));
-//            Future<ReplyItem> replyItemFuture = scheduler.async(() -> ReplyItem.get(token));
-            try {
-                info = userInfoFuture.get();
-                ratioList = ratioFuture.get();
-//                replyItem = replyItemFuture.get();
-            } catch(ExecutionException | InterruptedException e) {
-                info = UserInfo.get(token);
-                ratioList = LvRatioHistory.get(token);
-//                replyItem = ReplyItem.get(token);
-            }
-        }
-
-        ImageDrawer drawer;
-        BufferedImage avatar;
-        BufferedImage box;
-        BufferedImage title;
-        BufferedImage backgroundImg;
-
-        try {
-            backgroundImg = ImageIO.read(new File(CoverUtil.path + "Background1.png"));
-            drawer = new ImageDrawer(backgroundImg);
-            drawer.antiAliasing(); // 抗锯齿
-
-            // 个人信息 头像/头衔
-            avatar = ImageIO.read(new URL(info.getHeadimgURL()));
-            drawer.drawImage(avatar, 34, 180, 174, 174);
-
-            if(!info.getHeadimgBoxPath().equals("")) {
-                box = ImageIO.read(new URL(info.getHeadimgBoxPath()));
-                drawer.drawImage(box, -24, 122, 290, 290);
-            }
-            if(!info.getTitleUrl().equals("")) {
-                title = ImageIO.read(new URL(info.getTitleUrl()));
-                drawer.drawImage(title, 28, 373, 186, 79);
-            }
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        int lvRatio = info.getLvRatio();
-        String userInfoText = """
-                %s
-
-                战队：%s
-                排名：%d
-                战力：%d""".formatted(info.getUserName(), info.getTeamName(), info.getRankNation(), lvRatio);
-        Font infoFont = new Font("得意黑", Font.PLAIN, 45);
-        Font idFont = new Font("得意黑", Font.PLAIN, 30);
-        drawer.color(Color.BLACK).font(idFont).drawText("ID: " + token.getUserId(), 245, 200)
-                .font(infoFont).drawText(userInfoText, 245, 160, new TextEffect(230, 0));
-
-
-        // 异步获取两个列表
-        ArrayList<RankMusicInfo> allRankList;
-        ArrayList<RecentMusicInfo> allRecentList;
-        if(itIsAReeeeaaaalWindowsMark()) {
-            allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-            allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
-        } else {
-            Future<ArrayList<RankMusicInfo>> rankMusicFuture = scheduler.async(() -> LvRatioCalculator.getAllRankList(token.getBearerToken(), true));
-            Future<ArrayList<RecentMusicInfo>> recentMusicFuture = scheduler.async(() -> LvRatioCalculator.getAllRecentList(token.getBearerToken(), true));
-            try {
-                allRankList = rankMusicFuture.get();
-                allRecentList = recentMusicFuture.get();
-            } catch(ExecutionException | InterruptedException e) {
-                allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-                allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), true);
-            }
-
-        }
-        List<RankMusicInfo> rank15List = LvRatioCalculator.getSubRank15List(allRankList);
-        List<RecentMusicInfo> recent15List = LvRatioCalculator.getSubRecent15List(allRecentList);
-
-        // B15
-        int index = 0;
-        int dx = 395, dy = 180; //x y延伸长度
-        Font titleFont = new Font("Microsoft YaHei UI", Font.BOLD, 32);
-        Font scoreFont = new Font("庞门正道标题体", Font.PLAIN, 52);
-        Font comboMissAccFont = new Font("庞门正道标题体", Font.PLAIN, 15);
-        Font levelFont = new Font("庞门正道标题体", Font.PLAIN, 23);
-
-        for(int row = 0; row<5; row++) { //列
-            for(int col = 0; col<3; col++, index++) { //行
-                int dx2 = col * dx;
-                int dy2 = row * dy;
-                RankMusicInfo musicInfo = rank15List.get(index);
-                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
-                SingleRank bestInfo = musicInfo.getBestInfo();
-                BufferedImage card = getCardImage(bestInfo.getDifficulty());
-                BufferedImage grade = getGradeImage(bestInfo.getGrade());
-                int fx = switch(bestInfo.getGrade()) {
-                    case SSS, C -> 0;
-                    case SS -> -17;
-                    case S -> -6;
-                    default -> 5;// case A B D
-                };
-                ImageEffect effect = new ImageEffect(35, 35);
-
-                String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
-                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
-                        .drawImage(card, 15 + dx2, 620 + dy2)
-                        .drawImage(grade, 285 + fx + dx2, 715 + dy2)
-                        .font(titleFont, Color.BLACK)
-                        .drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
-                        .font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 648 + dy2)
-                        .font(comboMissAccFont)
-                        .drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 2))
-                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 703 + dy2)
-                        .font(levelFont, Color.WHITE)
-                        .drawText(String.valueOf(bestInfo.getLevel()), 17 + dx2, 747 + dy2);
-            }
-        }
-
-        index = 0;
-        for(int row = 0; row<5; row++) { //列
-            for(int col = 0; col<3; col++, index++) { //行
-                int dx2 = col * dx;
-                int dy2 = row * dy + 1065;
-                RecentMusicInfo musicInfo = recent15List.get(index);
-                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
-                BufferedImage card = getCardImage(musicInfo.getDifficulty());
-                BufferedImage grade = getGradeImage(musicInfo.getGrade());
-                int fx = switch(musicInfo.getGrade()) {
-                    case SSS, C -> 0;
-                    case SS -> -17;
-                    case S -> -6;
-                    default -> 3;// case A B D
-                };
-                ImageEffect effect = new ImageEffect(35, 35);
-                String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
-
-                drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
-                        .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fx + dx2, 715 + dy2)
-                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont)
-                        .drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 648 + dy2)
-                        .font(comboMissAccFont)
-                        .drawText("%d\n%d\n%.2f%%"
-                                .formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()), 230 + dx2, 725 + dy2, new TextEffect(null, 2))
-                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 703 + dy2)
-                        .font(levelFont, Color.WHITE)
-                        .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
-            }
-        }
-
-        LvRatioHistory lvRatioHistory = ratioList.get(ratioList.size() - (ratioList.size()>1 ? 2 : 1));
-        Calendar calendar = lvRatioHistory.getCalendar();
-        float avg1 = LvRatioCalculator.average(rank15List);
-        float avg2 = LvRatioCalculator.average(recent15List);
-        float allAvg = (avg1 + avg2) / 2;
-        int randomIndex = new Random().nextInt(5); //0 ~ 4
-        String extraInfoText = """
-                                       上次战力：%d   (%d月%d日)
-                                       B-15 战力：%.4f
-                                       R-15 战力：%.4f
-                                       平均战力：%.5f
-                                       """.formatted(lvRatioHistory.getRatio(),
-                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
-                avg1, avg2, allAvg) + getRatioComment(lvRatio);
-        // 向上取整到百位 ((info.getLvRatio() / 100) + 1) * 100)
-        drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
-        drawer.dispose();
-        return drawer.getImageStream("PNG");
-    }
-
     public static InputStream generateOptimized(Token token) {
         // 个人信息
         UserInfo info;
         ArrayList<LvRatioHistory> ratioList;
-//        if(itIsAReeeeaaaalWindowsMark()) {
         if(!itIsAReeeeaaaalWindowsMark()) {
             info = UserInfo.get(token);
             ratioList = LvRatioHistory.get(token);
@@ -257,22 +78,15 @@ public class UserRatioImage {
             try {
                 info = userInfoFuture.get();
                 ratioList = ratioFuture.get();
-//                replyItem = replyItemFuture.get();
             } catch(ExecutionException | InterruptedException e) {
                 info = UserInfo.get(token);
                 ratioList = LvRatioHistory.get(token);
-//                replyItem = ReplyItem.get(token);
             }
         }
 
         ImageDrawer drawer;
-//        BufferedImage avatar;
-//        BufferedImage box;
-//        BufferedImage title;
-//        BufferedImage backgroundImg;
-
         try {
-            // efficiently final info
+            // 为什么这里放个finalInfo？
             final UserInfo finalInfo = info;
 
             // 获取背景图片
@@ -284,7 +98,7 @@ public class UserRatioImage {
                 }
             });
 
-            // 个人信息 头像/头像框/头衔
+            // 个人信息 头像/头像框/头衔  异步获取
             CompletableFuture<BufferedImage> avatarFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     if(finalInfo.getHeadimgURL().equals("")) return null;
@@ -312,7 +126,7 @@ public class UserRatioImage {
                 }
             });
 
-            //异步阻塞完绘制
+            //异步阻塞完绘制战力图
             drawer = new ImageDrawer(backgroundImgFuture.get());
             drawer.antiAliasing(); // 抗锯齿
 
@@ -320,8 +134,6 @@ public class UserRatioImage {
             if(avatarFuture.get()!=null) drawer.drawImage(avatarFuture.get(), 34, 180, 174, 174);
             if(boxFuture.get()!=null) drawer.drawImage(boxFuture.get(), -24, 122, 290, 290);
             if(titleFuture.get()!=null) drawer.drawImage(titleFuture.get(), 28, 373, 186, 79);
-
-
         } catch(InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -340,27 +152,26 @@ public class UserRatioImage {
 
 
         // 异步获取两个列表
-        ArrayList<RankMusicInfo> allRankList;
-        ArrayList<RecentMusicInfo> allRecentList;
-        if(!itIsAReeeeaaaalWindowsMark()) {
-            allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-            allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), false);
-        } else {
-            CompletableFuture<ArrayList<RankMusicInfo>> rankMusicFuture = CompletableFuture.supplyAsync(() -> LvRatioCalculator.getAllRankList(token.getBearerToken(), true));
-            CompletableFuture<ArrayList<RecentMusicInfo>> recentMusicFuture = CompletableFuture.supplyAsync(() -> LvRatioCalculator.getAllRecentList(token.getBearerToken(), true));
+        List<RankMusicInfo> allRankList;
+        List<RecentMusicInfo> allRecentList;
+        if(itIsAReeeeaaaalWindowsMark()) { // Windows下执行异步
+            CompletableFuture<List<RankMusicInfo>> rankMusicFuture = CompletableFuture.supplyAsync(() -> RatioCalculator.getAllRankList(token.getBearerToken()));
+            CompletableFuture<List<RecentMusicInfo>> recentMusicFuture = CompletableFuture.supplyAsync(() -> RatioCalculator.getAllRecentList(token.getBearerToken()));
             try {
                 allRankList = rankMusicFuture.get();
                 allRecentList = recentMusicFuture.get();
             } catch(ExecutionException | InterruptedException e) {
-                allRankList = LvRatioCalculator.getAllRankList(token.getBearerToken(), true);
-                allRecentList = LvRatioCalculator.getAllRecentList(token.getBearerToken(), false);
+                allRankList = RatioCalculator.getAllRankList(token.getBearerToken());
+                allRecentList = RatioCalculator.getAllRecentList(token.getBearerToken());
             }
-
+        } else { //
+            allRankList = RatioCalculator.getAllRankList(token.getBearerToken());
+            allRecentList = RatioCalculator.getAllRecentList(token.getBearerToken());
         }
-        List<RankMusicInfo> rank15List = LvRatioCalculator.getSubRank15List(allRankList);
-        List<RecentMusicInfo> recent15List = LvRatioCalculator.getSubRecent15List(allRecentList);
+        List<RankMusicInfo> rank15List = RatioCalculator.getSubRank15List(allRankList, true);
+        List<RecentMusicInfo> recent15List = RatioCalculator.getSubRecent15List(allRecentList, false);
 
-        //添加到自制谱列表获取
+        //准备自制谱封面id下载列表
         HashSet<Integer> waitingCoversSet = new HashSet<>();
         for(RankMusicInfo value : rank15List) {
             if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
@@ -369,7 +180,7 @@ public class UserRatioImage {
             if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
         }
 
-        //异步下载不存在的封面
+        //多线程下载不存在的封面
         ExecutorService threadPool = Executors.newCachedThreadPool();
         CountDownLatch latch = new CountDownLatch(waitingCoversSet.size());
         waitingCoversSet.forEach(id -> threadPool.submit(() -> {
@@ -383,7 +194,7 @@ public class UserRatioImage {
         }
 
 
-        // B15
+        // B15绘制
         int index = 0;
         int dx = 395, dy = 180; //x y延伸长度
         Font titleFont = new Font("Microsoft YaHei UI", Font.BOLD, 32);
@@ -391,17 +202,18 @@ public class UserRatioImage {
         Font comboMissAccFont = new Font("庞门正道标题体", Font.PLAIN, 15);
         Font levelFont = new Font("庞门正道标题体", Font.PLAIN, 23);
 
+        out:
         for(int row = 0; row<5; row++) { //列
             for(int col = 0; col<3; col++, index++) { //行
+                if(index>=rank15List.size()) break out;
+
                 int dx2 = col * dx;
                 int dy2 = row * dy;
-                //todo checkIndex
                 RankMusicInfo musicInfo = rank15List.get(index);
                 BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
-                SingleRank bestInfo = musicInfo.getBestInfo();
-                BufferedImage card = getCardImage(bestInfo.getDifficulty());
-                BufferedImage grade = getGradeImage(bestInfo.getGrade());
-                int fx = switch(bestInfo.getGrade()) {
+                BufferedImage card = getCardImage(musicInfo.getDifficulty());
+                BufferedImage grade = getGradeImage(musicInfo.getAccGrade());
+                int fix = switch(musicInfo.getAccGrade()) {
                     case SSS, C -> 0;
                     case SS -> -17;
                     case S -> -6;
@@ -409,23 +221,25 @@ public class UserRatioImage {
                 };
                 ImageEffect effect = new ImageEffect(35, 35);
 
-                String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
+                // 战力 >xxxx(+/- xx)
+                String diff = musicInfo.getRatioInt()>lvRatio ?
+                        "+" + (musicInfo.getRatioInt() - lvRatio) : String.valueOf(musicInfo.getRatioInt() - lvRatio);
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
                         .drawImage(card, 15 + dx2, 620 + dy2)
-                        .drawImage(grade, 285 + fx + dx2, 715 + dy2)
+                        .drawImage(grade, 285 + fix + dx2, 715 + dy2)
                         .font(titleFont, Color.BLACK)
                         .drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
-                        .font(scoreFont).drawText(String.valueOf(bestInfo.getScore()), 160 + dx2, 646 + dy2)
+                        .font(scoreFont).drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 646 + dy2)
                         .font(comboMissAccFont)
-                        .drawText("%d\n%d\n%.2f%%".formatted(bestInfo.getCombo(), bestInfo.getMiss(), bestInfo.getAcc()), 230 + dx2, 725 + dy2,
+                        .drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAccuracy()), 230 + dx2, 725 + dy2,
                                 new TextEffect(null, 1))
-                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 702 + dy2)
+                        .drawText("> %d (%s)".formatted(musicInfo.getRatioInt(), diff), 163 + dx2, 702 + dy2)
                         .font(levelFont, Color.WHITE)
-                        .drawText(String.valueOf(bestInfo.getLevel()), 17 + dx2, 747 + dy2);
+                        .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
             }
         }
 
-        //R15
+        // R15绘制
         index = 0;
         a:
         for(int row = 0; row<5; row++) { //列
@@ -439,37 +253,39 @@ public class UserRatioImage {
                 BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
                 BufferedImage card = getCardImage(musicInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(musicInfo.getGrade());
-                int fx = switch(musicInfo.getGrade()) {
+                int fix = switch(musicInfo.getGrade()) {
                     case SSS, C -> 0;
                     case SS -> -17;
                     case S -> -6;
                     default -> 5;// case A B D
                 };
                 ImageEffect effect = new ImageEffect(35, 35);
-                String diff = musicInfo.getBestRatioInt()>lvRatio ? "+" + (musicInfo.getBestRatioInt() - lvRatio) : String.valueOf(musicInfo.getBestRatioInt() - lvRatio);
+                String diff = musicInfo.getRatioInt()>lvRatio ?
+                        "+" + (musicInfo.getRatioInt() - lvRatio) : String.valueOf(musicInfo.getRatioInt() - lvRatio);
 
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
-                        .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fx + dx2, 715 + dy2)
+                        .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fix + dx2, 715 + dy2)
                         .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont)
                         .drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 646 + dy2)
                         .font(comboMissAccFont)
-                        .drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAcc()),
+                        .drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAccuracy()),
                                 230 + dx2, 725 + dy2,
                                 new TextEffect(null, 1))
-                        .drawText("> %d (%s)".formatted(musicInfo.getBestRatioInt(), diff), 163 + dx2, 702 + dy2)
+                        .drawText("> %d (%s)".formatted(musicInfo.getRatioInt(), diff), 163 + dx2, 702 + dy2)
                         .font(levelFont, Color.WHITE)
                         .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
             }
         }
 
+        // 战力概况
         LvRatioHistory lvRatioHistory;
         if(ratioList.size()>0) {
             lvRatioHistory = ratioList.get(ratioList.size() - (ratioList.size()>1 ? 2 : 1));
         } else {
             lvRatioHistory = new LvRatioHistory(DateFormat.getDateInstance().getCalendar(), info.getLvRatio());
         }
-        float avg1 = LvRatioCalculator.average(rank15List);
-        float avg2 = LvRatioCalculator.average(recent15List);
+        float avg1 = RatioCalculator.average(rank15List);
+        float avg2 = RatioCalculator.average(recent15List);
         float allAvg = (avg1 + avg2) / 2;
         Calendar calendar = lvRatioHistory.getCalendar();
         String extraInfoText = """
@@ -480,7 +296,6 @@ public class UserRatioImage {
                                        """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
                 avg1, avg2, allAvg) + getRatioComment(lvRatio);
-        // 向上取整到百位 ((info.getLvRatio() / 100) + 1) * 100)
         drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
         drawer.dispose();
         return drawer.getImageStream("PNG");

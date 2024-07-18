@@ -4,13 +4,13 @@ package com.tools.image;
  * 舞立方成绩游玩评级
  */
 public enum AccGrade {
-    SSS(98),
-    SS(95),
-    S(90),
     A(80),
     B(70),
     C(60),
-    D(0);
+    D(0),
+    S(90),
+    SS(95),
+    SSS(98);
 
     private final float minAcc;
 

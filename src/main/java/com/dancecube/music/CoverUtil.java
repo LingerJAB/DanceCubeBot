@@ -14,13 +14,20 @@ public class CoverUtil {
     public static String path = configPath + "Images/Material/";
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
     public static String customImgPath = configPath + "Images/Cover/CustomImage/";
+//    public static HashSet<Integer> customIds;
+//    public static HashSet<Integer> officialIds;
+//    static {
+//        officialImgPath
+//    }
 
     ///不保证存在
     private static String getImgPath(int id) {
         return (MusicUtil.isOfficial(id) ? officialImgPath : customImgPath) + id + ".jpg";
     }
 
-    // Absent adj.缺席的，没有的
+    /**
+     * Absent adj.缺席的，没有的
+     */
     public static boolean isCoverAbsent(int id) {
         return !new File(getImgPath(id)).exists();
     }
@@ -35,7 +42,7 @@ public class CoverUtil {
         }
     }
 
-    public static BufferedImage downloadCover(int id) {
+    public static void downloadCover(int id) {
         Music music = MusicUtil.getMusic(id);
         BufferedImage image;
         try {
@@ -44,7 +51,6 @@ public class CoverUtil {
         } catch(IOException e) {
             throw new RuntimeException(id + "id cover url 无效");
         }
-        return image;
     }
 
     public static BufferedImage getCover(int id) {

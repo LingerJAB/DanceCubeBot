@@ -22,7 +22,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -207,23 +210,13 @@ public final class TokenBuilder {
 
     @Test
     public void main() {
-        for(; ; ) {
-            System.out.println("start?");
-            Scanner scanner = new Scanner(System.in);
-            String reply = scanner.nextLine();
-            if(reply.equals("n")) {
-                break;
-            } else if(reply.equals("y")) {
-                TokenBuilder builder = new TokenBuilder();
-                System.out.println("url:" + builder.getQrcodeUrl());
-                System.out.println("loading...");
-                System.out.println(builder.getToken());
-            } else {
-                System.out.println("#your reply:" + reply);
-            }
-        }
+        TokenBuilder builder = new TokenBuilder();
+        System.out.println("url:" + builder.getQrcodeUrl());
+        Token token = builder.getToken();
+        System.out.println("your id:" + token.getUserId());
     }
 
+    @Deprecated
     public void autoRefreshToken() {
         Scheduler scheduler;
         try {

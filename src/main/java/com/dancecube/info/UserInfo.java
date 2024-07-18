@@ -73,7 +73,7 @@ public class UserInfo {
     }
 
     public String getTitleUrl() {
-        return titleUrl==null ? "" : titleUrl;
+        return titleUrl==null || titleUrl.length()<5 ? "" : titleUrl;
     }
 
     public String getHeadimgBoxPath() {

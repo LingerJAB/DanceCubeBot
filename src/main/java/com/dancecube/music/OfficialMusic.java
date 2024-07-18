@@ -1,14 +1,7 @@
 package com.dancecube.music;
 
 import com.google.gson.annotations.SerializedName;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
 
 class OfficialMusic {
@@ -16,7 +9,7 @@ class OfficialMusic {
     private final int id;
     @SerializedName("Name")
     private final String name;
-    @SerializedName("CoverUtil")
+    @SerializedName("CoverUrl")
     private final String coverUrl;
 //    private final ArrayList<Integer> levels;
 
@@ -65,29 +58,4 @@ class OfficialMusic {
                 ", coverUrl='" + coverUrl + '\'' +
                 '}';
     }
-
-    @Deprecated
-    public static void saveOfficialImg(OkHttpClient client, OfficialMusic music) {
-        String name = music.getName();
-        int id = music.getId();
-        String url = music.getCoverUrl();
-
-        try {
-            Response response = client.newCall(new Request.Builder().url(url).build()).execute();
-
-            File file = new File("C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\src\\officialImg\\" + id + ".jpg");
-            if(file.exists()) {
-                System.out.println("#" + id + " " + name + " 已存在，未保存");
-            } else {
-                InputStream inputStream = response.body().byteStream();
-                FileOutputStream outputStream = new FileOutputStream(file);
-                outputStream.write(inputStream.readAllBytes());
-                outputStream.close();
-                System.out.println("#" + id + " " + name + " 已保存");
-            }
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 }

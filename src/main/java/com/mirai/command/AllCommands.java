@@ -122,7 +122,6 @@ public class AllCommands {
                 } else {
                     contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s\n\n⭐要是账号不匹配的话，重新登录下就好了".formatted(token.getUserId()));
                     userTokensMap.put(qq, token);  // 重复登录只会覆盖新的token
-//                    TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
                 }
                 logStatus.remove(qq);
             }).build();
