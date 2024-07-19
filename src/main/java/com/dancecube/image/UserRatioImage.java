@@ -30,9 +30,6 @@ import java.util.concurrent.*;
 import static com.mirai.config.AbstractConfig.itIsAReeeeaaaalWindowsMark;
 
 public class UserRatioImage {
-    public static int times = 1;
-
-
     public static final BufferedImage CARD_1; //低级
     public static final BufferedImage CARD_2; //中级
     public static final BufferedImage CARD_3; //高级
@@ -326,13 +323,10 @@ public class UserRatioImage {
     public void test() {
         System.out.println("Running...");
         Token token = new Token(939088,
-                "jo_-yldaIba9hASxFduTWZzfjwnu5JU7PvgmhT_S8vc8QOfmykdnFFiydB6-oS-PzU2XeK1K7q7IzGXSOZsel8AuhDawk5_Z7_dK1y4Xes-yb711n-r4kXL0D14sw4r3dHpIrzloR81WtHBh_Tq_fOrYnYwR8LHnLrksgeIi82-tB0Zx0xr2WNrK66eTZ3fKoLKbQ21DP36nsHDCafqqsDGgT_H-a7rttiZOwXajZDa7eWn6nXSvKvk2bhkqElORNeoYDAixccezJaWH2wujf--gEmWPvdxhNjtd2A2HTvxjZ6oMG2fRbeqgv8ste2VqHdqg2FddvZY6rWo69svgpUNmzhoB3L5aoMBklD13bV6hyJw3J_4PzniyAA14sM2q1fyuYji5XNsyLUc7DnemJlI1Jqb_rYOwlTKu38u3SnuJ_tfI2aFeJK2SUtofYAFk5oxfULh2uIRUWNXU9vXpkA_hZm5KCAv32cGYhPtvr_zCXrnQLAR0pGj1sagPeHCkGiMJVA0GnERkrETJtWpotQq_ABgrMH1mJJ_ptf1Hf7rFTcsPs3l4I9AkB1KtkVxJ2c04fcwObaL9D2bZRa8lokh7F6dN-w7-xEwEDBj4pi67YByoCq2pKwEB9wp9oNjY4pX3mP9Uvc3gtR6Nam-Ifd6SaRfnDNEcKivYNWlor6pjH2DXo56ltBGPro0jKGTtOoP7H9Zk4eVnAok_5wWplpXTtb_NTLG307zoH5kpwhvAnggOv0FZE5SYtad6qIXUeLcShpqybTZ7ZwBoiNGurrYLWsydtSS9PtgT1qdOD70WxR8kHkXjXI0lh5m4xiS8ZE_tbzwos7DyuE93OR_ruA");
+                "tLB-nyd8xVnXMpn2TObtpUZAoB_of9WhB9Sye7jrLuVldr_8JfV73qQvQ1-i-hAs2DPm83U4_LVqh-j7M4jZeULkaLvros29EKcMlpuPd76pBFScElsWd8LS07K2NmFBWwjtkmSxs7lhmSeWk1W0wZb7qVyZQiw-oPwLa_6kq2UngZxY2pGrr3SOJw3nuc58DaCexkJ_Hz6bZRC-Mfzhj4e59n-nr-7JN2A5t2U9znVdmDlfN1mrVauoGxdW-R29QhqYp-78hTDisUhogStCi9K7VHRdt1AoC5I9fUSpU9ZrXzJiUzMJTumw0dQ8hSAPGycxUDaDqIXViWqs78-zSw6giMQauJgI-feTSdDJkp3M86xw4qVHCPTeeMNKtPM8");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
         ImageDrawer.write(generateOptimized(token), path);
-
-
-//        System.out.println("\nDone! It takes " + deltaSeconds(timeMillis) + "s");
-
+        System.out.println("Done!");
     }
 
     public static float deltaSeconds(long mills) {

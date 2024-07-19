@@ -96,7 +96,6 @@ public class AllCommands {
 
     @DeclaredCommand("舞立方机器人登录")
     public static final RegexCommand dcLogin = new RegexCommandBuilder()
-//            .regex("登录|舞立方登录")
             .multiStrings("登录", "舞立方登录")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 // 限私聊
@@ -128,7 +127,6 @@ public class AllCommands {
 
     @DeclaredCommand("舞立方机台登录")
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
-//            .regex("机台登录|扫码")
             .multiStrings("机台登录", "扫码")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
@@ -354,9 +352,9 @@ public class AllCommands {
                     machineListText.append("\n").append(singleInfo);
                 }
                 if(list.size()>5) {
-                    contact.sendMessage(machineListText + "⭐刷屏哒咩！请私聊查询全部" + list.size() + "条~");
+                    contact.sendMessage(machineListText + "⭐刷屏哒咩！私聊查询全部" + list.size() + "条~");
                 } else {
-                    contact.sendMessage(machineListText.toString());
+                    contact.sendMessage(machineListText + "⭐呐！一共" + list.size() + "条~");
                 }
             })
             .onCall(Scope.USER, (event, contact, qq, args) -> {
@@ -468,7 +466,6 @@ public class AllCommands {
             .form(ArgsCommand.CHAR)
             .onCall(Scope.USER, (event, contact, qq, args) -> {
                 if(args==null) return;
-                //TODO 假的cmds
                 HashMap<Long, HashSet<String>> userInfoCommands = new HashMap<>();
 
                 String newPrefix = args[0];

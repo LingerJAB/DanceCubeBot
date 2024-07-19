@@ -14,11 +14,11 @@ public class CoverUtil {
     public static String path = configPath + "Images/Material/";
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
     public static String customImgPath = configPath + "Images/Cover/CustomImage/";
-//    public static HashSet<Integer> customIds;
-//    public static HashSet<Integer> officialIds;
-//    static {
-//        officialImgPath
-//    }
+
+    static {
+        new File(officialImgPath).mkdirs();
+        new File(customImgPath).mkdirs();
+    }
 
     ///不保证存在
     private static String getImgPath(int id) {
@@ -45,11 +45,13 @@ public class CoverUtil {
     public static void downloadCover(int id) {
         Music music = MusicUtil.getMusic(id);
         BufferedImage image;
+        File imgFile;
         try {
             image = ImageIO.read(new URL(music.getCoverUrl()));
-            ImageIO.write(image, "JPG", new File(getImgPath(id)));
+            imgFile = new File(getImgPath(id));
+            ImageIO.write(image, "JPG", imgFile);
         } catch(IOException e) {
-            throw new RuntimeException(id + "id cover url 无效");
+            throw new RuntimeException(id + "的id 封面url 无效");
         }
     }
 
@@ -59,6 +61,6 @@ public class CoverUtil {
             return cover;
         }
         downloadCover(id);
-        return cover;
+        return getCoverOrNull(id);
     }
 }

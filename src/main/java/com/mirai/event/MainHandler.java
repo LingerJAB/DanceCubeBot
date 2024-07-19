@@ -25,10 +25,7 @@ public class MainHandler {
                 .filter(msg -> msg instanceof At | msg instanceof PlainText)
                 .toList().size()) {
             PlainTextHandler.accept(event);
-        } else { //其它多元的消息
-            return;
-        }
-
+        } else return;
 
         String message = messageChain.contentToString();
         long qq = event.getSender().getId(); // qq不为contact.getId()
@@ -41,7 +38,6 @@ public class MainHandler {
             case "#about" -> showAbout(contact);
         }
     }
-
 
     // #save 高级
     public static void saveTokens(Contact contact) {

@@ -13,15 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,12 +46,21 @@ public final class TokenBuilder {
 
     public static ArrayList<String> initIds() {
         try {
-            FileReader reader = new FileReader(configPath + "TokenIds.json");
+            File tokenIdsFile = new File(configPath + "TokenIds.json");
+            if(!tokenIdsFile.exists()) {
+                tokenIdsFile.createNewFile();
+                Files.writeString(tokenIdsFile.toPath(), "[]", StandardOpenOption.WRITE);
+            }
+            FileReader reader = new FileReader(tokenIdsFile);
             String[] strings = new Gson().fromJson(reader, String[].class);
-            System.out.println(Arrays.toString(strings));
+            if(strings.length==0) throw new RuntimeException("# id缺失，请手动补充！");
+
+            System.out.printf("# id缓存成功，共%d项%n", strings.length);
             return new ArrayList<>(Arrays.asList(strings));
         } catch(FileNotFoundException e) {
             throw new RuntimeException("TokenIds.json 文件未找到，请重新配置");
+        } catch(IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -195,8 +203,11 @@ public final class TokenBuilder {
         HashMap<Long, Token> userMap;
         try {
             userMap = new Gson().fromJson(new FileReader(filePath), type);
+            if(userMap==null) { // 空文件判断
+                return new HashMap<>();
+            }
             // 读取并refresh()
-            if(refreshing & userMap!=null) userMap.forEach((key, token) -> token.refresh());
+            if(refreshing) userMap.forEach((key, token) -> token.refresh());
         } catch(FileNotFoundException e) {
             throw new RuntimeException(e);
         }

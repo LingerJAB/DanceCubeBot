@@ -22,7 +22,7 @@ public class RatioCalculator {
     public static void main(String[] args) {
 
         //Input Your DanceCubeBase Bearer Token Here
-        String auth = "bearer " + "rD_7AhyHSCrKNCXuPx31-U5VF5_ikh6rb9KoM7W_a_9zzBEwyShRYxnufk1utHMHPAOfi8kx6ZjQ-oEn3IeBLm-tzlzcILuSmnNJPfxD_U297pLVCjWChJjQg-ZwtxO8qRzdNLkrhzGXesTp8ZFh4TqFGf8e6kb-yOam-27cEzg39YKQEbm9qP4Pn7ZMUki85Wyx-9RrVfh8QoAV5_jhf69lrEBoaHmFjAlAh8CwaFHzJB_azqGojgJC5iPLpri-0ISGXSJZLkNO5fEL4-gKpjRtSlh-IiQKJBfzLAx4SN6yXAg5D7cZ7owg0CV1kKoVFHflK8i7r5Tdw2aGDXpNhxKutrxl8KHW4fCslVgSEoy8l9Al05wixV7Dj_ws21qlIpqZaufnDC2E-ZMnqLKCm4gggX6AM54IL3-MpszEtjgzR-caBsWg4EPTj926PLOUFEl-h8-JcfROuJtEb6pRFJOUCGmDaRjiqvEGHY_oMW4qFR0A1HYTbyvUqVOvb7vbjIwywq2xILDYhz8mzScoOfmUA3xN_syD7f8lzjHEaF_rDEEYRnO-6SneQ-hsj0TF8vJHYcI6Ah8xd3xyvC-Fd-Qqo7xrtS5Wwq9e2MiFw8jzpG1cJlzIJSxsYgCSMahc0bBnODWaZ0UXQameYVfpcF_klSbUgQWFGbNBb8UvEl5W3jMPkW55W8c1ChEP1DK6tCiJgHEHVIRs3km6jWqGlP0fB0kh1CoD9hRJRzxM1O2lq34G65byrhlrImnDPhhtF3xhM6D9umeMFB8Zg9TNb3ay_uWjDSfIc2SJXShMs9heYln5CjmoN7gvE9_qOhtfinqhQeXNVP0JEOx4U4MQG0iqfC1H1P8MdZPPEZGDA9-v1QAHey04eBfVFPCHZGX-";
+        String auth = "bearer " + "tLB-nyd8xVnXMpn2TObtpUZAoB_of9WhB9Sye7jrLuVldr_8JfV73qQvQ1-i-hAs2DPm83U4_LVqh-j7M4jZeULkaLvros29EKcMlpuPd76pBFScElsWd8LS07K2NmFBWwjtkmSxs7lhmSeWk1W0wZb7qVyZQiw-oPwLa_6kq2UngZxY2pGrr3SOJw3nuc58DaCexkJ_Hz6bZRC-Mfzhj4e59n-nr-7JN2A5t2U9znVdmDlfN1mrVauoGxdW-R29QhqYp-78hTDisUhogStCi9K7VHRdt1AoC5I9fUSpU9ZrXzJiUzMJTumw0dQ8hSAPGycxUDaDqIXViWqs78-zSw6giMQauJgI-feTSdDJkp3M86xw4qVHCPTeeMNKtPM8";
 
         //The parameter officialOnly given true will ignore non-official music (including fan-made charts)
         List<RankMusicInfo> allRankList = getAllRankList(auth);
@@ -53,7 +53,6 @@ public class RatioCalculator {
         System.out.println("Your average ratio: " + (best15Avg + recent15Avg) / 2);
 
         System.out.println("Your Accurate Ratio:" + UserInfo.get(new Token(auth.substring(7)), 939088).getLvRatio());
-
     }
 
     /**
@@ -68,7 +67,7 @@ public class RatioCalculator {
         return sum / multiInfo.size();
     }
 
-    private static List<RankMusicInfo> getCategoryRankListNew(String json) {
+    private static List<RankMusicInfo> getCategoryRankList(String json) {
         List<JsonElement> list = JsonParser.parseString(json).getAsJsonArray().asList();
         List<RankMusicInfo> singleRankMusicList = new ArrayList<>();
         list.forEach(element -> {
@@ -100,7 +99,7 @@ public class RatioCalculator {
             } catch(IOException e) {
                 throw new RuntimeException(e);
             }
-            musicInfos.addAll(getCategoryRankListNew(json));
+            musicInfos.addAll(getCategoryRankList(json));
         }
         return musicInfos;
     }
@@ -144,8 +143,13 @@ public class RatioCalculator {
         musicInfoList.sort((o1, o2) -> Float.compare(o2.getRatio(), o1.getRatio()));
         List<RankMusicInfo> subRankList = new ArrayList<>();
         if(ratioValidOnly) {
-            for(RankMusicInfo musicInfo : musicInfoList) {
-                if(isRatioValid(musicInfo)) subRankList.add(musicInfo);
+            int count = 0; // 用于跟踪添加到subRankList中的项数
+            for(int i = 0; i<musicInfoList.size() && count<15; i++) {
+                RankMusicInfo musicInfo = musicInfoList.get(i);
+                if(isRatioValid(musicInfo)) {
+                    subRankList.add(musicInfo);
+                    count++; // 增加计数器
+                }
             }
         } else {
             for(int i = 0; i<Math.min(15, musicInfoList.size()); i++) {
@@ -166,8 +170,13 @@ public class RatioCalculator {
     public static List<RecentMusicInfo> getSubRecent15List(List<RecentMusicInfo> musicInfoList, boolean officialOnly) {
         List<RecentMusicInfo> subRencentList = new ArrayList<>();
         if(officialOnly) {
-            for(RecentMusicInfo recentMusicInfo : musicInfoList) {
-                if(recentMusicInfo.isOfficial()) subRencentList.add(recentMusicInfo);
+            int count = 0;
+            for(int i = 0; i<musicInfoList.size() && count<15; i++) {
+                RecentMusicInfo musicInfo = musicInfoList.get(i);
+                if(isRatioValid(musicInfo)) {
+                    subRencentList.add(musicInfo);
+                    count++;
+                }
             }
         } else {
             for(int i = 0; i<Math.min(15, musicInfoList.size()); i++) {

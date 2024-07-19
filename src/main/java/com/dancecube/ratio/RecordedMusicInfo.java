@@ -6,7 +6,6 @@ import com.tools.image.AccGrade;
  * 已游玩谱面成绩歌曲的父类，包括RankMusic和RecentMusic
  */
 public abstract class RecordedMusicInfo {
-    //TODO: level  levelType移过来
     final int id;
     final String name;
     final int difficulty;  // show 为-1
