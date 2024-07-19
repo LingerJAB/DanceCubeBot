@@ -127,6 +127,7 @@ public class AllCommands {
 
     @DeclaredCommand("舞立方机台登录")
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
+            //Todo：扫不出来
             .multiStrings("机台登录", "扫码")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 Token token = getToken(contact, qq, onNoLoginCall, onInvalidCall);
