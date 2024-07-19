@@ -249,8 +249,8 @@ public class UserRatioImage {
                 musicInfo = recent15List.get(index);
                 BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
                 BufferedImage card = getCardImage(musicInfo.getDifficulty());
-                BufferedImage grade = getGradeImage(musicInfo.getGrade());
-                int fix = switch(musicInfo.getGrade()) {
+                BufferedImage grade = getGradeImage(musicInfo.getAccGrade());
+                int fix = switch(musicInfo.getAccGrade()) {
                     case SSS, C -> 0;
                     case SS -> -17;
                     case S -> -6;

@@ -2,7 +2,6 @@ package com.dancecube.ratio;
 
 import com.dancecube.music.MusicUtil;
 import com.google.gson.JsonObject;
-import com.tools.image.AccGrade;
 
 /**
  * 最近游玩的记录音乐信息
@@ -12,10 +11,6 @@ public class RecentMusicInfo extends RecordedMusicInfo {
     private final int great;
     private final int good;
     private final String recordTime;
-
-    public AccGrade getGrade() {
-        return AccGrade.get(accuracy);
-    }
 
     @Override
     boolean isOfficial() {
