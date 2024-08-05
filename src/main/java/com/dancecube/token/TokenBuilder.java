@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -51,12 +50,15 @@ public final class TokenBuilder {
                 tokenIdsFile.createNewFile();
                 Files.writeString(tokenIdsFile.toPath(), "[]", StandardOpenOption.WRITE);
             }
-            FileReader reader = new FileReader(tokenIdsFile);
-            String[] strings = new Gson().fromJson(reader, String[].class);
-            if(strings.length==0) throw new RuntimeException("# id缺失，请手动补充！");
+            ArrayList<String> strings = new ArrayList<>();
+            JsonParser.parseString(Files.readString(tokenIdsFile.toPath())).getAsJsonArray().forEach(
+                    element -> strings.add(element.getAsString())
+            );
 
-            System.out.printf("# id缓存成功，共%d项%n", strings.length);
-            return new ArrayList<>(Arrays.asList(strings));
+            if(strings.isEmpty()) throw new RuntimeException("# id缺失，请手动补充！");
+
+            System.out.printf("# id缓存成功，共%d项%n", strings.size());
+            return strings;
         } catch(FileNotFoundException e) {
             throw new RuntimeException("TokenIds.json 文件未找到，请重新配置");
         } catch(IOException e) {
@@ -139,6 +141,19 @@ public final class TokenBuilder {
         Matcher matcher = compile.matcher(json);
         matcher.find();
         System.out.println(matcher.group(1));
+    }
+
+    @Test
+    public void testID() throws InterruptedException {
+        ArrayList<String> strings = new ArrayList<>();
+        for(int i = 0; i<100; i++) {
+            String id = getNewID();
+            Thread.sleep(100);
+            if(id.isBlank()) continue;
+            strings.add("\"" + id + "\"");
+        }
+        System.out.println(strings);
+        System.out.println("共 " + strings.size());
     }
 
     public Token getToken() {

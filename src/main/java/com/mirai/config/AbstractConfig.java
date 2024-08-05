@@ -1,21 +1,16 @@
 package com.mirai.config;
 
 import com.dancecube.token.Token;
-import com.dancecube.token.TokenBuilder;
-import com.mirai.MiraiBot;
-import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 
 public abstract class AbstractConfig {
-    public static JavaPluginScheduler scheduler;
     public static HashMap<Long, Token> userTokensMap;
     public static HashSet<Long> logStatus = new HashSet<>();
     public static String linuxRootPath;
@@ -30,27 +25,21 @@ public abstract class AbstractConfig {
 
     static {
 
-        windowsMark = new File("./WINDOWS_MARK").exists();
+        windowsMark = new File("../WINDOWS_MARK").exists();
         try {
             linuxRootPath = new File("..").getCanonicalPath();
-            windowsRootPath = new File(".").getCanonicalPath();
+            windowsRootPath = new File("..").getCanonicalPath();
 
             //在项目下创建 “WINDOWS_MARK” 文件，存在即使用Windows路径的配置，而Linux则不需要
             if(itIsAReeeeaaaalWindowsMark()) {
                 configPath = windowsRootPath + "/DcConfig/";
             } else {
-                scheduler = MiraiBot.INSTANCE.getScheduler();
                 configPath = linuxRootPath + "/DcConfig/";
             }
             new File(configPath).mkdirs();
         } catch(IOException e) {
             e.printStackTrace();
         }
-
-        // 导入Token
-        userTokensMap = Objects.requireNonNullElse(
-                TokenBuilder.tokensFromFile(configPath + "UserTokens.json"),
-                new HashMap<>());
 
 
         // Authorization错误时查看控制台ip白名单
@@ -62,7 +51,7 @@ public abstract class AbstractConfig {
                 apiKeyYml.createNewFile();
             }
 
-            map = new Yaml().load(new FileReader(apiKeyYml));
+            map = new Yaml().load(Files.readString(apiKeyYml.toPath()));
         } catch(IOException e) {
             throw new RuntimeException(e);
         }

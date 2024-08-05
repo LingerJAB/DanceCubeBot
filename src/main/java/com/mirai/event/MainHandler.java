@@ -3,7 +3,6 @@ package com.mirai.event;
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -35,7 +34,6 @@ public class MainHandler {
         switch(message) {
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
-            case "#about" -> showAbout(contact);
         }
     }
 
@@ -58,17 +56,6 @@ public class MainHandler {
         contact.sendMessage("不刷新加载成功！共%d条".formatted(userTokensMap.size()) + sb);
     }
 
-    // #about 全局
-    public static void showAbout(Contact contact) {
-        if(contact instanceof Group) return;
-        String content = """
-                你的id是%d,发送#token查看详情
-                舞小铃已保存%d个账户辣！
-                目前运行在Ubuntu Linux服务器上
-                欢迎提出建议！
-                开发者QQ:2862125721""".formatted(userTokensMap.get(contact.getId()).getUserId(), userTokensMap.size());
-        contact.sendMessage(content);
-    }
 
     @Deprecated
     public static void loadTokens() {

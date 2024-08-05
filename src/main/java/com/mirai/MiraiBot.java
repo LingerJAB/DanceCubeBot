@@ -15,10 +15,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static com.mirai.config.AbstractConfig.configPath;
@@ -26,6 +23,7 @@ import static com.mirai.config.AbstractConfig.userTokensMap;
 
 public final class MiraiBot extends JavaPlugin {
     public static final MiraiBot INSTANCE = new MiraiBot();
+    String path = configPath + "UserTokens.json";
 
     private MiraiBot() {
         super(JvmPluginDescription.loadFromResource("plugin.yml", MiraiBot.class.getClassLoader()));
@@ -67,7 +65,6 @@ public final class MiraiBot extends JavaPlugin {
         long period = 86400 * 500; //半天
 
         JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
-        String path = configPath + "UserTokens.json";
         userTokensMap = TokenBuilder.tokensFromFile(path);
 
         TimerTask task = new TimerTask() {
@@ -99,7 +96,10 @@ public final class MiraiBot extends JavaPlugin {
 
     public void onLoadToken() {
         StringBuilder sb = new StringBuilder();
-        if(userTokensMap==null) return;
+        // 导入Token
+        userTokensMap = Objects.requireNonNullElse(
+                TokenBuilder.tokensFromFile(configPath + "UserTokens.json"),
+                new HashMap<>());
 
         for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
             Long qq = entry.getKey();

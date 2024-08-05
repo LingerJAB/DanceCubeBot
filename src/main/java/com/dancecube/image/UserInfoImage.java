@@ -15,11 +15,18 @@ import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static com.mirai.config.AbstractConfig.*;
+import static com.mirai.command.AllCommands.scheduler;
+import static com.mirai.config.AbstractConfig.configPath;
+import static com.mirai.config.AbstractConfig.itIsAReeeeaaaalWindowsMark;
 
 
 public class UserInfoImage {
-    //UserInfo生成
+    /**
+     * 生成个人信息图，可能是用户查询别人账号
+     *
+     * @param token 发起查看信息的用户
+     * @param id    需要查看的信息目标
+     */
     public static InputStream generate(Token token, int id) {
         //todo 随机背景
         String bgPath = "file:" + configPath + "Images/UserInfoImage/Background2.png";
@@ -32,7 +39,7 @@ public class UserInfoImage {
         if(userInfo.getHeadimgURL()==null) return null;
 
         ImageDrawer drawer = new ImageDrawer(bgPath);
-        drawer.antiAliasing();
+        drawer.setAntiAliasing();
         drawer.drawImage(ImageDrawer.read(userInfo.getHeadimgURL()), 120, 150, 137, 137);
 
         if(!userInfo.getHeadimgBoxPath().equals("")) // 头像框校验
@@ -42,7 +49,7 @@ public class UserInfoImage {
 
         Font font = new Font("得意黑", Font.PLAIN, 36);
         Font font2 = new Font("得意黑", Font.PLAIN, 20);
-        TextEffect effect = new TextEffect(235, 0);
+        TextEffect effect = new TextEffect().setMaxWidth(235).setSpaceHeight(0);
         drawer.font(font);
         //信息开放
         if(userInfo.getStatus()!=InfoStatus.PRIVATE) {

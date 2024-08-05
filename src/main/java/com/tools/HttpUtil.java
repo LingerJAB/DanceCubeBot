@@ -49,10 +49,16 @@ public class HttpUtil {
     }
 
     public static Image getImageFromStream(InputStream inputStream, Contact contact) {
+        try {
+            return getImageFromBytes(inputStream.readAllBytes(), contact);
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Image getImageFromBytes(byte[] bytes, Contact contact) {
         Image image = null;
         try {
-            byte[] bytes = inputStream.readAllBytes();
-            inputStream.close();
             ExternalResource ex = ExternalResource.create(bytes);
             image = ExternalResource.uploadAsImage(ex, contact);
             ex.close();

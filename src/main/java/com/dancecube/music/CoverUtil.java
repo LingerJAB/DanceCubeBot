@@ -11,7 +11,6 @@ import java.net.URL;
 import static com.mirai.config.AbstractConfig.configPath;
 
 public class CoverUtil {
-    public static String path = configPath + "Images/Material/";
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
     public static String customImgPath = configPath + "Images/Cover/CustomImage/";
 

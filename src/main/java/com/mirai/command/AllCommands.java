@@ -13,6 +13,8 @@ import com.mirai.MiraiBot;
 import com.mirai.config.UserConfigUtils;
 import com.tools.HttpUtil;
 import kotlin.jvm.functions.Function1;
+import net.coobird.thumbnailator.Thumbnails;
+import net.mamoe.mirai.console.plugin.jvm.JavaPluginScheduler;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.Event;
@@ -24,6 +26,9 @@ import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -43,6 +48,8 @@ import static com.mirai.config.AbstractConfig.*;
 @SuppressWarnings("unused")
 public class AllCommands {
 
+
+    public static JavaPluginScheduler scheduler = MiraiBot.INSTANCE.getScheduler();
     public static HashSet<RegexCommand> regexCommands = new HashSet<>();  //所有正则指令
     public static HashSet<ArgsCommand> argsCommands = new HashSet<>();  //所有参数指令
     private static final BiConsumer<Contact, Long> onNoLoginCall = (contact, qq) ->
@@ -72,25 +79,12 @@ public class AllCommands {
 
     }
 
-
     @DeclaredCommand("菜单")
     public static final RegexCommand msgMenu = new RegexCommandBuilder()
             .regex("菜单")
             .onCall(Scope.GLOBAL, (event, contact, qq, args) -> {
                 String menu = """
-                        舞小铃有以下功能哦！
-                        1. 登录
-                        -登录才能和舞小铃玩！
-                        2. 我的信息/mydc/mywlf
-                        -查询舞立方资料
-                        3. 机台登录/扫码
-                        -拍照即可扫码舞立方机台！
-                        4. 战力分析/myrt
-                        5. 查找(舞立方) [地名]
-                        越详细地名越精确！
-                        6. [自制谱兑换码]
-                        私聊批量兑换好多兑换码！
-                        ❤️其它问题请联系铃酱!！""";
+                        去看看主页图片就知道辣！""";
                 contact.sendMessage(menu);
             }).build();
 
@@ -119,12 +113,13 @@ public class AllCommands {
                 if(token==null) {
                     contact.sendMessage("超时啦~ 请重试一下吧！");
                 } else {
-                    contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s\n\n⭐要是账号不匹配的话，重新登录下就好了".formatted(token.getUserId()));
+                    contact.sendMessage("登录成功啦~(●'◡'●)\n你的ID是：%s\n\n⭐要是账号不匹配的话，重新发送登录就好了".formatted(token.getUserId()));
                     userTokensMap.put(qq, token);  // 重复登录只会覆盖新的token
                 }
                 logStatus.remove(qq);
             }).build();
 
+    @Deprecated
     @DeclaredCommand("舞立方机台登录")
     public static final RegexCommand machineLogin = new RegexCommandBuilder()
             //Todo：扫不出来
@@ -421,9 +416,18 @@ public class AllCommands {
                 if(token==null) return;
 
                 contact.sendMessage("小铃正在计算中,等一下下💦...");
-                InputStream inputStream = UserRatioImage.generateOptimized(token);
+                InputStream inputStream = UserRatioImage.generate(token);
+                Image image;
                 if(inputStream!=null) {
-                    Image image = HttpUtil.getImageFromStream(inputStream, contact);
+                    BufferedImage bufferedImage;
+                    try(ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                        Thumbnails.of(inputStream)
+                                .scale(1)
+                                .outputFormat("jpg").toOutputStream(baos);
+                        image = HttpUtil.getImageFromBytes(baos.toByteArray(), contact);
+                    } catch(IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     contact.sendMessage(image);
                 }
             }).build();

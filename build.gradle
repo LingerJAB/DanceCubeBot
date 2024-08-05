@@ -17,9 +17,9 @@ repositories {
 }
 dependencies {
     implementation 'com.google.zxing:javase:3.5.1'
-    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.freewayso:image-combiner:2.6.3'
+    implementation 'net.coobird:thumbnailator:0.4.20'
     implementation 'com.tencentcloudapi:tencentcloud-sdk-java-ocr:3.1.764'
     implementation 'org.yaml:snakeyaml:2.0'
     implementation 'org.junit.jupiter:junit-jupiter:5.9.2'

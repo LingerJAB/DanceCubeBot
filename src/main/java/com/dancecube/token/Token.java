@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * 舞立方 Token 类，用于身份识别和验证
+ * 舞立方登录鉴权 Token 类，用于账号操作时的身份识别和验证
  *
  * @author Lin
  */
@@ -75,12 +75,11 @@ public class Token {
      * @return Token是否可用
      */
     public boolean checkAvailable() {
+        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
+                Map.of("Authorization", getBearerToken()))) {
+            available = response!=null && response.code()==200;
+        }
         return !(!available | accessToken==null | refreshToken==null);
-        //        boolean available;
-//        try(Response response = HttpUtil.httpApi("https://dancedemo.shenghuayule.com/Dance/api/Message/GetUnreadCount",
-//                Map.of("Authorization", getBearerToken()))) {
-//            available = response!=null && response.code()==200;
-//        }
 //        return available;
     }
 

@@ -11,6 +11,7 @@ import com.tools.image.AccGrade;
 import com.tools.image.ImageDrawer;
 import com.tools.image.ImageEffect;
 import com.tools.image.TextEffect;
+import net.coobird.thumbnailator.Thumbnails;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
@@ -27,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static com.mirai.config.AbstractConfig.configPath;
 import static com.mirai.config.AbstractConfig.itIsAReeeeaaaalWindowsMark;
 
 public class UserRatioImage {
@@ -41,31 +43,32 @@ public class UserRatioImage {
     public static final BufferedImage LV_B;
     public static final BufferedImage LV_C;
     public static final BufferedImage LV_D;
+    public static String path = configPath + "Images/UserRatioImage/";
 
 
     static {
         try {
             // 素材缓存到内存
-            CARD_1 = ImageIO.read(new File(CoverUtil.path + "Card1.png"));
-            CARD_2 = ImageIO.read(new File(CoverUtil.path + "Card2.png"));
-            CARD_3 = ImageIO.read(new File(CoverUtil.path + "Card3.png"));
-            LV_SSS = ImageIO.read(new File(CoverUtil.path + "SSS.png"));
-            LV_SS = ImageIO.read(new File(CoverUtil.path + "SS.png"));
-            LV_S = ImageIO.read(new File(CoverUtil.path + "S.png"));
-            LV_A = ImageIO.read(new File(CoverUtil.path + "A.png"));
-            LV_B = ImageIO.read(new File(CoverUtil.path + "B.png"));
-            LV_C = ImageIO.read(new File(CoverUtil.path + "C.png"));
-            LV_D = ImageIO.read(new File(CoverUtil.path + "D.png"));
+            CARD_1 = ImageIO.read(new File(path + "Card1.png"));
+            CARD_2 = ImageIO.read(new File(path + "Card2.png"));
+            CARD_3 = ImageIO.read(new File(path + "Card3.png"));
+            LV_SSS = ImageIO.read(new File(path + "SSS.png"));
+            LV_SS = ImageIO.read(new File(path + "SS.png"));
+            LV_S = ImageIO.read(new File(path + "S.png"));
+            LV_A = ImageIO.read(new File(path + "A.png"));
+            LV_B = ImageIO.read(new File(path + "B.png"));
+            LV_C = ImageIO.read(new File(path + "C.png"));
+            LV_D = ImageIO.read(new File(path + "D.png"));
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
 
     }
 
-    public static InputStream generateOptimized(Token token) {
+    public static InputStream generate(Token token) {
         // 个人信息
         UserInfo info;
-        ArrayList<LvRatioHistory> ratioList;
+        List<LvRatioHistory> ratioList;
         if(!itIsAReeeeaaaalWindowsMark()) {
             info = UserInfo.get(token);
             ratioList = LvRatioHistory.get(token);
@@ -85,11 +88,14 @@ public class UserRatioImage {
         try {
             // 为什么这里放个finalInfo？
             final UserInfo finalInfo = info;
+            if(info==null) {
+                System.err.println("# 战力分析时个人信息获取失败");
+            }
 
             // 获取背景图片
             CompletableFuture<BufferedImage> backgroundImgFuture = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return ImageIO.read(new File(CoverUtil.path + "Background1.png"));
+                    return ImageIO.read(new File(path + "Background1.png"));
                 } catch(IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -98,7 +104,7 @@ public class UserRatioImage {
             // 个人信息 头像/头像框/头衔  异步获取
             CompletableFuture<BufferedImage> avatarFuture = CompletableFuture.supplyAsync(() -> {
                 try {
-                    if(finalInfo.getHeadimgURL().equals("")) return null;
+                    if(finalInfo.getHeadimgURL().isEmpty()) return null;
                     return ImageIO.read(new URL(finalInfo.getHeadimgURL()));
                 } catch(IOException e) {
                     return null;
@@ -107,7 +113,7 @@ public class UserRatioImage {
 
             CompletableFuture<BufferedImage> boxFuture = CompletableFuture.supplyAsync(() -> {
                 try {
-                    if(finalInfo.getHeadimgBoxPath().equals("")) return null;
+                    if(finalInfo.getHeadimgBoxPath().isEmpty()) return null;
                     return ImageIO.read(new URL(finalInfo.getHeadimgBoxPath()));
                 } catch(IOException e) {
                     return null;
@@ -115,7 +121,7 @@ public class UserRatioImage {
             });
 
             CompletableFuture<BufferedImage> titleFuture = CompletableFuture.supplyAsync(() -> {
-                if(finalInfo.getTitleUrl().equals("")) return null;
+                if(finalInfo.getTitleUrl().isEmpty()) return null;
                 try {
                     return ImageIO.read(new URL(finalInfo.getTitleUrl()));
                 } catch(IOException e) {
@@ -125,7 +131,7 @@ public class UserRatioImage {
 
             //异步阻塞完绘制战力图
             drawer = new ImageDrawer(backgroundImgFuture.get());
-            drawer.antiAliasing(); // 抗锯齿
+            drawer.setAntiAliasing(); // 抗锯齿
 
             CompletableFuture.allOf(avatarFuture, boxFuture, titleFuture).join();
             if(avatarFuture.get()!=null) drawer.drawImage(avatarFuture.get(), 34, 180, 174, 174);
@@ -145,7 +151,7 @@ public class UserRatioImage {
         Font infoFont = new Font("得意黑", Font.PLAIN, 45);
         Font idFont = new Font("得意黑", Font.PLAIN, 30);
         drawer.color(Color.BLACK).font(idFont).drawText("ID: " + token.getUserId(), 245, 200)
-                .font(infoFont).drawText(userInfoText, 245, 160, new TextEffect(230, 0));
+                .font(infoFont).drawText(userInfoText, 245, 160, new TextEffect().setMaxWidth(230).setSpaceHeight(0));
 
 
         // 异步获取两个列表
@@ -184,6 +190,7 @@ public class UserRatioImage {
             CoverUtil.downloadCover(id);
             latch.countDown();
         }));
+        threadPool.shutdown();
         try {
             latch.await();
         } catch(InterruptedException e) {
@@ -216,7 +223,7 @@ public class UserRatioImage {
                     case S -> -6;
                     default -> 5;// case A B D
                 };
-                ImageEffect effect = new ImageEffect(35, 35);
+                ImageEffect effect = new ImageEffect().setArc(35);
 
                 // 战力 >xxxx(+/- xx)
                 String diff = musicInfo.getRatioInt()>lvRatio ?
@@ -225,11 +232,11 @@ public class UserRatioImage {
                         .drawImage(card, 15 + dx2, 620 + dy2)
                         .drawImage(grade, 285 + fix + dx2, 715 + dy2)
                         .font(titleFont, Color.BLACK)
-                        .drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null))
+                        .drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect().setMaxWidth(220))
                         .font(scoreFont).drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 646 + dy2)
                         .font(comboMissAccFont)
                         .drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAccuracy()), 230 + dx2, 725 + dy2,
-                                new TextEffect(null, 1))
+                                new TextEffect().setSpaceHeight(1))
                         .drawText("> %d (%s)".formatted(musicInfo.getRatioInt(), diff), 163 + dx2, 702 + dy2)
                         .font(levelFont, Color.WHITE)
                         .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
@@ -256,18 +263,18 @@ public class UserRatioImage {
                     case S -> -6;
                     default -> 5;// case A B D
                 };
-                ImageEffect effect = new ImageEffect(35, 35);
+                ImageEffect effect = new ImageEffect().setArc(35);
                 String diff = musicInfo.getRatioInt()>lvRatio ?
                         "+" + (musicInfo.getRatioInt() - lvRatio) : String.valueOf(musicInfo.getRatioInt() - lvRatio);
 
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect) //y+1065
                         .drawImage(card, 15 + dx2, 620 + dy2).drawImage(grade, 285 + fix + dx2, 715 + dy2)
-                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect(220, null)).font(scoreFont)
+                        .font(titleFont, Color.BLACK).drawText(musicInfo.getName(), 160 + dx2, 624 + dy2, new TextEffect().setMaxWidth(220)).font(scoreFont)
                         .drawText(String.valueOf(musicInfo.getScore()), 160 + dx2, 646 + dy2)
                         .font(comboMissAccFont)
                         .drawText("%d\n%d\n%.2f%%".formatted(musicInfo.getCombo(), musicInfo.getMiss(), musicInfo.getAccuracy()),
                                 230 + dx2, 725 + dy2,
-                                new TextEffect(null, 1))
+                                new TextEffect().setSpaceHeight(1))
                         .drawText("> %d (%s)".formatted(musicInfo.getRatioInt(), diff), 163 + dx2, 702 + dy2)
                         .font(levelFont, Color.WHITE)
                         .drawText(String.valueOf(musicInfo.getLevel()), 17 + dx2, 747 + dy2);
@@ -276,7 +283,7 @@ public class UserRatioImage {
 
         // 战力概况
         LvRatioHistory lvRatioHistory;
-        if(ratioList.size()>0) {
+        if(!ratioList.isEmpty()) {
             lvRatioHistory = ratioList.get(ratioList.size() - (ratioList.size()>1 ? 2 : 1));
         } else {
             lvRatioHistory = new LvRatioHistory(DateFormat.getDateInstance().getCalendar(), info.getLvRatio());
@@ -293,9 +300,9 @@ public class UserRatioImage {
                                        """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
                 avg1, avg2, allAvg) + getRatioComment(lvRatio);
-        drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect(null, -6));
+        drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect().setSpaceHeight(-6));
         drawer.dispose();
-        return drawer.getImageStream("PNG");
+        return drawer.getImageStream("png");
     }
 
     private static BufferedImage getGradeImage(AccGrade grade) {
@@ -320,12 +327,19 @@ public class UserRatioImage {
     }
 
     @Test
-    public void test() {
+    public void test() throws IOException {
         System.out.println("Running...");
         Token token = new Token(939088,
-                "tLB-nyd8xVnXMpn2TObtpUZAoB_of9WhB9Sye7jrLuVldr_8JfV73qQvQ1-i-hAs2DPm83U4_LVqh-j7M4jZeULkaLvros29EKcMlpuPd76pBFScElsWd8LS07K2NmFBWwjtkmSxs7lhmSeWk1W0wZb7qVyZQiw-oPwLa_6kq2UngZxY2pGrr3SOJw3nuc58DaCexkJ_Hz6bZRC-Mfzhj4e59n-nr-7JN2A5t2U9znVdmDlfN1mrVauoGxdW-R29QhqYp-78hTDisUhogStCi9K7VHRdt1AoC5I9fUSpU9ZrXzJiUzMJTumw0dQ8hSAPGycxUDaDqIXViWqs78-zSw6giMQauJgI-feTSdDJkp3M86xw4qVHCPTeeMNKtPM8");
-        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
-        ImageDrawer.write(generateOptimized(token), path);
+                "c4JX0KdtlS8Y7e5c9PXjFFS-0Cggeu2yGGDbCWqNT-v_VVOl5jQTF-nZjA8uCDIAGw6FKF0gaTYx8wW0d364McS6ntGh4BIS4lMvrofM4mWmsztYaE4CqcB8Nd7-6T40FkEF46iC4zGaMu7DrERzft3rNwnrV312Y_3UCOZI-wEBdRGhRO6tKZ7MdlRB-Ba8Z_qkfWLFWMBruadH7H1wXqd8TvJHXbFkINDPDx--wpSX6Qmrh-vCkcTV_DFuCYd3sGI9hEVF6k3j9XGHsVs4zurL-LLkYBQco2abgiho3lT_I8wNdvnWHINFUL0wOzEcB0fsNdZ3kZyF5u312J-OgM1uY8J_HRB9IVN3V_9DKcHUU9m4iRm-E8Qja1JHPGik");
+        String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.jpg";
+
+        InputStream image = generate(token);
+        Thumbnails.of(image)
+                .scale(1)
+                .outputFormat("jpg")
+                .toFile(path);
+//        ImageDrawer.write(ImageDrawer.convertPngToJpg(ImageDrawer.read(image),0.5f), path);
+//        ImageDrawer.write(ImageDrawer.read(image), path);
         System.out.println("Done!");
     }
 
