@@ -15,7 +15,7 @@
 
 用户可用功能：
 
-- 扫码至登录机器人
+- 手机号或扫码至登录机器人
 - 查看个人信息（图片，战力，排行，金币，积分等等）
 - 查看战力分析（图片，b15/r15，单曲详情等等）
 - 舞立方机台二维码登录（发送给机器人二维码）~~至少不用微信扫码了~~
@@ -54,15 +54,14 @@
 创建一个文件夹 `DcConfig`放入如下文件，使用如下文件结构（**注意`DcConfig`在`mcl`外面**）
 
 ```
+*当然如果你没有主动配置文件夹，插件也会自己生成
 - root
 - mcl
  - mcl
  - plugins
- - libs
  - ...
 - DcConfig （见下一代码块）
-- Images
-  - Background.png
+  - Images
   - ...
 ```
 
@@ -93,7 +92,7 @@ DcConfig
     │          115.jpg ...
     │          default.png
     │
-    ├─Material
+    ├─UserRatioImage
     │      A.png
     │      B.png
     │      Background1.png
