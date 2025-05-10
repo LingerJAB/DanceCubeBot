@@ -25,4 +25,5 @@ dependencies {
     implementation 'org.junit.jupiter:junit-jupiter:5.9.2'
     implementation 'junit:junit:4.13.2'
     implementation 'org.quartz-scheduler:quartz:2.3.2'
+    implementation 'io.github.humbleui:skija-windows-x64:0.116.2'
 }

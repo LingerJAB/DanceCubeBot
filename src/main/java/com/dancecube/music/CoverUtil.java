@@ -7,12 +7,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static com.mirai.config.AbstractConfig.configPath;
 
 public class CoverUtil {
     public static String officialImgPath = configPath + "Images/Cover/OfficialImage/";
     public static String customImgPath = configPath + "Images/Cover/CustomImage/";
+    public static String coverImgPath = configPath + "Images/Cover/";
 
     static {
         new File(officialImgPath).mkdirs();
@@ -21,6 +24,7 @@ public class CoverUtil {
 
     ///不保证存在
     private static String getImgPath(int id) {
+        if(id == 0) return coverImgPath + "default.jpg";
         return (MusicUtil.isOfficial(id) ? officialImgPath : customImgPath) + id + ".jpg";
     }
 
@@ -29,16 +33,6 @@ public class CoverUtil {
      */
     public static boolean isCoverAbsent(int id) {
         return !new File(getImgPath(id)).exists();
-    }
-
-    @Nullable
-    private static BufferedImage getCoverOrNull(int id) {
-        // 先从官谱音乐取封面
-        try {
-            return ImageIO.read(new File(getImgPath(id)));
-        } catch(IOException e) {
-            return null;
-        }
     }
 
     public static void downloadCover(int id) {
@@ -54,12 +48,22 @@ public class CoverUtil {
         }
     }
 
-    public static BufferedImage getCover(int id) {
-        BufferedImage cover = getCoverOrNull(id);
-        if(cover!=null) {
-            return cover;
+    @Nullable
+    public static BufferedImage getCoverOrDefault(int id) {
+        if(isCoverAbsent(id)) id = 0;
+        try {
+            return ImageIO.read(new File(getImgPath(id)));
+        } catch(IOException e) {
+            return null;
         }
-        downloadCover(id);
-        return getCoverOrNull(id);
+    }
+
+    public static byte[] getCoverBytesOrDefault(int id) {
+        if(isCoverAbsent(id)) id = 0;
+        try {
+            return Files.readAllBytes(Path.of(getImgPath(id)));
+        } catch(IOException e) {
+            return null;
+        }
     }
 }

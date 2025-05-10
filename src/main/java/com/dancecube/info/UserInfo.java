@@ -150,7 +150,7 @@ public class UserInfo {
                     e.printStackTrace();
                 }
                 JsonArray jsonArray = JsonParser.parseString(userInfoJson).getAsJsonObject().get("List").getAsJsonArray();
-                if(jsonArray.size()>=1) {
+                if(!jsonArray.isEmpty()) {
                     JsonObject jsonObject = jsonArray.get(0).getAsJsonObject();
                     userInfo.userID = id;
                     userInfo.userName = jsonObject.get("Name").getAsString();

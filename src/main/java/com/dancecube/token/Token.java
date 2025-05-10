@@ -66,11 +66,11 @@ public class Token {
     }
 
     /**
-     * 通过查看账户未读消息检测是否Token可用
+     * 通过查看账户未读消息检测API是否Token可用
      * <p><b>*不严谨判定：</b>{@code available}表示是否可用访问API，但<b>不能判定{@code refresh_token}是否可再次刷新。</b>
      * 但事实上，{@code refresh_token}的{@code expire_in}并不准确，应该尽可能的刷新。
      * <p>
-     * 而对于<b>能够即时刷新的定时程序</b>来说，可用认为{@code available}等价于{@code refreshable}</p>
+     * 而对于<b>能够即时刷新的定时程序</b>来说，可以认为{@code available}等价于{@code refreshable}</p>
      *
      * @return Token是否可用
      */
@@ -126,7 +126,7 @@ public class Token {
                     "accessToken"="%s",
                     "refreshToken"="%s",
                     "recTime"=%d
-                    "desc"="token时长为%.3f天（大于7天可能需要重新登录）"
+                    "desc"="当前token时长为%.3f天。Token拥有账号的所有控制权，请务必保管好token以免泄露，你可以发送"退出登录"来删除当前会话token"
                 }
                 """)
                 .formatted(userId, accessToken, refreshToken, recTime, (float) (System.currentTimeMillis() - recTime) / 86400_000);

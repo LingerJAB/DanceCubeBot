@@ -51,6 +51,15 @@ public class RecentMusicInfo extends RecordedMusicInfo {
         this.recordTime = object.get("RecordTime").getAsString();
     }
 
+    public RecentMusicInfo(int id, String name, int difficulty, int level, int levelType,
+                           float accuracy, int score, int combo, int perfect,
+                           int great, int good, int miss, String recordTime) {
+        super(id, name, difficulty, level, levelType, accuracy, score, combo, miss);
+        this.perfect = perfect;
+        this.great = great;
+        this.good = good;
+        this.recordTime = recordTime;
+    }
 
     @Override
     public String toString() {

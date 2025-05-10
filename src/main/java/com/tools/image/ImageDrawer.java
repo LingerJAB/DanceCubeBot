@@ -85,15 +85,15 @@ public class ImageDrawer {
         int wh = w * h;
         int div = radius + radius + 1;
 
-        int r[] = new int[wh];
-        int g[] = new int[wh];
-        int b[] = new int[wh];
+        int[] r = new int[wh];
+        int[] g = new int[wh];
+        int[] b = new int[wh];
         int rsum, gsum, bsum, x, y, i, p, yp, yi, yw;
-        int vmin[] = new int[Math.max(w, h)];
+        int[] vmin = new int[Math.max(w, h)];
 
         int divsum = (div + 1) >> 1;
         divsum *= divsum;
-        int dv[] = new int[256 * divsum];
+        int[] dv = new int[256 * divsum];
         for(i = 0; i<256 * divsum; i++) {
             dv[i] = (i / divsum);
         }
@@ -288,10 +288,10 @@ public class ImageDrawer {
                 graphics.drawString(line, x, y);
                 y += lineHeight + effect.getSpaceHeight();
             }
-        } else if(effect.getMaxWidth()!=null) {
-            text = addDots(text, effect.getMaxWidth());
-            graphics.drawString(text, x, y);
         } else {
+            if(effect.getMaxWidth() != null) {
+                text = addDots(text, effect.getMaxWidth());
+            }
             graphics.drawString(text, x, y);
         }
         return this;

@@ -12,6 +12,8 @@ import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.EventChannel;
 import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.NewFriendRequestEvent;
+import net.mamoe.mirai.event.events.NudgeEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
@@ -50,6 +52,8 @@ public final class MiraiBot extends JavaPlugin {
 
         // 监听器
         channel.subscribeAlways(MessageEvent.class, MainHandler::eventCenter);
+        channel.subscribeAlways(NudgeEvent.class, MainHandler::NudgeHandler);
+        channel.subscribeAlways(NewFriendRequestEvent.class, MainHandler::addFriendHandler);
 
     }
 

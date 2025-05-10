@@ -108,9 +108,9 @@ public class UserInfoImage {
 
     @Test
     public void test() {
-        Token token = new Token(939800, "PViJl0yNANEslG5QPYZjiI7ZcAg8F5L7o0mXH2TJpkEsoZQcAh3DrUN3CPgvx-KFNoMFMQDMtQbZs9opoXnL6_VaOSDIf2VvlJBpBHY7XF-YSAnIdkRaLbyiUF6J6WqvKFiP6WcSEcdXde-ifSp2GlifVvGE4NiGxTPmY2NsV61T9LCd6CzhQyz97408jGYUsTq9I-d8ewZ65qE3TayXn18SGseZG924fOr-tOYWiEFESXnLNzMbrsRIiSSMtuc4ell1_4479J7WFGvZkvmgGSa3qis4WmvFUJkuTcAH5OuqjCeroiLwz1ksCGriCt6b7CGVFAHTkoEI0XMBdwiw-t_LczRuLZeS9_JCAH-DZ3bdCcL_i26a9jYyAqqpggQchgKMUYyy7j_jR7QhcEoCLodAgAtU4PN4WoZRHp7DhAhxQMY-9ua66ZJBhu2b6tEdUocjN4FUMRv3Qv_Fg53WBKB8f36fqFxZ5HTdpaiPF1ig5ipI0hM3rRYEWWvxg4j_IjzzMJDGQHN5KhSXEvjk7TSUvCaOuM9DR8fdbaiUTz2JC0QCw9SG4l_mlVdkf7zmj3ZfhiteGZ1-n3VXl9y_KyKKEuuL-_0YGn6qDvS9ng5fUdwki3WUlZ34TJrYaNmImGQmnEjQTpvFGxKgdpMOR-P4vAm0W8HVS9r15Kht2wAM5GHWoXmlvjva-oLt6LbJICd_u6svAFn92VwHlx6179LSMr6iZppK4GEC-XS9kJTwCDMZ_XLXoqczOBRngz9M69NMRVpmRJ8c0Bn55lbiA6n8sAcbHAYtGCh3P5gnPO_1PKDn0UQ1FovmA7uS1Xvfc6fk0Ugi29yCC_rhv0R4MZbxodOyCha4rMgDd8XlsKfQJNpCMNWogAD7vhWYIpACOXjRjCG4Q5lweR3XxbSRPA");
+        Token token = new Token(939800, "Tbp4C0QAJeIsqNcJx7psKoYAxFNsD0qH68qutYCZod8ybPiRoEJ05RZhHzy4LPQDtw3tJvKYqSkCpnEd-qrg-c7MMY7DwQecXF3-uuU-6qDd7zIQ7IpfTHbcVHvN_st9XnVCyt9op0b6CYFY3nTvNH1F4aidP5M-P-MXes3-TIH80YHN8zHgua_XjgFWfi0loubYS0KW9APsB0POsoaBmeJz-85ZxnqlOdzUkW7cb9vGPzgQvP7adZPa6igEfynpx1YXTthssnhGyjKdMSQnKkR2Zhmx4zdbwo9N1eTDoAv0ZuNZ9-29gSirqGHbwRS-GXPnXG4mGLvdMuRWY1OKuLk1HWvV-AsceOuMvZX9vin0BcxGDKmK4axbU8kRQkx-");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.png";
-        ImageDrawer.write(generate(token, 2550784), path);
+        ImageDrawer.write(generate(token, 939088), path);
     }
 }
 

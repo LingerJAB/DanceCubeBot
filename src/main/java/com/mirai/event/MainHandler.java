@@ -2,14 +2,17 @@ package com.mirai.event;
 
 import com.dancecube.token.Token;
 import com.dancecube.token.TokenBuilder;
+import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.contact.Contact;
+import net.mamoe.mirai.contact.Friend;
+import net.mamoe.mirai.contact.friendgroup.FriendGroup;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.NewFriendRequestEvent;
+import net.mamoe.mirai.event.events.NudgeEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.PlainText;
-
-import java.util.Map;
 
 import static com.mirai.config.AbstractConfig.configPath;
 import static com.mirai.config.AbstractConfig.userTokensMap;
@@ -27,46 +30,73 @@ public class MainHandler {
         } else return;
 
         String message = messageChain.contentToString();
-        long qq = event.getSender().getId(); // qq不为contact.getId()
+        long qq = event.getSender().getId(); // qq发送者id 而非群聊id
         Contact contact = event.getSubject();
 
         // 文本消息检测
         switch(message) {
             case "#save" -> saveTokens(contact);
             case "#load" -> loadTokens(contact);
+            case "#logout" -> logoutToken(contact);
         }
     }
 
-    // #save 高级
+    @EventHandler
+    public static void NudgeHandler(NudgeEvent event) {
+        if(event.getTarget() instanceof Bot) {
+            event.getFrom().nudge().sendTo(event.getSubject());
+        }
+    }
+
+    @EventHandler
+    public static void addFriendHandler(NewFriendRequestEvent event) {
+        event.accept();
+        Friend friend = event.getBot().getFriend(event.getFromId());
+        if(friend != null) {
+            friend.sendMessage("🥰呐~ 现在我们是好朋友啦！\n请到主页查看功能哦！");
+            FriendGroup friendGroup = event.getBot().getFriendGroups().get(0);
+            if(friendGroup != null) {
+                friendGroup.moveIn(friend);
+            }
+        }
+    }
+
+
+    /**
+     * 保存Token到文件JSON
+     *
+     * @param contact 触发对象
+     */
     public static void saveTokens(Contact contact) {
         TokenBuilder.tokensToFile(userTokensMap, configPath + "UserTokens.json");
         contact.sendMessage("保存成功！共%d条".formatted(userTokensMap.size()));
     }
 
-    // #load 高级
+    /**
+     * 从文件JSON中加载Token
+     *
+     * @param contact 触发对象
+     */
     public static void loadTokens(Contact contact) {
         String path = configPath + "UserTokens.json";
         userTokensMap = TokenBuilder.tokensFromFile(path, false);
-        StringBuilder sb = new StringBuilder();
-        for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
-            Long qq = entry.getKey();
-            Token token = entry.getValue();
-            sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
-        }
-        contact.sendMessage("不刷新加载成功！共%d条".formatted(userTokensMap.size()) + sb);
+        contact.sendMessage("不刷新加载成功！共%d条".formatted(userTokensMap.size()));
     }
 
-
-    @Deprecated
-    public static void loadTokens() {
-        StringBuilder sb = new StringBuilder();
-        if(userTokensMap==null) return;
-
-        for(Map.Entry<Long, Token> entry : userTokensMap.entrySet()) {
-            Long qq = entry.getKey();
-            Token token = entry.getValue();
-            sb.append("\nqq: %d , id: %s;".formatted(qq, token.getUserId()));
+    /**
+     * 注销Token
+     *
+     * @param contact 触发对象
+     */
+    public static void logoutToken(Contact contact) {
+        long qq = contact.getId();
+        Token token = userTokensMap.get(qq);
+        if(token == null) {
+            contact.sendMessage("当前账号未登录到舞小铃！");
+            return;
         }
-        System.out.println("刷新加载成功！共%d条".formatted(userTokensMap.size()) + sb);
+        userTokensMap.remove(qq);
+        contact.sendMessage("id:%d 注销成功！".formatted(token.getUserId()));
     }
+
 }

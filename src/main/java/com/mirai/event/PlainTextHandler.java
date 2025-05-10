@@ -26,10 +26,14 @@ public class PlainTextHandler {
     public static HashSet<RegexCommand> regexCommands = AllCommands.regexCommands;  //所有正则指令
     public static HashSet<ArgsCommand> argsCommands = AllCommands.argsCommands;  //所有参数指令
 
-    private static final int MAX_LENGTH = 32767;  //单次指令字符最大长度（用于过滤）
+    private static final int MAX_LENGTH = 0x7fff;  //单次指令字符最大长度（用于过滤）
 
 
-    //事件处理
+    /**
+     * 事件处理
+     *
+     * @param messageEvent 消息事件
+     */
     public static void accept(MessageEvent messageEvent) {
         MessageChain messageChain = messageEvent.getMessage();
 
@@ -55,15 +59,14 @@ public class PlainTextHandler {
 
         ArrayList<String> prefixAndArgs = new ArrayList<>(Arrays.asList(message.strip().split("\\s+")));
         String msgPre = prefixAndArgs.remove(0); //前缀
-        String[] args = prefixAndArgs.toArray(new String[0]); //参数
+        String[] args = prefixAndArgs.isEmpty() ? null : prefixAndArgs.toArray(new String[0]); //参数 奇奇怪怪的特性，这不是空数组！
 
 
         //执行参数指令
         for(ArgsCommand command : argsCommands) {
-            if(args.length<1) continue;
             String[] commandPrefixes = command.getPrefix();
             if(Arrays.asList(commandPrefixes).contains(msgPre)) {
-                if(ArgsCommand.checkError(command, args)==-1) {
+                if(ArgsCommand.checkError(command, args) < 0) { //args可能不存在，需要判空
                     runCommand(messageEvent, command, args);
                 }
             }
@@ -74,7 +77,11 @@ public class PlainTextHandler {
 
     private static final MsgHandleable MUTE = (event, contact, qq, args) -> contact.sendMessage("小铃困啦，白天再来玩吧，先晚安安啦~");
 
-    // 宵禁
+    /**
+     * 宵禁
+     *
+     * @return 是否在宵禁
+     */
     public static boolean isMutedNow() {
         // 获取当前时间
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);

@@ -3,11 +3,11 @@ package com.dancecube.image;
 import com.dancecube.api.LvRatioHistory;
 import com.dancecube.info.UserInfo;
 import com.dancecube.music.CoverUtil;
+import com.dancecube.ratio.AccGrade;
 import com.dancecube.ratio.RankMusicInfo;
 import com.dancecube.ratio.RatioCalculator;
 import com.dancecube.ratio.RecentMusicInfo;
 import com.dancecube.token.Token;
-import com.tools.image.AccGrade;
 import com.tools.image.ImageDrawer;
 import com.tools.image.ImageEffect;
 import com.tools.image.TextEffect;
@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
@@ -69,20 +68,20 @@ public class UserRatioImage {
         // 个人信息
         UserInfo info;
         List<LvRatioHistory> ratioList;
-        if(!itIsAReeeeaaaalWindowsMark()) {
-            info = UserInfo.get(token);
-            ratioList = LvRatioHistory.get(token);
-        } else {
-            CompletableFuture<UserInfo> userInfoFuture = CompletableFuture.supplyAsync(() -> UserInfo.get(token));
-            CompletableFuture<ArrayList<LvRatioHistory>> ratioFuture = CompletableFuture.supplyAsync(() -> LvRatioHistory.get(token));
-            try {
-                info = userInfoFuture.get();
-                ratioList = ratioFuture.get();
-            } catch(ExecutionException | InterruptedException e) {
-                info = UserInfo.get(token);
-                ratioList = LvRatioHistory.get(token);
-            }
-        }
+//        if(!itIsAReeeeaaaalWindowsMark()) {
+        info = UserInfo.get(token);
+        ratioList = LvRatioHistory.get(token);
+//        } else {
+//            CompletableFuture<UserInfo> userInfoFuture = CompletableFuture.supplyAsync(() -> UserInfo.get(token));
+//            CompletableFuture<ArrayList<LvRatioHistory>> ratioFuture = CompletableFuture.supplyAsync(() -> LvRatioHistory.get(token));
+//            try {
+//                info = userInfoFuture.get();
+//                ratioList = ratioFuture.get();
+//            } catch(ExecutionException | InterruptedException e) {
+//                info = UserInfo.get(token);
+//                ratioList = LvRatioHistory.get(token);
+//            }
+//        }
 
         ImageDrawer drawer;
         try {
@@ -95,6 +94,7 @@ public class UserRatioImage {
             // 获取背景图片
             CompletableFuture<BufferedImage> backgroundImgFuture = CompletableFuture.supplyAsync(() -> {
                 try {
+                    // TODO 背景图片写到常量区（内存）
                     return ImageIO.read(new File(path + "Background1.png"));
                 } catch(IOException e) {
                     throw new RuntimeException(e);
@@ -144,7 +144,7 @@ public class UserRatioImage {
         int lvRatio = info.getLvRatio();
         String userInfoText = """
                 %s
-
+                
                 战队：%s
                 排名：%d
                 战力：%d""".formatted(info.getUserName(), info.getTeamName(), info.getRankNation(), lvRatio);
@@ -174,27 +174,31 @@ public class UserRatioImage {
         List<RankMusicInfo> rank15List = RatioCalculator.getSubRank15List(allRankList, true);
         List<RecentMusicInfo> recent15List = RatioCalculator.getSubRecent15List(allRecentList, false);
 
-        //准备自制谱封面id下载列表
-        HashSet<Integer> waitingCoversSet = new HashSet<>();
-        for(RankMusicInfo value : rank15List) {
-            if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
-        }
-        for(RecentMusicInfo value : recent15List) {
-            if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
-        }
+        // TODO 这里要改
+        boolean stopDownloading = false;
+        if(stopDownloading) {
+            //准备自制谱封面id下载列表
+            HashSet<Integer> waitingCoversSet = new HashSet<>();
+            for(RankMusicInfo value : rank15List) {
+                if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
+            }
+            for(RecentMusicInfo value : recent15List) {
+                if(CoverUtil.isCoverAbsent(value.getId())) waitingCoversSet.add(value.getId());
+            }
 
-        //多线程下载不存在的封面
-        ExecutorService threadPool = Executors.newCachedThreadPool();
-        CountDownLatch latch = new CountDownLatch(waitingCoversSet.size());
-        waitingCoversSet.forEach(id -> threadPool.submit(() -> {
-            CoverUtil.downloadCover(id);
-            latch.countDown();
-        }));
-        threadPool.shutdown();
-        try {
-            latch.await();
-        } catch(InterruptedException e) {
-            throw new RuntimeException(e);
+            //多线程下载不存在的封面
+            ExecutorService threadPool = Executors.newCachedThreadPool();
+            CountDownLatch latch = new CountDownLatch(waitingCoversSet.size());
+            waitingCoversSet.forEach(id -> threadPool.submit(() -> {
+                CoverUtil.downloadCover(id);
+                latch.countDown();
+            }));
+            threadPool.shutdown();
+            try {
+                latch.await();
+            } catch(InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
 
 
@@ -214,7 +218,7 @@ public class UserRatioImage {
                 int dx2 = col * dx;
                 int dy2 = row * dy;
                 RankMusicInfo musicInfo = rank15List.get(index);
-                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
+                BufferedImage cover = CoverUtil.getCoverOrDefault(musicInfo.getId());
                 BufferedImage card = getCardImage(musicInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(musicInfo.getAccGrade());
                 int fix = switch(musicInfo.getAccGrade()) {
@@ -226,8 +230,9 @@ public class UserRatioImage {
                 ImageEffect effect = new ImageEffect().setArc(35);
 
                 // 战力 >xxxx(+/- xx)
-                String diff = musicInfo.getRatioInt()>lvRatio ?
-                        "+" + (musicInfo.getRatioInt() - lvRatio) : String.valueOf(musicInfo.getRatioInt() - lvRatio);
+                String diff = musicInfo.getRatioInt() > lvRatio
+                        ? "+" + (musicInfo.getRatioInt() - lvRatio)
+                        : String.valueOf(musicInfo.getRatioInt() - lvRatio);
                 drawer.drawImage(cover, 16 + dx2, 621 + dy2, 130, 158, effect)
                         .drawImage(card, 15 + dx2, 620 + dy2)
                         .drawImage(grade, 285 + fix + dx2, 715 + dy2)
@@ -254,7 +259,7 @@ public class UserRatioImage {
 
                 if(index>=recent15List.size()) break a;
                 musicInfo = recent15List.get(index);
-                BufferedImage cover = CoverUtil.getCover(musicInfo.getId());
+                BufferedImage cover = CoverUtil.getCoverOrDefault(musicInfo.getId());
                 BufferedImage card = getCardImage(musicInfo.getDifficulty());
                 BufferedImage grade = getGradeImage(musicInfo.getAccGrade());
                 int fix = switch(musicInfo.getAccGrade()) {
@@ -293,11 +298,11 @@ public class UserRatioImage {
         float allAvg = (avg1 + avg2) / 2;
         Calendar calendar = lvRatioHistory.getCalendar();
         String extraInfoText = """
-                                       上次战力：%d   (%d月%d日)
-                                       B-15 战力：%.4f
-                                       R-15 战力：%.4f
-                                       平均战力：%.5f
-                                       """.formatted(lvRatioHistory.getRatio(),
+                上次战力：%d   (%d月%d日)
+                B-15 战力：%.4f
+                R-15 战力：%.4f
+                平均战力：%.5f
+                """.formatted(lvRatioHistory.getRatio(),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
                 avg1, avg2, allAvg) + getRatioComment(lvRatio);
         drawer.font(infoFont).color(Color.BLACK).drawText(extraInfoText, 720, 160, new TextEffect().setSpaceHeight(-6));
@@ -322,7 +327,7 @@ public class UserRatioImage {
             case 0, -1 -> CARD_1; //-1为秀谱
             case 1 -> CARD_2;
             case 2 -> CARD_3;
-            default -> throw new IllegalStateException("Unexpected value: " + difficulty);
+            default -> CARD_1;
         };
     }
 
@@ -330,7 +335,7 @@ public class UserRatioImage {
     public void test() throws IOException {
         System.out.println("Running...");
         Token token = new Token(939088,
-                "c4JX0KdtlS8Y7e5c9PXjFFS-0Cggeu2yGGDbCWqNT-v_VVOl5jQTF-nZjA8uCDIAGw6FKF0gaTYx8wW0d364McS6ntGh4BIS4lMvrofM4mWmsztYaE4CqcB8Nd7-6T40FkEF46iC4zGaMu7DrERzft3rNwnrV312Y_3UCOZI-wEBdRGhRO6tKZ7MdlRB-Ba8Z_qkfWLFWMBruadH7H1wXqd8TvJHXbFkINDPDx--wpSX6Qmrh-vCkcTV_DFuCYd3sGI9hEVF6k3j9XGHsVs4zurL-LLkYBQco2abgiho3lT_I8wNdvnWHINFUL0wOzEcB0fsNdZ3kZyF5u312J-OgM1uY8J_HRB9IVN3V_9DKcHUU9m4iRm-E8Qja1JHPGik");
+                "Tbp4C0QAJeIsqNcJx7psKoYAxFNsD0qH68qutYCZod8ybPiRoEJ05RZhHzy4LPQDtw3tJvKYqSkCpnEd-qrg-c7MMY7DwQecXF3-uuU-6qDd7zIQ7IpfTHbcVHvN_st9XnVCyt9op0b6CYFY3nTvNH1F4aidP5M-P-MXes3-TIH80YHN8zHgua_XjgFWfi0loubYS0KW9APsB0POsoaBmeJz-85ZxnqlOdzUkW7cb9vGPzgQvP7adZPa6igEfynpx1YXTthssnhGyjKdMSQnKkR2Zhmx4zdbwo9N1eTDoAv0ZuNZ9-29gSirqGHbwRS-GXPnXG4mGLvdMuRWY1OKuLk1HWvV-AsceOuMvZX9vin0BcxGDKmK4axbU8kRQkx-");
         String path = "C:\\Users\\Lin\\IdeaProjects\\DanceCubeBot\\DcConfig\\Images\\result.jpg";
 
         InputStream image = generate(token);

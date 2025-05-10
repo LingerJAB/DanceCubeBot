@@ -11,8 +11,6 @@ public class ArgsCommand extends AbstractCommand {
     private String[] prefix;
     private Pattern[] form;
 
-//    private Consumer<String> testOnCall;
-
     public String[] getPrefix() {
         return prefix;
     }
@@ -31,9 +29,11 @@ public class ArgsCommand extends AbstractCommand {
      *
      * @param command 需要的指令
      * @param args    传递的参数
-     * @return -1为成功，否则为匹配错误的索引
+     * @return -1为成功，-2为无参数，否则为匹配错误的索引
      */
     public static int checkError(ArgsCommand command, String[] args) {
+        if(args == null) return -2;
+
         if(args.length<command.form.length) return 0;
         Pattern[] patterns = command.form;
         for(int i = 0; i<patterns.length; i++) {

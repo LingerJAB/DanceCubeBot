@@ -15,7 +15,6 @@ import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -24,8 +23,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.mirai.config.AbstractConfig.configPath;
 
@@ -130,17 +127,6 @@ public final class TokenBuilder {
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Test
-    public void test() throws IOException {
-        URL url = new URL("https://dancedemo.shenghuayule.com/Dance/api/Common/GetQrCode");
-        byte[] allBytes = url.openStream().readAllBytes();
-        String json = new String(allBytes);
-        Pattern compile = Pattern.compile("\"ID\":\"(\\S+)\",\"Q");
-        Matcher matcher = compile.matcher(json);
-        matcher.find();
-        System.out.println(matcher.group(1));
     }
 
     @Test

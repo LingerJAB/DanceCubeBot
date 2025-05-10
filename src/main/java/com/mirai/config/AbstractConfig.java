@@ -25,10 +25,10 @@ public abstract class AbstractConfig {
 
     static {
 
-        windowsMark = new File("../WINDOWS_MARK").exists();
+        windowsMark = new File("./WINDOWS_MARK").exists();
         try {
             linuxRootPath = new File("..").getCanonicalPath();
-            windowsRootPath = new File("..").getCanonicalPath();
+            windowsRootPath = new File(".").getCanonicalPath();
 
             //在项目下创建 “WINDOWS_MARK” 文件，存在即使用Windows路径的配置，而Linux则不需要
             if(itIsAReeeeaaaalWindowsMark()) {

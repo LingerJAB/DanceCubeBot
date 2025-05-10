@@ -1,7 +1,5 @@
 package com.dancecube.ratio;
 
-import com.tools.image.AccGrade;
-
 /**
  * 已游玩谱面成绩歌曲的父类，包括RankMusic和RecentMusic
  */
@@ -76,6 +74,14 @@ public abstract class RecordedMusicInfo {
 
     public AccGrade getAccGrade() {
         return AccGrade.get(getAccuracy());
+    }
+
+    public boolean isFullCombo() {
+        return miss == 0;
+    }
+
+    public boolean isAllPerfect() {
+        return accuracy == 100f;
     }
 
     abstract boolean isOfficial();
